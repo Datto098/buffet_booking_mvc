@@ -69,14 +69,14 @@
                 </div>
             </div>
         </div>
-    </footer>
-
-    <!-- Bootstrap JS -->
+    </footer>    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Luxury Smooth Scrolling -->
+    <script src="<?php echo SITE_URL; ?>/assets/js/luxury-scroll.js"></script>
     <!-- Custom JS -->
-    <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>    <!-- CSRF Token for AJAX requests -->
+    <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script><!-- CSRF Token for AJAX requests -->
     <script>
         window.csrfToken = '<?php echo $_SESSION['csrf_token'] ?? generateCSRFToken(); ?>';
         window.siteUrl = '<?php echo SITE_URL; ?>';

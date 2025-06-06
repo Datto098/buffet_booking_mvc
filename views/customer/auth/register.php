@@ -1,9 +1,9 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
-            <div class="card shadow border-0 rounded-4">
+            <div class="card shadow border-0 rounded-4 fade-in-up">
                 <div class="card-body p-5">
-                    <div class="text-center mb-4">
+                    <div class="text-center mb-4 fade-in-up" data-delay="0.1s">
                         <h2 class="fw-bold text-primary">
                             <i class="fas fa-user-plus"></i> Đăng Ký Tài Khoản
                         </h2>
@@ -15,31 +15,28 @@
                             <i class="fas fa-exclamation-circle"></i>
                             <?php echo $_SESSION['error'];
                             unset($_SESSION['error']); ?>
-                        </div> <?php endif; ?> <form action="<?php echo SITE_URL; ?>/auth/register" method="POST" data-validate="true">
+                        </div> <?php endif; ?>                    <form action="<?php echo SITE_URL; ?>/auth/register" method="POST" data-validate="true" class="fade-in-up" data-delay="0.2s">
                         <input type="hidden" name="csrf_token" value="<?php echo isset($_SESSION['csrf_token']) ? $_SESSION['csrf_token'] : ''; ?>">
 
-                        <div class="row">
+                        <div class="row fade-in-up" data-delay="0.3s">
                             <div class="col-md-12 mb-3">
                                 <label for="full_name" class="form-label">
                                     <i class="fas fa-user"></i> Họ và Tên <span class="text-danger">*</span>
-                                </label>
-                                <input type="text"
-                                    class="form-control"
+                                </label>                                <input type="text"
+                                    class="form-control smooth-transition"
                                     id="full_name"
                                     name="full_name"
                                     placeholder="Nhập họ và tên đầy đủ"
                                     value="<?php echo $_POST['full_name'] ?? ''; ?>"
                                     required>
                             </div>
-                        </div>
-
-                        <div class="row">
+                        </div>                        <div class="row fade-in-up" data-delay="0.4s">
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">
                                     <i class="fas fa-envelope"></i> Email <span class="text-danger">*</span>
                                 </label>
                                 <input type="email"
-                                    class="form-control"
+                                    class="form-control smooth-transition"
                                     id="email"
                                     name="email"
                                     placeholder="your@email.com"
@@ -51,7 +48,7 @@
                                     <i class="fas fa-phone"></i> Số điện thoại
                                 </label>
                                 <input type="tel"
-                                    class="form-control"
+                                    class="form-control smooth-transition"
                                     id="phone_number"
                                     name="phone_number"
                                     placeholder="0123456789"
@@ -59,20 +56,19 @@
                             </div>
                         </div>
 
-                        <div class="row">
+                        <div class="row fade-in-up" data-delay="0.5s">
                             <div class="col-md-6 mb-3">
                                 <label for="password" class="form-label">
                                     <i class="fas fa-lock"></i> Mật khẩu <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
+                                </label>                                <div class="input-group">
                                     <input type="password"
-                                        class="form-control"
+                                        class="form-control smooth-transition"
                                         id="password"
                                         name="password"
                                         placeholder="Tối thiểu 6 ký tự"
                                         minlength="<?php echo PASSWORD_MIN_LENGTH; ?>"
                                         required>
-                                    <button class="btn btn-outline-secondary"
+                                    <button class="btn btn-outline-secondary smooth-transition"
                                         type="button"
                                         onclick="togglePassword('password')">
                                         <i class="fas fa-eye" id="password-icon"></i>
@@ -85,61 +81,56 @@
                             <div class="col-md-6 mb-3">
                                 <label for="confirm_password" class="form-label">
                                     <i class="fas fa-lock"></i> Xác nhận mật khẩu <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
+                                </label>                                <div class="input-group">
                                     <input type="password"
-                                        class="form-control"
+                                        class="form-control smooth-transition"
                                         id="confirm_password"
                                         name="confirm_password"
                                         placeholder="Nhập lại mật khẩu"
                                         required>
-                                    <button class="btn btn-outline-secondary"
+                                    <button class="btn btn-outline-secondary smooth-transition"
                                         type="button"
                                         onclick="togglePassword('confirm_password')">
                                         <i class="fas fa-eye" id="confirm_password-icon"></i>
                                     </button>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="terms" required>
+                        </div>                        <div class="mb-3 form-check fade-in-up" data-delay="0.6s">
+                            <input type="checkbox" class="form-check-input smooth-transition" id="terms" required>
                             <label class="form-check-label" for="terms">
                                 Tôi đồng ý với
-                                <a href="#" class="text-decoration-none">Điều khoản dịch vụ</a>
+                                <a href="#" class="text-decoration-none smooth-transition">Điều khoản dịch vụ</a>
                                 và
-                                <a href="#" class="text-decoration-none">Chính sách bảo mật</a>
+                                <a href="#" class="text-decoration-none smooth-transition">Chính sách bảo mật</a>
                                 <span class="text-danger">*</span>
                             </label>
                         </div>
 
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="newsletter">
+                        <div class="mb-3 form-check fade-in-up" data-delay="0.7s">
+                            <input type="checkbox" class="form-check-input smooth-transition" id="newsletter">
                             <label class="form-check-label" for="newsletter">
                                 Nhận thông báo về các chương trình khuyến mãi qua email
                             </label>
                         </div>
 
-                        <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary btn-lg">
+                        <div class="d-grid mb-3 fade-in-up" data-delay="0.8s">
+                            <button type="submit" class="btn btn-primary btn-lg smooth-transition">
                                 <i class="fas fa-user-plus"></i> Tạo Tài Khoản
                             </button>
                         </div>
-                    </form>
-
-                    <hr class="my-4">
-                    <div class="text-center">
+                    </form>                    <hr class="my-4">
+                    <div class="text-center fade-in-up" data-delay="0.9s">
                         <p class="mb-0">Đã có tài khoản?</p>
                         <a href="<?php echo SITE_URL; ?>/auth/login"
-                            class="btn btn-outline-primary">
+                            class="btn btn-outline-primary smooth-transition">
                             <i class="fas fa-sign-in-alt"></i> Đăng Nhập Ngay
                         </a>
                     </div>
                 </div>
             </div>
 
-            <div class="text-center mt-4">
-                <a href="<?php echo SITE_URL; ?>" class="text-muted text-decoration-none">
+            <div class="text-center mt-4 fade-in-up" data-delay="1.0s">
+                <a href="<?php echo SITE_URL; ?>" class="text-muted text-decoration-none smooth-transition">
                     <i class="fas fa-arrow-left"></i> Quay lại trang chủ
                 </a>
             </div>
