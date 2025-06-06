@@ -122,7 +122,7 @@
                         $discountedPrice = $originalPrice * (100 - $discountPercent) / 100;
                         $isHotDeal = $discountPercent >= 30;
                     ?>
-                    <div class="food-item promotion-food-item" style="animation-delay: <?php echo $index * 0.1; ?>s">
+                    <div class="food-item promotion-food-item fade-in-up" style="animation-delay: <?php echo $index * 0.1; ?>s" data-delay="<?php echo $index * 0.1; ?>s">
                         <div class="food-image">
                             <?php if (!empty($food['image']) && $food['image'] !== 'placeholder.jpg'): ?>
                                 <img src="<?= SITE_URL ?>/uploads/food_images/<?= htmlspecialchars($food['image']) ?>"
