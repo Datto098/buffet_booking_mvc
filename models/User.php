@@ -16,6 +16,32 @@ class User extends BaseModel {
         return $stmt->fetch();
     }
 
+    public function findByRole($role) {
+        $sql = "SELECT * FROM {$this->table} WHERE role = :role";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':role', $role);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function findByCondition($condition) {
+        $where = [];
+        foreach ($condition as $key => $value) {
+            $where[] = "$key = :$key";
+        }
+        $whereClause = implode(' AND ', $where);
+
+        $sql = "SELECT * FROM {$this->table} WHERE {$whereClause}";
+        $stmt = $this->db->prepare($sql);
+
+        foreach ($condition as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     public function createUser($data) {
         // Hash password before storing
         if (isset($data['password'])) {

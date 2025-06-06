@@ -31,57 +31,51 @@ class FoodController extends BaseController {
         $subcategoryId = intval($_GET['subcategory'] ?? 0);
         $search = sanitizeInput($_GET['search'] ?? '');
         $sortBy = $_GET['sort'] ?? 'name';
-        $priceRange = $_GET['price_range'] ?? '';
-
-        // Build filter conditions
-        $conditions = ['is_available = 1'];
+        $priceRange = $_GET['price_range'] ?? '';        // Build filter conditions
+        $conditions = ['f.is_available = 1'];
         $params = [];
 
         if ($categoryId > 0) {
-            $conditions[] = 'category_id = :category_id';
+            $conditions[] = 'f.category_id = :category_id';
             $params[':category_id'] = $categoryId;
         }
 
         if ($subcategoryId > 0) {
-            $conditions[] = 'subcategory_id = :subcategory_id';
+            $conditions[] = 'f.subcategory_id = :subcategory_id';
             $params[':subcategory_id'] = $subcategoryId;
         }
 
         if (!empty($search)) {
-            $conditions[] = '(name LIKE :search OR description LIKE :search)';
+            $conditions[] = '(f.name LIKE :search OR f.description LIKE :search)';
             $params[':search'] = "%$search%";
-        }
-
-        if (!empty($priceRange)) {
+        }        if (!empty($priceRange)) {
             switch ($priceRange) {
                 case 'under-50000':
-                    $conditions[] = 'price < 50000';
+                    $conditions[] = 'f.price < 50000';
                     break;
                 case '50000-100000':
-                    $conditions[] = 'price BETWEEN 50000 AND 100000';
+                    $conditions[] = 'f.price BETWEEN 50000 AND 100000';
                     break;
                 case '100000-200000':
-                    $conditions[] = 'price BETWEEN 100000 AND 200000';
+                    $conditions[] = 'f.price BETWEEN 100000 AND 200000';
                     break;
                 case 'over-200000':
-                    $conditions[] = 'price > 200000';
+                    $conditions[] = 'f.price > 200000';
                     break;
             }
         }
 
-        $whereClause = implode(' AND ', $conditions);
-
-        // Get sorting
+        $whereClause = implode(' AND ', $conditions);        // Get sorting
         switch ($sortBy) {
             case 'price_asc':
-                $orderBy = 'price ASC';
+                $orderBy = 'f.price ASC';
                 break;
             case 'price_desc':
-                $orderBy = 'price DESC';
+                $orderBy = 'f.price DESC';
                 break;
             case 'name':
             default:
-                $orderBy = 'name ASC';
+                $orderBy = 'f.name ASC';
                 break;
         }
 
@@ -133,7 +127,7 @@ class FoodController extends BaseController {
             redirect('/menu');
         }
 
-        $food = $this->foodModel->findById($id);
+        $food = $this->foodModel->getFoodDetails($id);
 
         if (!$food || !$food['is_available']) {
             redirect('/menu');
@@ -236,7 +230,7 @@ class FoodController extends BaseController {
             $this->jsonResponse(['error' => 'Invalid food ID'], 400);
         }
 
-        $food = $this->foodModel->findById($foodId);
+        $food = $this->foodModel->getFoodDetails($foodId);
 
         if (!$food || !$food['is_available']) {
             $this->jsonResponse(['error' => 'Food not found'], 404);

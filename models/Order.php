@@ -90,8 +90,7 @@ class Order extends BaseModel {
         return $stmt->fetchAll();
     }
 
-    public function getOrderDetails($orderId, $userId = null) {
-        $sql = "SELECT o.*, ua.address_line, u.full_name, u.phone_number
+    public function getOrderDetails($orderId, $userId = null) {        $sql = "SELECT o.*, ua.address_line, CONCAT(u.first_name, ' ', u.last_name) as full_name, u.phone_number
                 FROM {$this->table} o
                 JOIN user_addresses ua ON o.address_id = ua.id
                 JOIN users u ON o.user_id = u.id
@@ -110,10 +109,8 @@ class Order extends BaseModel {
 
         $stmt->execute();
         return $stmt->fetch();
-    }
-
-    public function getOrderItems($orderId) {
-        $sql = "SELECT oi.*, fi.name, fi.image_url
+    }    public function getOrderItems($orderId) {
+        $sql = "SELECT oi.*, fi.name, fi.image
                 FROM order_items oi
                 JOIN food_items fi ON oi.food_item_id = fi.id
                 WHERE oi.order_id = :order_id
@@ -209,10 +206,8 @@ class Order extends BaseModel {
         $stmt->execute();
         $result = $stmt->fetch();
         return $result['revenue'] ?? 0;
-    }
-
-    public function getAllOrders($limit = null, $offset = 0, $status = '') {
-        $sql = "SELECT o.*, u.name as customer_name, u.email as customer_email,
+    }    public function getAllOrders($limit = null, $offset = 0, $status = '') {
+        $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email,
                        COUNT(oi.id) as total_items
                 FROM {$this->table} o
                 LEFT JOIN users u ON o.user_id = u.id
@@ -335,26 +330,24 @@ class Order extends BaseModel {
      * Get order with items for detailed view
      * @param int $orderId Order ID
      * @return array Order details with items
-     */
-    public function getOrderWithItems($orderId) {
+     */    public function getOrderWithItems($orderId) {
         // Get order details
-        $sql = "SELECT o.*, u.name as customer_name, u.email as customer_email
+        $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email
                 FROM {$this->table} o
                 LEFT JOIN users u ON o.user_id = u.id
                 WHERE o.id = :order_id";
 
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
-        $stmt->execute();        $order = $stmt->fetch();
+        $stmt->execute();
+        $order = $stmt->fetch();
 
         if (!$order) {
             return []; // Return an empty array instead of null
-        }
-
-        // Get order items
-        $sql = "SELECT oi.*, f.name as food_name, f.image_url, f.description
+        }        // Get order items
+        $sql = "SELECT oi.*, f.name as food_name, f.image, f.description
                 FROM order_items oi
-                LEFT JOIN foods f ON oi.food_id = f.id
+                LEFT JOIN food_items f ON oi.food_item_id = f.id
                 WHERE oi.order_id = :order_id
                 ORDER BY f.name";
 
@@ -364,11 +357,9 @@ class Order extends BaseModel {
         $order['items'] = $stmt->fetchAll();
 
         return $order;
-    }
-
-    // Get orders for CSV export with filtering
+    }    // Get orders for CSV export with filtering
     public function getOrdersForExport($filters = []) {
-        $sql = "SELECT o.*, u.name as customer_name, u.email as customer_email,
+        $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email,
                        COUNT(oi.id) as total_items
                 FROM {$this->table} o
                 LEFT JOIN users u ON o.user_id = u.id
@@ -394,7 +385,7 @@ class Order extends BaseModel {
         }
 
         if (!empty($filters['search'])) {
-            $sql .= " AND (u.name LIKE :search OR u.email LIKE :search OR o.id LIKE :search)";
+            $sql .= " AND (CONCAT(u.first_name, ' ', u.last_name) LIKE :search OR u.email LIKE :search OR o.id LIKE :search)";
             $params[':search'] = '%' . $filters['search'] . '%';
         }
 
@@ -407,7 +398,7 @@ class Order extends BaseModel {
 
     // Get filtered orders for enhanced admin interface
     public function getFilteredOrders($filters = [], $limit = null, $offset = 0) {
-        $sql = "SELECT o.*, u.name as customer_name, u.email as customer_email,
+        $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email,
                        COUNT(oi.id) as total_items
                 FROM {$this->table} o
                 LEFT JOIN users u ON o.user_id = u.id
@@ -433,7 +424,7 @@ class Order extends BaseModel {
         }
 
         if (!empty($filters['search'])) {
-            $sql .= " AND (u.name LIKE :search OR u.email LIKE :search OR o.id LIKE :search)";
+            $sql .= " AND (CONCAT(u.first_name, ' ', u.last_name) LIKE :search OR u.email LIKE :search OR o.id LIKE :search)";
             $params[':search'] = '%' . $filters['search'] . '%';
         }
 

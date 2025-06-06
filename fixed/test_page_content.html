@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Page Content Test</title>
+		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	</head>
+	<body>
+		<h1>Testing Page Content</h1>
+
+		<h2>Home Page Test</h2>
+		<button onclick="testPage('/')">Test Home</button>
+		<div id="home-result"></div>
+
+		<h2>About Page Test</h2>
+		<button onclick="testPage('/about')">Test About</button>
+		<div id="about-result"></div>
+
+		<h2>Promotions Page Test</h2>
+		<button onclick="testPage('/promotions')">Test Promotions</button>
+		<div id="promotions-result"></div>
+
+		<script>
+			function testPage(url) {
+				const fullUrl = '/buffet_booking_mvc' + url;
+				const resultId = url.replace('/', '') || 'home';
+
+				fetch(fullUrl)
+					.then((response) => response.text())
+					.then((data) => {
+						const result = document.getElementById(
+							resultId + '-result'
+						);
+						const content = data.substring(0, 1000); // First 1000 chars
+
+						// Check for specific content
+						let status = '';
+						if (url === '/about') {
+							status = data.includes('Giới Thiệu')
+								? '✓ Contains "Giới Thiệu"'
+								: '✗ Missing "Giới Thiệu"';
+						} else if (url === '/promotions') {
+							status = data.includes('Khuyến Mãi')
+								? '✓ Contains "Khuyến Mãi"'
+								: '✗ Missing "Khuyến Mãi"';
+						} else {
+							status = data.includes('Trang Chủ')
+								? '✓ Contains "Trang Chủ"'
+								: '✗ Missing "Trang Chủ"';
+						}
+
+						result.innerHTML = `
+                    <strong>Status:</strong> ${status}<br>
+                    <strong>Content Length:</strong> ${
+						data.length
+					} characters<br>
+                    <strong>Preview:</strong><br>
+                    <pre style="background: #f5f5f5; padding: 10px; max-height: 200px; overflow-y: auto;">${content
+						.replace(/</g, '&lt;')
+						.replace(/>/g, '&gt;')}</pre>
+                `;
+					})
+					.catch((error) => {
+						document.getElementById(
+							resultId + '-result'
+						).innerHTML = `Error: ${error}`;
+					});
+			}
+		</script>
+	</body>
+</html>

@@ -1,3 +1,26 @@
+<?php
+// Start session and include necessary files before any output
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once 'config/config.php';
+require_once 'models/User.php';
+
+// Set up admin session
+$userModel = new User();
+$admins = $userModel->findByCondition(['role' => 'manager']);
+
+$adminFound = false;
+if (!empty($admins)) {
+    $admin = $admins[0];
+    $_SESSION['user_id'] = $admin['id'];
+    $_SESSION['user_role'] = $admin['role'];
+    $_SESSION['user_name'] = $admin['first_name'] . ' ' . $admin['last_name'];
+    $_SESSION['user_email'] = $admin['email'];
+    $adminFound = true;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,37 +32,15 @@
 </head>
 <body>
     <div class="container mt-4">
-        <h1 class="mb-4">Order Management Test Suite</h1>
-
-        <?php
-        require_once 'config/config.php';
-        require_once 'models/User.php';
-
-        // Start session and set up admin login
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        // Set up admin session
-        $userModel = new User();
-        $admins = $userModel->findByCondition(['role' => 'manager']);
-
-        if (!empty($admins)) {
-            $admin = $admins[0];
-            $_SESSION['user_id'] = $admin['id'];
-            $_SESSION['user_role'] = $admin['role'];
-            $_SESSION['user_name'] = $admin['name'];
-            $_SESSION['user_email'] = $admin['email'];
-
-            echo "<div class='alert alert-success'>";
-            echo "<i class='fas fa-check-circle'></i> Admin session established: {$admin['name']} ({$admin['role']})";
-            echo "</div>";
-        } else {
-            echo "<div class='alert alert-danger'>";
-            echo "<i class='fas fa-exclamation-triangle'></i> No admin users found. Please run database setup first.";
-            echo "</div>";
-        }
-        ?>
+        <h1 class="mb-4">Order Management Test Suite</h1>        <?php if ($adminFound): ?>
+            <div class='alert alert-success'>
+                <i class='fas fa-check-circle'></i> Admin session established: <?= htmlspecialchars($admin['first_name'] . ' ' . $admin['last_name']) ?> (<?= htmlspecialchars($admin['role']) ?>)
+            </div>
+        <?php else: ?>
+            <div class='alert alert-danger'>
+                <i class='fas fa-exclamation-triangle'></i> No admin users found. Please run database setup first.
+            </div>
+        <?php endif; ?>
 
         <div class="row">
             <div class="col-md-6">

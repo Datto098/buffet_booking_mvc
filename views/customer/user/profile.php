@@ -1,7 +1,6 @@
 <?php
 $title = "My Profile - " . APP_NAME;
 $current_page = 'profile';
-include VIEW_PATH . '/layouts/header.php';
 ?>
 
 <div class="container my-5">
@@ -503,5 +502,3 @@ function enable2FA() {
     showAlert('Two-factor authentication setup coming soon!', 'info');
 }
 </script>
-
-<?php include VIEW_PATH . '/layouts/footer.php'; ?>

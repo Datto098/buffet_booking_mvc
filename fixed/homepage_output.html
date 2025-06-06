@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Chủ - Buffet Booking</title>
+
+    <!-- Meta Tags for SEO -->
+    <meta name="description" content="Nhà hàng buffet sang trọng với không gian đẳng cấp và thực đơn phong phú">
+    <meta name="keywords" content="nhà hàng buffet, buffet cao cấp, ẩm thực, đặt bàn, khuyến mãi">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Luxury CSS -->
+    <link href="http://localhost:8080/assets/css/luxury-style.css" rel="stylesheet">
+    <!-- Custom CSS (fallback) -->
+    <link href="http://localhost:8080/assets/css/style.css" rel="stylesheet">
+</head>
+<body>    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg fixed-top" id="mainNavbar">
+        <div class="container">
+            <!-- Brand -->
+            <a class="navbar-brand" href="http://localhost:8080">
+                <i class="fas fa-crown me-2"></i>
+                <span class="brand-text">Buffet Booking</span>
+            </a>
+
+            <!-- Mobile Menu Button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Collapsible Content -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Main Navigation -->
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="http://localhost:8080">
+                            <i class="fas fa-home"></i>
+                            <span class="nav-text">Trang Chủ</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="http://localhost:8080/menu">
+                            <i class="fas fa-utensils"></i>
+                            <span class="nav-text">Thực Đơn</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="http://localhost:8080/promotions">
+                            <i class="fas fa-tags"></i>
+                            <span class="nav-text">Khuyến Mãi</span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarInfo" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="nav-text">Thông Tin</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-luxury">
+                            <li><a class="dropdown-item" href="http://localhost:8080/about">
+                                <i class="fas fa-building me-2"></i>Giới Thiệu
+                            </a></li>
+                            <li><a class="dropdown-item" href="http://localhost:8080/news">
+                                <i class="fas fa-newspaper me-2"></i>Tin Tức
+                            </a></li>
+                            <li><a class="dropdown-item" href="http://localhost:8080/contact">
+                                <i class="fas fa-phone me-2"></i>Liên Hệ
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <!-- Right Side Actions -->
+                <ul class="navbar-nav navbar-actions">
+                    <!-- Search -->
+                    <li class="nav-item">
+                        <button class="nav-link btn-search" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
+                            <i class="fas fa-search"></i>
+                            <span class="nav-text d-lg-none">Tìm Kiếm</span>
+                        </button>
+                    </li>
+
+                    <!-- Cart -->
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="http://localhost:8080/cart">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="nav-text d-lg-none">Giỏ Hàng</span>
+                            <span id="cart-count" class="cart-badge">
+                                0                            </span>
+                        </a>
+                    </li>
+
+                    <!-- Booking Button -->
+                    <li class="nav-item">
+                        <a class="btn btn-booking" href="http://localhost:8080/booking">
+                            <i class="fas fa-calendar-check me-1"></i>
+                            <span>Đặt Bàn</span>
+                        </a>
+                    </li>
+
+                                            <!-- Login/Register -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarAuth" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user"></i>
+                                <span class="nav-text">Tài Khoản</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-luxury">
+                                <li><a class="dropdown-item" href="http://localhost:8080/auth/login">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Đăng Nhập
+                                </a></li>
+                                <li><a class="dropdown-item" href="http://localhost:8080/auth/register">
+                                    <i class="fas fa-user-plus me-2"></i>Đăng Ký Tài Khoản
+                                </a></li>
+                            </ul>
+                        </li>
+                                    </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Search Modal -->
+    <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="searchModalLabel">
+                        <i class="fas fa-search me-2 text-gold"></i>Tìm Kiếm Món Ăn
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="http://localhost:8080/search" method="GET">
+                        <div class="input-group input-group-lg">
+                            <input type="text" class="form-control" name="q" placeholder="Nhập tên món ăn hoặc danh mục..." autocomplete="off" id="searchInput">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search me-2"></i>Tìm Kiếm
+                            </button>
+                        </div>
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                Gợi ý: pizza, burger, sushi, tráng miệng, đồ uống...
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title text-luxury">
+                Trải Nghiệm Ẩm Thực <br>
+                <span class="text-white">Đẳng Cấp Quốc Tế</span>
+            </h1>
+            <p class="hero-subtitle">
+                Chào mừng bạn đến với không gian buffet sang trọng nhất thành phố.
+                Hơn 200 món ăn tinh tế từ 5 châu lục, phục vụ trong không gian đẳng cấp
+                với dịch vụ chuyên nghiệp và tận tâm.
+            </p>
+            <div class="hero-cta">
+                <a href="http://localhost:8080/menu" class="btn btn-luxury">
+                    <i class="fas fa-crown"></i> Khám Phá Thực Đơn
+                </a>
+                <a href="http://localhost:8080/booking" class="btn btn-outline-luxury">
+                    <i class="fas fa-concierge-bell"></i> Đặt Bàn VIP
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="section-luxury bg-luxury">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card-luxury p-4">
+                    <i class="fas fa-utensils fa-3x text-gold mb-3"></i>
+                    <h3 class="text-gold">200+</h3>
+                    <p>Món Ăn Đa Dạng</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card-luxury p-4">
+                    <i class="fas fa-users fa-3x text-gold mb-3"></i>
+                    <h3 class="text-gold">10,000+</h3>
+                    <p>Khách Hàng Hài Lòng</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card-luxury p-4">
+                    <i class="fas fa-star fa-3x text-gold mb-3"></i>
+                    <h3 class="text-gold">15+</h3>
+                    <p>Năm Kinh Nghiệm</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card-luxury p-4">
+                    <i class="fas fa-award fa-3x text-gold mb-3"></i>
+                    <h3 class="text-gold">5 Sao</h3>
+                    <p>Đánh Giá Chất Lượng</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Categories -->
+<section class="section-luxury">
+    <div class="container">
+        <div class="section-title">
+            <h2>Ẩm Thực Đa Dạng</h2>
+            <p class="section-subtitle">
+                Từ các món Á đến Âu, từ hải sản tươi sống đến tráng miệng tinh tế,
+                chúng tôi mang đến hành trình ẩm thực vòng quanh thế giới
+            </p>
+        </div>
+
+        <div class="row g-4">
+                                                <div class="col-lg-4 col-md-6">
+                        <div class="card-luxury h-100" style="animation-delay: 0s">
+                            <div class="card-body-luxury text-center">
+                                <div class="mb-4">
+                                    <i class="fas fa-fish fa-4x text-gold"></i>
+                                </div>
+                                <h3 class="card-title-luxury">Appetizers</h3>
+                                <p class="card-text-luxury">
+                                    Starter dishes and small plates                                </p>
+                                <a href="http://localhost:8080/menu/category/1"
+                                   class="btn btn-luxury">
+                                    <i class="fas fa-arrow-right"></i> Khám Phá Ngay
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                                    <div class="col-lg-4 col-md-6">
+                        <div class="card-luxury h-100" style="animation-delay: 0.1s">
+                            <div class="card-body-luxury text-center">
+                                <div class="mb-4">
+                                    <i class="fas fa-pizza-slice fa-4x text-gold"></i>
+                                </div>
+                                <h3 class="card-title-luxury">Main Courses</h3>
+                                <p class="card-text-luxury">
+                                    Primary dishes and entrees                                </p>
+                                <a href="http://localhost:8080/menu/category/2"
+                                   class="btn btn-luxury">
+                                    <i class="fas fa-arrow-right"></i> Khám Phá Ngay
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                                    <div class="col-lg-4 col-md-6">
+                        <div class="card-luxury h-100" style="animation-delay: 0.2s">
+                            <div class="card-body-luxury text-center">
+                                <div class="mb-4">
+                                    <i class="fas fa-hamburger fa-4x text-gold"></i>
+                                </div>
+                                <h3 class="card-title-luxury">Desserts</h3>
+                                <p class="card-text-luxury">
+                                    Sweet treats and desserts                                </p>
+                                <a href="http://localhost:8080/menu/category/3"
+                                   class="btn btn-luxury">
+                                    <i class="fas fa-arrow-right"></i> Khám Phá Ngay
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                                    <div class="col-lg-4 col-md-6">
+                        <div class="card-luxury h-100" style="animation-delay: 0.3s">
+                            <div class="card-body-luxury text-center">
+                                <div class="mb-4">
+                                    <i class="fas fa-ice-cream fa-4x text-gold"></i>
+                                </div>
+                                <h3 class="card-title-luxury">Beverages</h3>
+                                <p class="card-text-luxury">
+                                    Drinks and refreshments                                </p>
+                                <a href="http://localhost:8080/menu/category/4"
+                                   class="btn btn-luxury">
+                                    <i class="fas fa-arrow-right"></i> Khám Phá Ngay
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                                    </div>
+    </div>
+</section>
+
+<!-- Featured Foods -->
+<section class="section-luxury bg-luxury">
+    <div class="container">
+        <div class="section-title">
+            <h2>Món Ăn Đặc Sắc</h2>
+            <p class="section-subtitle">
+                Những tinh hoa ẩm thực được tuyển chọn kỹ lưỡng, chế biến bởi
+                đội ngũ đầu bếp hàng đầu với nguyên liệu cao cấp nhất
+            </p>
+        </div>
+
+        <div class="food-grid">
+                                                <div class="food-item" style="animation-delay: 0s">
+                        <div class="food-image">
+                            <img src="http://localhost:8080/assets/images/food-placeholder.svg"
+                                 alt="Vegetarian Special"
+                                 class="card-img-luxury">
+                            <div class="food-badge">
+                                <i class="fas fa-star"></i> Đặc Biệt
+                            </div>
+                        </div>
+                        <div class="food-content">
+                            <div class="food-category">
+                                Appetizers                            </div>
+                            <h3 class="food-title">Vegetarian Special</h3>
+                            <p class="food-description">
+                                Vegetarian-only buffet options...                            </p>
+                            <div class="food-price">
+                                <span class="price-current">
+                                    179đ
+                                </span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="http://localhost:8080/food/detail/3"
+                                   class="btn btn-outline-luxury flex-fill">
+                                    <i class="fas fa-eye"></i> Chi Tiết
+                                </a>
+                                <button class="btn btn-luxury add-to-cart"
+                                        data-food-id="3"
+                                        data-food-name="Vegetarian Special"
+                                        data-food-price="179.00">
+                                    <i class="fas fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                                    <div class="food-item" style="animation-delay: 0.1s">
+                        <div class="food-image">
+                            <img src="http://localhost:8080/assets/images/food-placeholder.svg"
+                                 alt="Standard Buffet"
+                                 class="card-img-luxury">
+                            <div class="food-badge">
+                                <i class="fas fa-star"></i> Đặc Biệt
+                            </div>
+                        </div>
+                        <div class="food-content">
+                            <div class="food-category">
+                                Appetizers                            </div>
+                            <h3 class="food-title">Standard Buffet</h3>
+                            <p class="food-description">
+                                Traditional buffet experience...                            </p>
+                            <div class="food-price">
+                                <span class="price-current">
+                                    199đ
+                                </span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="http://localhost:8080/food/detail/2"
+                                   class="btn btn-outline-luxury flex-fill">
+                                    <i class="fas fa-eye"></i> Chi Tiết
+                                </a>
+                                <button class="btn btn-luxury add-to-cart"
+                                        data-food-id="2"
+                                        data-food-name="Standard Buffet"
+                                        data-food-price="199.00">
+                                    <i class="fas fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                                    <div class="food-item" style="animation-delay: 0.2s">
+                        <div class="food-image">
+                            <img src="http://localhost:8080/assets/images/food-placeholder.svg"
+                                 alt="Deluxe Buffet"
+                                 class="card-img-luxury">
+                            <div class="food-badge">
+                                <i class="fas fa-star"></i> Đặc Biệt
+                            </div>
+                        </div>
+                        <div class="food-content">
+                            <div class="food-category">
+                                Appetizers                            </div>
+                            <h3 class="food-title">Deluxe Buffet</h3>
+                            <p class="food-description">
+                                All-you-can-eat buffet with premium dishes...                            </p>
+                            <div class="food-price">
+                                <span class="price-current">
+                                    299đ
+                                </span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="http://localhost:8080/food/detail/1"
+                                   class="btn btn-outline-luxury flex-fill">
+                                    <i class="fas fa-eye"></i> Chi Tiết
+                                </a>
+                                <button class="btn btn-luxury add-to-cart"
+                                        data-food-id="1"
+                                        data-food-name="Deluxe Buffet"
+                                        data-food-price="299.00">
+                                    <i class="fas fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                                    </div>
+
+        <div class="text-center mt-5">
+            <a href="http://localhost:8080/menu" class="btn btn-luxury btn-lg">
+                <i class="fas fa-crown"></i> Khám Phá Toàn Bộ Thực Đơn
+            </a>
+        </div>    </div>
+</section>
+
+<!-- Latest News -->
+<section class="section-luxury">
+    <div class="container">
+        <div class="section-title">
+            <h2>Tin Tức & Sự Kiện</h2>
+            <p class="section-subtitle">
+                Cập nhật những thông tin mới nhất, sự kiện đặc biệt và
+                các hoạt động thú vị tại nhà hàng
+            </p>
+        </div>
+
+        <div class="row g-4">
+                            <div class="col-lg-4 col-md-6">
+                    <div class="card-luxury h-100" style="animation-delay: 0s">
+                        <div class="position-relative overflow-hidden" style="height: 250px;">
+                                                            <img src="http://localhost:8080/assets/images/news-placeholder.svg"
+                                     class="card-img-luxury" alt="News Placeholder">
+                                                        <div class="position-absolute top-0 end-0 m-3">
+                                <span class="badge" style="background: var(--primary-gold); color: white; padding: 0.5rem 1rem; border-radius: 20px;">
+                                    <i class="fas fa-calendar-alt"></i> 06/06/2025                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body-luxury">
+                            <h3 class="card-title-luxury">
+                                <a href="http://localhost:8080/news/detail?id=2"
+                                   class="text-decoration-none" style="color: var(--text-primary);">
+                                    Grand Opening of Our Buffet Restaurant                                </a>
+                            </h3>
+                            <p class="card-text-luxury">
+                                Join us for the grand opening of our new buffet restaurant with special offers and discounts!                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="http://localhost:8080/news/detail?id=2"
+                                   class="btn btn-outline-luxury">
+                                    <i class="fas fa-book-open"></i> Đọc Thêm
+                                </a>
+                                <div class="text-muted small">
+                                    <i class="fas fa-user"></i> Admin
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    </div>
+
+        <div class="text-center mt-5">
+            <a href="http://localhost:8080/news" class="btn btn-luxury btn-lg">
+                <i class="fas fa-newspaper"></i> Xem Tất Cả Tin Tức
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="section-luxury" style="background: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-navy-light) 100%); color: white;">
+    <div class="container text-center">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h2 class="text-luxury mb-4">Sẵn Sàng Trải Nghiệm?</h2>
+                <p class="lead mb-5" style="color: rgba(255,255,255,0.9);">
+                    Hãy đặt bàn ngay hôm nay để thưởng thức bữa tiệc buffet đẳng cấp
+                    trong không gian sang trọng với dịch vụ chuyên nghiệp nhất.
+                </p>
+                <div class="d-flex flex-column flex-md-row gap-3 justify-content-center">
+                    <a href="http://localhost:8080/booking" class="btn btn-luxury btn-lg">
+                        <i class="fas fa-concierge-bell"></i> Đặt Bàn Ngay
+                    </a>
+                    <a href="http://localhost:8080/menu" class="btn btn-outline-luxury btn-lg">
+                        <i class="fas fa-crown"></i> Xem Thực Đơn
+                    </a>
+                    <a href="http://localhost:8080/about" class="btn btn-outline-luxury btn-lg">
+                        <i class="fas fa-info-circle"></i> Về Chúng Tôi
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-luxury">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-crown"></i> Buffet Booking</h3>
+                    <p>Nhà hàng buffet đẳng cấp quốc tế với không gian sang trọng và ẩm thực tinh tế. Chúng tôi mang đến trải nghiệm ẩm thực khó quên với hương vị đa dạng từ khắp nơi trên thế giới.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="YouTube">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="TikTok">
+                            <i class="fab fa-tiktok"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-section">
+                    <h3><i class="fas fa-map-marker-alt"></i> Thông Tin Liên Hệ</h3>
+                    <p><i class="fas fa-home"></i> 123 Đường Nguyễn Huệ, Quận 1, TP.HCM</p>
+                    <p><i class="fas fa-phone"></i> <a href="tel:0123456789">0123-456-789</a></p>
+                    <p><i class="fas fa-envelope"></i> <a href="mailto:admin@buffetbooking.com">admin@buffetbooking.com</a></p>
+                    <p><i class="fas fa-globe"></i> www.luxury-buffet.com</p>
+                </div>
+
+                <div class="footer-section">
+                    <h3><i class="fas fa-clock"></i> Giờ Hoạt Động</h3>
+                    <p><strong>Thứ 2 - Thứ 6:</strong> 11:00 - 22:00</p>
+                    <p><strong>Thứ 7 - Chủ Nhật:</strong> 10:00 - 23:00</p>
+                    <p><strong>Ngày Lễ:</strong> 10:00 - 23:30</p>
+                    <p class="mt-3"><i class="fas fa-info-circle"></i> <em>Phục vụ buffet liên tục</em></p>
+                </div>
+
+                <div class="footer-section">
+                    <h3><i class="fas fa-concierge-bell"></i> Dịch Vụ</h3>
+                    <p><a href="http://localhost:8080/menu">Thực Đơn Buffet</a></p>
+                    <p><a href="http://localhost:8080/booking">Đặt Bàn Online</a></p>
+                    <p><a href="http://localhost:8080/promotions">Khuyến Mãi Đặc Biệt</a></p>
+                    <p><a href="http://localhost:8080/about">Về Chúng Tôi</a></p>
+                    <p><a href="http://localhost:8080/news">Tin Tức & Sự Kiện</a></p>
+                </div>
+            </div>
+
+            <hr style="border-color: rgba(212, 175, 55, 0.3); margin: 2rem 0 1rem;">
+              <div class="text-center">
+                <p class="mb-0">&copy; 2025 Buffet Booking. Tất cả quyền được bảo lưu.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="http://localhost:8080/assets/js/luxury-effects.js"></script>
+    <script src="http://localhost:8080/assets/js/main.js"></script>
+</body>
+</html>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="#" class="text-light me-3">Chính Sách Bảo Mật</a>
+                    <a href="#" class="text-light">Điều Khoản Dịch Vụ</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Custom JS -->
+    <script src="http://localhost:8080/assets/js/main.js"></script>    <!-- CSRF Token for AJAX requests -->
+    <script>
+        window.csrfToken = 'a941e16c95552a6f6473f75c3150640c95b13d6b3475e942333504abdad1b50d';
+        window.siteUrl = 'http://localhost:8080';
+            </script>
+</body>
+</html>

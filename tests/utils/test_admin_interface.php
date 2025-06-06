@@ -24,6 +24,28 @@ echo "<div class='container mt-4'>";
 echo "<h1>Admin Interface Test</h1>";
 
 try {
+    // Set up admin session first
+    echo "<div class='card mb-3'>";
+    echo "<div class='card-header'><h3>Setup: Admin Session</h3></div>";
+    echo "<div class='card-body'>";
+
+    // Get admin user
+    $userModel = new User();
+    $admins = $userModel->findByCondition(['role' => 'manager']);
+
+    if (!empty($admins)) {
+        $admin = $admins[0];
+        $_SESSION['user_id'] = $admin['id'];
+        $_SESSION['user_role'] = $admin['role'];
+        $_SESSION['user_name'] = $admin['first_name'] . ' ' . $admin['last_name'];
+        $_SESSION['user_email'] = $admin['email'];
+        echo "<div class='alert alert-success'>✅ Admin session established: {$admin['first_name']} {$admin['last_name']} ({$admin['role']})</div>";
+    } else {
+        echo "<div class='alert alert-danger'>❌ No admin users found</div>";
+    }
+
+    echo "</div></div>";
+
     // Test 1: Check BaseController
     echo "<div class='card mb-3'>";
     echo "<div class='card-header'><h3>Test 1: BaseController</h3></div>";

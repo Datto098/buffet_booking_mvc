@@ -1,7 +1,9 @@
 <?php
+/**
+ * Booking History View
+ */
 $title = "Booking History - " . APP_NAME;
 $current_page = 'bookings';
-include VIEW_PATH . '/layouts/header.php';
 ?>
 
 <div class="container my-5">
@@ -365,9 +367,6 @@ function rebookTable(bookingId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('An error occurred while copying booking details', 'error');
-    });
+        showAlert('An error occurred while copying booking details', 'error');    });
 }
 </script>
-
-<?php include VIEW_PATH . '/layouts/footer.php'; ?>

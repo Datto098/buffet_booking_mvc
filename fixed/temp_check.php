@@ -1,0 +1,1 @@
+<?php try { \ = new PDO('mysql:host=localhost;dbname=buffet_booking', 'root', ''); \ = \->query('DESCRIBE food_items'); while (\ = \->fetch(PDO::FETCH_ASSOC)) { echo \['Field'] . PHP_EOL; } } catch (Exception \) { echo 'Error: ' . \->getMessage(); } ?>

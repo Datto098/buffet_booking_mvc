@@ -250,8 +250,7 @@ class AdminController extends BaseController {    public function __construct() 
         $this->view('admin/foods/create', $data);
     }
 
-    public function editFood($id) {
-        $foodModel = new Food();
+    public function editFood($id) {        $foodModel = new Food();
         $categoryModel = new Category();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -308,7 +307,7 @@ class AdminController extends BaseController {    public function __construct() 
             return;
         }
 
-        $food = $foodModel->findById($id);
+        $food = $foodModel->getFoodDetails($id);
         if (!$food) {
             $this->setFlash('error', 'Food item not found.');
             $this->redirect('/admin/foods');

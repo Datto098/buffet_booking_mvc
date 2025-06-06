@@ -5,10 +5,8 @@
 
 class BaseModel {
     protected $db;
-    protected $table;
-
-    public function __construct() {
-        $database = new Database();
+    protected $table;    public function __construct() {
+        $database = Database::getInstance();
         $this->db = $database->getConnection();
     }
 
@@ -75,29 +73,13 @@ class BaseModel {
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
-    }    public function count() {
+    }
+
+    public function count() {
         $sql = "SELECT COUNT(*) FROM {$this->table}";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchColumn();
-    }
-
-    public function findByCondition($conditions) {
-        $whereClause = [];
-        foreach ($conditions as $key => $value) {
-            $whereClause[] = "$key = :$key";
-        }
-        $whereClause = implode(' AND ', $whereClause);
-
-        $sql = "SELECT * FROM {$this->table} WHERE {$whereClause}";
-        $stmt = $this->db->prepare($sql);
-
-        foreach ($conditions as $key => $value) {
-            $stmt->bindValue(":$key", $value);
-        }
-
-        $stmt->execute();
-        return $stmt->fetchAll();
     }
 }
 ?>

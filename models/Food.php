@@ -184,13 +184,13 @@ class Food extends BaseModel {
 
         $stmt->execute();
         return $stmt->fetchAll();
-    }
-
-    /**
+    }    /**
      * Count foods with complex filters
      */
     public function countFoodWithFilters($whereClause, $params) {
-        $sql = "SELECT COUNT(*) as count FROM {$this->table} f";
+        $sql = "SELECT COUNT(*) as count FROM {$this->table} f
+                LEFT JOIN categories c ON f.category_id = c.id
+                LEFT JOIN sub_categories sc ON f.subcategory_id = sc.id";
 
         if (!empty($whereClause)) {
             $sql .= " WHERE " . $whereClause;

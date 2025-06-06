@@ -16,11 +16,9 @@ class CartController extends BaseController {
     public function index() {
         $cart = $this->getCart();
         $cartItems = [];
-        $totalAmount = 0;
-
-        if (!empty($cart)) {
+        $totalAmount = 0;        if (!empty($cart)) {
             foreach ($cart as $foodId => $quantity) {
-                $food = $this->foodModel->findById($foodId);
+                $food = $this->foodModel->getFoodDetails($foodId);
                 if ($food && $food['is_available']) {
                     $subtotal = $food['price'] * $quantity;
                     $cartItems[] = [
@@ -53,10 +51,8 @@ class CartController extends BaseController {
 
         if ($foodId <= 0 || $quantity <= 0) {
             $this->jsonResponse(['error' => 'Invalid parameters'], 400);
-        }
-
-        // Check if food exists and is available
-        $food = $this->foodModel->findById($foodId);
+        }        // Check if food exists and is available
+        $food = $this->foodModel->getFoodDetails($foodId);
         if (!$food || !$food['is_available']) {
             $this->jsonResponse(['error' => 'Food not available'], 404);
         }
@@ -99,9 +95,8 @@ class CartController extends BaseController {
         if ($quantity <= 0) {
             // Remove item from cart
             $this->removeFromCart($foodId);
-        } else {
-            // Check stock quantity
-            $food = $this->foodModel->findById($foodId);
+        } else {            // Check stock quantity
+            $food = $this->foodModel->getFoodDetails($foodId);
             if ($food && isset($food['stock_quantity']) && $food['stock_quantity'] > 0) {
                 if ($quantity > $food['stock_quantity']) {
                     $this->jsonResponse(['error' => 'Insufficient stock'], 400);
@@ -161,11 +156,9 @@ class CartController extends BaseController {
     public function getCartInfo() {
         $cart = $this->getCart();
         $itemCount = 0;
-        $totalAmount = 0;
-
-        if (!empty($cart)) {
+        $totalAmount = 0;        if (!empty($cart)) {
             foreach ($cart as $foodId => $quantity) {
-                $food = $this->foodModel->findById($foodId);
+                $food = $this->foodModel->getFoodDetails($foodId);
                 if ($food && $food['is_available']) {
                     $itemCount += $quantity;
                     $totalAmount += $food['price'] * $quantity;
@@ -228,10 +221,8 @@ class CartController extends BaseController {
 
         $foodId = intval($_POST['food_id'] ?? 0);
         $quantity = intval($_POST['quantity'] ?? 1);
-        $redirectTo = $_POST['redirect_to'] ?? '/index.php?page=menu';
-
-        if ($foodId > 0 && $quantity > 0) {
-            $food = $this->foodModel->findById($foodId);
+        $redirectTo = $_POST['redirect_to'] ?? '/index.php?page=menu';        if ($foodId > 0 && $quantity > 0) {
+            $food = $this->foodModel->getFoodDetails($foodId);
             if ($food && $food['is_available']) {
                 $this->addToCart($foodId, $quantity);
                 $_SESSION['success'] = 'Đã thêm ' . $food['name'] . ' vào giỏ hàng';

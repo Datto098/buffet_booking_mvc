@@ -1,7 +1,9 @@
 <?php
+/**
+ * Order History View
+ */
 $title = "Order History - " . APP_NAME;
 $current_page = 'orders';
-include VIEW_PATH . '/layouts/header.php';
 ?>
 
 <div class="container my-5">
@@ -301,9 +303,6 @@ function reorderItems(orderId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('An error occurred while reordering', 'error');
-    });
+        showAlert('An error occurred while reordering', 'error');    });
 }
 </script>
-
-<?php include VIEW_PATH . '/layouts/footer.php'; ?>
