@@ -27,7 +27,7 @@ define('UPLOAD_PATH', ROOT_PATH . '/uploads');
 define('ASSETS_PATH', ROOT_PATH . '/assets');
 
 // Include database configuration
-require_once 'database.php';
+require_once __DIR__ . '/../database/install.php';
 
 // Start session only if not already started and not in CLI mode
 if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {

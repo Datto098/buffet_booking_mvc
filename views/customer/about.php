@@ -19,7 +19,7 @@
             </nav>
 
             <h1 class="hero-title">
-                <span class="text-luxury">Câu Chuyện</span> <br>
+                 <span  style="color: var(--text-primary);">Câu Chuyện</span> <br>
                 <span class="text-white">Của Chúng Tôi</span>
             </h1>
             <p class="hero-subtitle">
