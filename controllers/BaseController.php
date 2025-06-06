@@ -209,9 +209,8 @@ class BaseController {
      * Get URL segments from REQUEST_URI for clean URL routing
      *
      * @return array Array of URL segments
-     */
-    protected function getUrlSegments() {
-        $uri = $_SERVER['REQUEST_URI'];
+     */    protected function getUrlSegments() {
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
 
         // Remove query string if present
         if (strpos($uri, '?') !== false) {
@@ -219,7 +218,7 @@ class BaseController {
         }
 
         // Get the path relative to the installation directory
-        $basePath = str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']);
+        $basePath = str_replace('/index.php', '', $_SERVER['SCRIPT_NAME'] ?? '');
         $uri = str_replace($basePath, '', $uri);
 
         // Remove leading and trailing slashes

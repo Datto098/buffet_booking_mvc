@@ -26,13 +26,13 @@ define('ROOT_PATH', dirname(__DIR__));
 define('UPLOAD_PATH', ROOT_PATH . '/uploads');
 define('ASSETS_PATH', ROOT_PATH . '/assets');
 
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 // Include database configuration
 require_once 'database.php';
+
+// Start session only if not already started and not in CLI mode
+if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Utility functions
 function redirect($url) {

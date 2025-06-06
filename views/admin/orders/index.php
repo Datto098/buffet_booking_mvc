@@ -37,16 +37,15 @@ require_once 'views/admin/layouts/header.php';
                 <div class="card-body">                    <form method="GET" class="row g-3">
                         <div class="col-md-2">
                             <input type="text" name="search" class="form-control" value="<?= $_GET['search'] ?? '' ?>" placeholder="Search orders...">
-                        </div>
-                        <div class="col-md-2">
+                        </div>                        <div class="col-md-2">
                             <select name="status" class="form-select">
                                 <option value="">All Status</option>
-                                <option value="pending" <?= $data['statusFilter'] === 'pending' ? 'selected' : '' ?>>Pending</option>
-                                <option value="confirmed" <?= $data['statusFilter'] === 'confirmed' ? 'selected' : '' ?>>Confirmed</option>
-                                <option value="preparing" <?= $data['statusFilter'] === 'preparing' ? 'selected' : '' ?>>Preparing</option>
-                                <option value="ready" <?= $data['statusFilter'] === 'ready' ? 'selected' : '' ?>>Ready</option>
-                                <option value="delivered" <?= $data['statusFilter'] === 'delivered' ? 'selected' : '' ?>>Delivered</option>
-                                <option value="cancelled" <?= $data['statusFilter'] === 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                                <option value="pending" <?= ($data['filters']['status'] ?? '') === 'pending' ? 'selected' : '' ?>>Pending</option>
+                                <option value="confirmed" <?= ($data['filters']['status'] ?? '') === 'confirmed' ? 'selected' : '' ?>>Confirmed</option>
+                                <option value="preparing" <?= ($data['filters']['status'] ?? '') === 'preparing' ? 'selected' : '' ?>>Preparing</option>
+                                <option value="ready" <?= ($data['filters']['status'] ?? '') === 'ready' ? 'selected' : '' ?>>Ready</option>
+                                <option value="delivered" <?= ($data['filters']['status'] ?? '') === 'delivered' ? 'selected' : '' ?>>Delivered</option>
+                                <option value="cancelled" <?= ($data['filters']['status'] ?? '') === 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
                             </select>
                         </div>
                         <div class="col-md-2">

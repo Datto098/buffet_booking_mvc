@@ -1,8 +1,8 @@
-<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
-    <div class="position-sticky pt-3">
+<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">    <div class="position-sticky pt-3">
+        <?php $requestUri = $_SERVER['REQUEST_URI'] ?? ''; ?>
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link <?= $_SERVER['REQUEST_URI'] === '/admin' ? 'active' : '' ?>" href="/admin">
+                <a class="nav-link <?= $requestUri === '/admin' ? 'active' : '' ?>" href="/admin">
                     <i class="fas fa-tachometer-alt"></i> Dashboard
                 </a>
             </li>
@@ -13,18 +13,22 @@
         </h6>
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin/users') !== false ? 'active' : '' ?>" href="/admin/users">
+                <a class="nav-link <?= strpos($requestUri, '/admin/users') !== false ? 'active' : '' ?>" href="/admin/users">
                     <i class="fas fa-users"></i> Users
                 </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin/foods') !== false ? 'active' : '' ?>" href="/admin/foods">
+            </li>            <li class="nav-item">
+                <a class="nav-link <?= strpos($requestUri, '/admin/foods') !== false ? 'active' : '' ?>" href="/admin/foods">
                     <i class="fas fa-utensils"></i> Food Items
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin/categories') !== false ? 'active' : '' ?>" href="/admin/categories">
+                <a class="nav-link <?= strpos($requestUri, '/admin/categories') !== false ? 'active' : '' ?>" href="/admin/categories">
                     <i class="fas fa-tags"></i> Categories
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <?= strpos($requestUri, '/news/manage') !== false ? 'active' : '' ?>" href="/news/manage">
+                    <i class="fas fa-newspaper"></i> News
                 </a>
             </li>
         </ul>
@@ -34,19 +38,19 @@
         </h6>
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin/orders') !== false ? 'active' : '' ?>" href="/admin/orders">
+                <a class="nav-link <?= strpos($requestUri, '/admin/orders') !== false ? 'active' : '' ?>" href="/admin/orders">
                     <i class="fas fa-shopping-cart"></i> Orders
                     <?php if (isset($data['stats']['pending_orders']) && $data['stats']['pending_orders'] > 0): ?>
                         <span class="badge bg-warning text-dark ms-2"><?= $data['stats']['pending_orders'] ?></span>
                     <?php endif; ?>
                 </a>
             </li>            <li class="nav-item">
-                <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin/bookings') !== false ? 'active' : '' ?>" href="/admin/bookings">
+                <a class="nav-link <?= strpos($requestUri, '/admin/bookings') !== false ? 'active' : '' ?>" href="/admin/bookings">
                     <i class="fas fa-calendar-check"></i> Bookings
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin/tables') !== false ? 'active' : '' ?>" href="/admin/tables">
+                <a class="nav-link <?= strpos($requestUri, '/admin/tables') !== false ? 'active' : '' ?>" href="/admin/tables">
                     <i class="fas fa-table"></i> Tables
                 </a>
             </li>

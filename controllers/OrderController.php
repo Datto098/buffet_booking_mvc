@@ -33,10 +33,8 @@ class OrderController extends BaseController {
 
         // Calculate cart totals
         $cartItems = [];
-        $subtotal = 0;
-
-        foreach ($cart as $foodId => $quantity) {
-            $food = $this->foodModel->findById($foodId);
+        $subtotal = 0;        foreach ($cart as $foodId => $quantity) {
+            $food = $this->foodModel->getFoodDetails($foodId);
             if ($food && $food['is_available']) {
                 $itemTotal = $food['price'] * $quantity;
                 $cartItems[] = [
@@ -123,10 +121,8 @@ class OrderController extends BaseController {
 
         // Prepare cart items and calculate totals
         $orderItems = [];
-        $subtotal = 0;
-
-        foreach ($cart as $foodId => $quantity) {
-            $food = $this->foodModel->findById($foodId);
+        $subtotal = 0;        foreach ($cart as $foodId => $quantity) {
+            $food = $this->foodModel->getFoodDetails($foodId);
             if ($food && $food['is_available']) {
                 $itemTotal = $food['price'] * $quantity;
                 $orderItems[] = [

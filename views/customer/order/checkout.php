@@ -233,9 +233,8 @@
                 <div class="card-body">
                     <!-- Cart Items -->
                     <div class="order-items mb-3">
-                        <?php foreach ($cartItems as $item): ?>
-                            <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
-                                <img src="<?= !empty($item['food']['image_url']) ? htmlspecialchars($item['food']['image_url']) : '/assets/images/no-image.jpg' ?>"
+                        <?php foreach ($cartItems as $item): ?>                            <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
+                                <img src="<?= !empty($item['food']['image']) ? htmlspecialchars($item['food']['image']) : '/assets/images/no-image.jpg' ?>"
                                      class="rounded me-2"
                                      style="width: 40px; height: 40px; object-fit: cover;"
                                      alt="<?= htmlspecialchars($item['food']['name']) ?>">

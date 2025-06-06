@@ -1,7 +1,9 @@
 <?php
+/**
+ * Booking Details View
+ */
 $title = "Booking Details - " . APP_NAME;
 $current_page = 'bookings';
-include VIEW_PATH . '/layouts/header.php';
 ?>
 
 <div class="container my-5">
@@ -414,12 +416,8 @@ window.addEventListener('afterprint', function() {
     .countdown-display {
         background: #f8f9fa !important;
         color: #000 !important;
-    }
-
-    body.printing .countdown-display {
+    }    body.printing .countdown-display {
         display: none !important;
     }
 }
 </style>
-
-<?php include VIEW_PATH . '/layouts/footer.php'; ?>

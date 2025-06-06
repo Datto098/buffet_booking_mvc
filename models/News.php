@@ -32,9 +32,7 @@ class News extends BaseModel {
 
         $stmt->execute();
         return $stmt->fetchAll();
-    }
-
-    /**
+    }    /**
      * Get news article by ID
      * @param int $id News article ID
      * @return array|false News article data or false if not found
@@ -44,6 +42,23 @@ class News extends BaseModel {
                 FROM {$this->table} n
                 LEFT JOIN users u ON n.author_id = u.id
                 WHERE n.id = :id AND n.is_published = 1";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    /**
+     * Find news article by ID (admin version - includes unpublished)
+     * @param int $id News article ID
+     * @return array|false News article data or false if not found
+     */
+    public function findById($id) {
+        $sql = "SELECT n.*, u.first_name, u.last_name
+                FROM {$this->table} n
+                LEFT JOIN users u ON n.author_id = u.id
+                WHERE n.id = :id";
 
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -92,9 +107,7 @@ class News extends BaseModel {
             ':meta_title' => $newsData['meta_title'] ?? $newsData['title'],
             ':meta_description' => $newsData['meta_description'] ?? ''
         ]);
-    }
-
-    /**
+    }    /**
      * Update an existing news article
      * @param int $id News article ID
      * @param array $newsData Updated news data
@@ -123,6 +136,17 @@ class News extends BaseModel {
             ':meta_description' => $newsData['meta_description'] ?? '',
             ':id' => $id
         ]);
+    }
+
+    /**
+     * Delete a news article
+     * @param int $id News article ID
+     * @return bool Success status
+     */
+    public function deleteNews($id) {
+        $sql = "DELETE FROM {$this->table} WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':id' => $id]);
     }
 
     /**
@@ -160,9 +184,7 @@ class News extends BaseModel {
 
         $stmt->execute();
         return $stmt->fetchAll();
-    }
-
-    /**
+    }    /**
      * Search news articles
      * @param string $query Search query
      * @param int $limit Number of results to return
@@ -188,6 +210,45 @@ class News extends BaseModel {
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         }
 
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Count all news articles
+     * @param bool $publishedOnly Only count published news
+     * @return int Number of news articles
+     */
+    public function countNews($publishedOnly = false) {
+        $sql = "SELECT COUNT(*) FROM {$this->table}";
+
+        if ($publishedOnly) {
+            $sql .= " WHERE is_published = 1";
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchColumn();
+    }
+
+    /**
+     * Get related news articles
+     * @param int $currentId Current news article ID
+     * @param int $limit Number of related articles to return
+     * @return array Array of related news articles
+     */
+    public function getRelatedNews($currentId, $limit = 3) {
+        $sql = "SELECT n.*, u.first_name, u.last_name
+                FROM {$this->table} n
+                LEFT JOIN users u ON n.author_id = u.id
+                WHERE n.id != :id
+                AND n.is_published = 1
+                ORDER BY n.created_at DESC
+                LIMIT :limit";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $currentId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
     }

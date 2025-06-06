@@ -370,17 +370,19 @@ function handleAdminTableApi($controller, $segments) {
     }
 }
 
-function handleCustomerRoute($page, $action, $param) {
-    // Customer route mapping
+function handleCustomerRoute($page, $action, $param) {    // Customer route mapping
     $routes = [
         'home' => 'controllers/HomeController.php',
+        'about' => 'controllers/HomeController.php',
+        'promotions' => 'controllers/HomeController.php',
         'menu' => 'controllers/FoodController.php',
         'food' => 'controllers/FoodController.php',
         'cart' => 'controllers/CartController.php',
         'order' => 'controllers/OrderController.php',
         'booking' => 'controllers/BookingController.php',
         'user' => 'controllers/UserController.php',
-        'auth' => 'controllers/AuthController.php'
+        'auth' => 'controllers/AuthController.php',
+        'news' => 'controllers/NewsController.php'
     ];
 
     if (!isset($routes[$page])) {
@@ -395,10 +397,10 @@ function handleCustomerRoute($page, $action, $param) {
         http_response_code(404);
         include 'views/errors/404.php';
         return;
-    }    require_once $controllerFile;
-
-    // Create controller instance
+    }    require_once $controllerFile;    // Create controller instance
     $controllerMap = [
+        'about' => 'HomeController',
+        'promotions' => 'HomeController',
         'menu' => 'FoodController',
         'food' => 'FoodController',
     ];
@@ -407,10 +409,15 @@ function handleCustomerRoute($page, $action, $param) {
 
     if (!class_exists($controllerClass)) {
         throw new Exception("Controller class $controllerClass not found");
-    }
+    }    $controller = new $controllerClass();
 
-    $controller = new $controllerClass();// Call the appropriate method
-    if ($param && method_exists($controller, $action)) {
+    // Call the appropriate method
+    // For about and promotions pages, call the page method directly
+    if ($page === 'about' && method_exists($controller, 'about')) {
+        $controller->about();
+    } elseif ($page === 'promotions' && method_exists($controller, 'promotions')) {
+        $controller->promotions();
+    } elseif ($param && method_exists($controller, $action)) {
         $controller->$action($param);
     } elseif (method_exists($controller, $action)) {
         $controller->$action();

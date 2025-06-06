@@ -223,10 +223,8 @@ class BookingController extends BaseController {
         // Add user ID if logged in
         if (isLoggedIn()) {
             $bookingData['user_id'] = $_SESSION['user_id'];
-        }
-
-        // Create booking
-        $bookingId = $this->bookingModel->createBooking($bookingData);
+        }        // Create booking
+        $bookingId = $this->bookingModel->createBookingFromController($bookingData);
 
         if ($bookingId) {
             $_SESSION['success'] = 'Đặt bàn thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất để xác nhận.';

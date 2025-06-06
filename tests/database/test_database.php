@@ -47,21 +47,19 @@ try {
 
         echo "</tr>";
     }
-    echo "</table>";
-
-    // Check for admin users
+    echo "</table>";    // Check for admin users
     echo "<h2>Admin Users:</h2>";
     try {
-        $stmt = $db->query("SELECT id, name, email, role FROM users WHERE role IN ('manager', 'super_admin')");
+        $stmt = $db->query("SELECT id, CONCAT(first_name, ' ', last_name) as name, email, role FROM users WHERE role IN ('manager', 'super_admin')");
         $admins = $stmt->fetchAll();
 
         if (empty($admins)) {
-            echo "<p style='color: red;'>No admin users found!</p>";
-            echo "<p>Creating default admin user...</p>";
+            echo "<p style='color: red;'>No admin users found!</p>";            echo "<p>Creating default admin user...</p>";
 
-            $stmt = $db->prepare("INSERT INTO users (name, email, password, role, is_active, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
+            $stmt = $db->prepare("INSERT INTO users (first_name, last_name, email, password, role, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
             $success = $stmt->execute([
-                'Admin User',
+                'Admin',
+                'User',
                 'admin@buffet.com',
                 password_hash('admin123', PASSWORD_DEFAULT),
                 'manager',

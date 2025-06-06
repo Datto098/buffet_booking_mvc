@@ -6,23 +6,31 @@
 require_once 'BaseModel.php';
 
 class Booking extends BaseModel {
-    protected $table = 'reservations';
-
-    public function createBooking($bookingData) {
+    protected $table = 'reservations';    public function createBooking($bookingData) {
         $sql = "INSERT INTO {$this->table} (user_id, customer_name, phone_number, table_id, reservation_time, number_of_guests, status, notes)
                 VALUES (:user_id, :customer_name, :phone_number, :table_id, :reservation_time, :number_of_guests, :status, :notes)";
 
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            ':user_id' => $bookingData['user_id'],
+        // Handle field name differences between controller and model
+        $phone = $bookingData['phone_number'] ?? $bookingData['customer_phone'] ?? null;
+        $resTime = $bookingData['reservation_time'] ?? $bookingData['booking_datetime'] ?? null;
+        $guests = $bookingData['number_of_guests'] ?? $bookingData['party_size'] ?? null;
+        $notes = $bookingData['notes'] ?? $bookingData['special_requests'] ?? null;        $stmt = $this->db->prepare($sql);
+        $result = $stmt->execute([
+            ':user_id' => $bookingData['user_id'] ?? null,
             ':customer_name' => $bookingData['customer_name'],
-            ':phone_number' => $bookingData['phone_number'],
+            ':phone_number' => $phone,
             ':table_id' => $bookingData['table_id'] ?? null,
-            ':reservation_time' => $bookingData['reservation_time'],
-            ':number_of_guests' => $bookingData['number_of_guests'],
+            ':reservation_time' => $resTime,
+            ':number_of_guests' => $guests,
             ':status' => $bookingData['status'] ?? 'pending',
-            ':notes' => $bookingData['notes'] ?? null
+            ':notes' => $notes
         ]);
+
+        if ($result) {
+            return $this->db->lastInsertId();
+        }
+
+        return false;
     }
 
     public function getBookingsByUser($userId, $limit = null) {
@@ -127,9 +135,24 @@ class Booking extends BaseModel {
 
         $stmt->execute();
         return $stmt->fetchAll();
-    }
+    }    public function getAvailableTables($reservationTime, $numberOfGuests) {
+        // First check if tables table exists or has any data
+        try {
+            $checkSql = "SELECT COUNT(*) as count FROM tables";
+            $checkStmt = $this->db->prepare($checkSql);
+            $checkStmt->execute();
+            $result = $checkStmt->fetch();
 
-    public function getAvailableTables($reservationTime, $numberOfGuests) {
+            if ($result['count'] <= 0) {
+                // No tables in database, return empty array
+                return [];
+            }
+        } catch (PDOException $e) {
+            // Table likely doesn't exist or other DB error
+            error_log("Error checking tables: " . $e->getMessage());
+            return [];
+        }
+
         $sql = "SELECT t.*
                 FROM tables t
                 WHERE t.capacity >= :number_of_guests
@@ -292,31 +315,39 @@ class Booking extends BaseModel {
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll();
-    }
-
-    /**
+    }    /**
      * Check availability for a booking at specified date and time
      */
     public function checkAvailability($date, $time, $partySize) {
         $bookingDateTime = $date . ' ' . $time;
 
         // Check if there are available tables for the party size
-        $availableTables = $this->getAvailableTables($bookingDateTime, $partySize);
+        try {
+            $availableTables = $this->getAvailableTables($bookingDateTime, $partySize);
 
-        if (count($availableTables) > 0) {
+            if (count($availableTables) > 0) {
+                return [
+                    'available' => true,
+                    'message' => 'Có bàn trống cho thời gian này',
+                    'suggestedTimes' => []
+                ];
+            } else {
+                // Suggest alternative times
+                $suggestedTimes = $this->getSuggestedTimes($date, $partySize);
+
+                return [
+                    'available' => false,
+                    'message' => 'Không có bàn trống cho thời gian này. Vui lòng chọn thời gian khác.',
+                    'suggestedTimes' => $suggestedTimes
+                ];
+            }
+        } catch (Exception $e) {
+            // Log the error and return a user-friendly message
+            error_log("Error in checkAvailability: " . $e->getMessage());
             return [
-                'available' => true,
-                'message' => 'Có bàn trống cho thời gian này',
+                'available' => true, // Assume available for now to allow booking to proceed
+                'message' => 'Hệ thống đang kiểm tra tình trạng bàn',
                 'suggestedTimes' => []
-            ];
-        } else {
-            // Suggest alternative times
-            $suggestedTimes = $this->getSuggestedTimes($date, $partySize);
-
-            return [
-                'available' => false,
-                'message' => 'Không có bàn trống cho thời gian này. Vui lòng chọn thời gian khác.',
-                'suggestedTimes' => $suggestedTimes
             ];
         }
     }

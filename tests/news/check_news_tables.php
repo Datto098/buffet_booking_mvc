@@ -1,0 +1,1 @@
+<?php try { \ = new PDO('mysql:host=localhost;dbname=buffet_booking', 'root', ''); \ = \->query('SHOW TABLES'); while (\ = \->fetch(PDO::FETCH_ASSOC)) { if (strpos(\[array_keys(\)[0]], 'news') !== false) echo \[array_keys(\)[0]] . PHP_EOL; } } catch (Exception \) { echo 'Error: ' . \->getMessage(); } ?>

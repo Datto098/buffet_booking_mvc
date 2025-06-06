@@ -51,16 +51,14 @@
                 </thead>
                 <tbody>
                     <?php
-                    $subtotal = 0;
-                    foreach ($order['items'] as $item):
-                        $itemTotal = $item['price'] * $item['quantity'];
+                    $subtotal = 0;                    foreach ($order['items'] as $item):
+                        $itemTotal = ($item['unit_price'] ?? 0) * $item['quantity'];
                         $subtotal += $itemTotal;
                     ?>
                     <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <?php if (!empty($item['image_url'])): ?>
-                                <img src="<?= ASSETS_URL ?>/images/food/<?= htmlspecialchars($item['image_url']) ?>"
+                        <td>                            <div class="d-flex align-items-center">
+                                <?php if (!empty($item['image'])): ?>
+                                <img src="<?= ASSETS_URL ?>/images/food/<?= htmlspecialchars($item['image']) ?>"
                                      alt="<?= htmlspecialchars($item['food_name']) ?>"
                                      class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
                                 <?php endif; ?>
@@ -72,8 +70,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="text-center"><?= $item['quantity'] ?></td>
-                        <td class="text-end">$<?= number_format($item['price'], 2) ?></td>
+                        <td class="text-center"><?= $item['quantity'] ?></td>                        <td class="text-end">$<?= number_format($item['unit_price'] ?? 0, 2) ?></td>
                         <td class="text-end fw-bold">$<?= number_format($itemTotal, 2) ?></td>
                     </tr>
                     <?php endforeach; ?>

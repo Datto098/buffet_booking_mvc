@@ -4,17 +4,35 @@
  */
 
 session_start();
-$_SESSION['user_id'] = 1;
-$_SESSION['user_role'] = 'admin';
-$_SESSION['user_email'] = 'admin@buffet.com';
 
+// Include necessary files first
 require_once 'config/database.php';
+require_once 'models/User.php';
+require_once 'helpers/functions.php';
+
+// Set up proper admin session by finding an actual admin user
+$userModel = new User();
+$admins = $userModel->findByCondition(['role' => 'manager']);
+
+if (!empty($admins)) {
+    $admin = $admins[0];
+    $_SESSION['user_id'] = $admin['id'];
+    $_SESSION['user_role'] = $admin['role'];
+    $_SESSION['user_name'] = $admin['first_name'] . ' ' . $admin['last_name'];
+    $_SESSION['user_email'] = $admin['email'];
+} else {
+    // Fallback admin session
+    $_SESSION['user_id'] = 1;
+    $_SESSION['user_role'] = 'manager';
+    $_SESSION['user_email'] = 'admin@buffet.com';
+    $_SESSION['user_name'] = 'Admin User';
+}
+
+// Now include controllers
 require_once 'controllers/BaseController.php';
 require_once 'controllers/AdminController.php';
 require_once 'models/Order.php';
-require_once 'models/User.php';
 require_once 'models/Food.php';
-require_once 'helpers/functions.php';
 
 ?>
 <!DOCTYPE html>
