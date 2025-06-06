@@ -1,0 +1,34 @@
+# Bảo mật
+config/database.php
+uploads/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*.sql
+
+# Temporary files
+tmp/
+temp/
+cache/
+
+# User uploads (for development)
+uploads/food_images/*
+uploads/news_images/*
+uploads/user_avatars/*
+
+# Keep the upload directories but not the contents
+!uploads/food_images/.gitkeep
+!uploads/news_images/.gitkeep
+!uploads/user_avatars/.gitkeep
