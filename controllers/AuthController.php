@@ -68,14 +68,23 @@ class AuthController extends BaseController {
         }
 
         // Find user by email
-        $user = $this->userModel->findByEmail($email);
-
-        if ($user && $this->userModel->verifyPassword($password, $user['password'])) {
+        $user = $this->userModel->findByEmail($email);        if ($user && $this->userModel->verifyPassword($password, $user['password'])) {
             // Login successful
             $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['full_name'];
+            $_SESSION['user_name'] = $user['full_name'] ?? $user['name'] ?? 'User';
             $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_role'] = $user['role'];            $_SESSION['success'] = 'Đăng nhập thành công!';
+            $_SESSION['user_role'] = $user['role'];
+            $_SESSION['is_logged_in'] = true;
+
+            // Set user array for admin panel compatibility
+            $_SESSION['user'] = [
+                'id' => $user['id'],
+                'name' => $user['full_name'] ?? $user['name'] ?? 'User',
+                'email' => $user['email'],
+                'role' => $user['role']
+            ];
+
+            $_SESSION['success'] = 'Đăng nhập thành công!';
 
             // Redirect based on role
             if ($user['role'] === 'admin') {
