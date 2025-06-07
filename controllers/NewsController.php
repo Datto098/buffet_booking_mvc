@@ -42,16 +42,14 @@ class NewsController extends BaseController {
      * Display a single news article
      */
     public function detail() {
-        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-
-        if ($id <= 0) {
-            redirect('/index.php?page=news');
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;        if ($id <= 0) {
+            redirect('/news');
         }
 
         $newsItem = $this->newsModel->getNewsById($id);
 
         if (!$newsItem) {
-            redirect('/index.php?page=news');
+            redirect('/news');
         }
 
         // Get related news
@@ -64,22 +62,39 @@ class NewsController extends BaseController {
         ];
 
         $this->loadView('customer/news/detail', $data);
-    }
-
-    /**
+    }    /**
      * Admin: List all news articles
      */
     public function manage() {
         $this->requireAdmin();
 
-        $news = $this->newsModel->getAllNews();
+        // Use getAllForAdmin() to get properly formatted news data with status field
+        $news = $this->newsModel->getAllForAdmin();
+
+        // Calculate statistics for the dashboard cards
+        $totalNews = count($news);
+        $publishedNews = count(array_filter($news, function($article) {
+            return $article['status'] === 'published';
+        }));
+
+        $draftNews = count(array_filter($news, function($article) {
+            return $article['status'] === 'draft';
+        }));
+
+        $newToday = count(array_filter($news, function($article) {
+            return date('Y-m-d', strtotime($article['created_at'])) === date('Y-m-d');
+        }));
 
         $data = [
             'title' => 'Quản Lý Tin Tức - Admin',
-            'news' => $news
+            'news' => $news,
+            'totalNews' => $totalNews,
+            'publishedNews' => $publishedNews,
+            'draftNews' => $draftNews,
+            'newToday' => $newToday
         ];
 
-        $this->loadView('admin/news/index', $data);
+        $this->loadAdminView('news/index', $data);
     }
 
     /**
@@ -95,58 +110,53 @@ class NewsController extends BaseController {
                 'title' => 'Thêm Tin Tức Mới - Admin'
             ];
 
-            $this->loadView('admin/news/create', $data);
+            $this->loadAdminView('news/create', $data);
         }
-    }
-
-    /**
+    }    /**
      * Admin: Edit a news article
      */
-    public function edit() {
+    public function edit($id = null) {
         $this->requireAdmin();
 
-        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        $id = $id ? (int)$id : (isset($_GET['id']) ? (int)$_GET['id'] : 0);
 
         if ($id <= 0) {
-            redirect('/index.php?page=news&action=manage');
+            redirect('/admin/news');
         }
 
         $newsItem = $this->newsModel->findById($id);
 
         if (!$newsItem) {
             $_SESSION['error'] = 'Không tìm thấy bài viết';
-            redirect('/index.php?page=news&action=manage');
+            redirect('/admin/news');
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->handleNewsSubmission($id);
-        } else {
-            $data = [
+        } else {            $data = [
                 'title' => 'Chỉnh Sửa Tin Tức - Admin',
                 'news_item' => $newsItem
             ];
 
-            $this->loadView('admin/news/edit', $data);
+            $this->loadAdminView('news/edit', $data);
         }
-    }
-
-    /**
+    }    /**
      * Admin: Delete a news article
      */
-    public function delete() {
+    public function delete($id = null) {
         $this->requireAdmin();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            redirect('/index.php?page=news&action=manage');
+            redirect('/admin/news');
         }
 
         $this->validateCSRF();
 
-        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        $id = $id ? (int)$id : (isset($_POST['id']) ? (int)$_POST['id'] : 0);
 
         if ($id <= 0) {
             $_SESSION['error'] = 'ID không hợp lệ';
-            redirect('/index.php?page=news&action=manage');
+            redirect('/admin/news');
         }
 
         if ($this->newsModel->deleteNews($id)) {
@@ -155,7 +165,7 @@ class NewsController extends BaseController {
             $_SESSION['error'] = 'Có lỗi xảy ra khi xóa tin tức';
         }
 
-        redirect('/index.php?page=news&action=manage');
+        redirect('/admin/news');
     }
 
     /**
@@ -179,16 +189,14 @@ class NewsController extends BaseController {
 
         if (empty($content)) {
             $errors[] = 'Vui lòng nhập nội dung';
-        }
-
-        if (!empty($errors)) {
+        }        if (!empty($errors)) {
             $_SESSION['error'] = implode('<br>', $errors);
             $_SESSION['form_data'] = $_POST;
 
             if ($id) {
-                redirect('/index.php?page=news&action=edit&id=' . $id);
+                redirect('/admin/news/edit?id=' . $id);
             } else {
-                redirect('/index.php?page=news&action=create');
+                redirect('/admin/news/create');
             }
             return;
         }
@@ -203,18 +211,16 @@ class NewsController extends BaseController {
         ];
           // Handle image upload if provided
         if (!empty($_FILES['image']['name'])) {
-            $uploadResult = $this->uploadNewsImage($_FILES['image']);
-
-            if ($uploadResult['success']) {
+            $uploadResult = $this->uploadNewsImage($_FILES['image']);            if ($uploadResult['success']) {
                 $newsData['image_url'] = $uploadResult['filename'];
             } else {
                 $_SESSION['error'] = $uploadResult['message'];
                 $_SESSION['form_data'] = $_POST;
 
                 if ($id) {
-                    redirect('/index.php?page=news&action=edit&id=' . $id);
+                    redirect('/admin/news/edit?id=' . $id);
                 } else {
-                    redirect('/index.php?page=news&action=create');
+                    redirect('/admin/news/create');
                 }
                 return;
             }
@@ -226,10 +232,9 @@ class NewsController extends BaseController {
             if ($this->newsModel->updateNews($id, $newsData)) {
                 $_SESSION['success'] = 'Cập nhật tin tức thành công';
             } else {
-                $_SESSION['error'] = 'Có lỗi xảy ra khi cập nhật tin tức';
-            }
+                $_SESSION['error'] = 'Có lỗi xảy ra khi cập nhật tin tức';            }
 
-            redirect('/index.php?page=news&action=edit&id=' . $id);
+            redirect('/admin/news/edit?id=' . $id);
         } else {
             // Create new news
             if ($this->newsModel->createNews($newsData)) {
@@ -238,7 +243,7 @@ class NewsController extends BaseController {
                 $_SESSION['error'] = 'Có lỗi xảy ra khi thêm tin tức';
             }
 
-            redirect('/index.php?page=news&action=create');
+            redirect('/admin/news/create');
         }
     }
       /**
@@ -295,22 +300,19 @@ class NewsController extends BaseController {
         }
     }    /**
      * Validate CSRF token
-     */
-    protected function validateCSRF() {
+     */    protected function validateCSRF() {
         if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
             $_SESSION['error'] = 'CSRF token không hợp lệ';
-            redirect('/index.php?page=news');
+            redirect('/news');
             exit;
         }
-    }
-
-    /**
+    }/**
      * Require admin authentication
      */
     protected function requireAdmin() {
         if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'], ['manager', 'super_admin'])) {
             $_SESSION['error'] = 'Bạn không có quyền truy cập trang này';
-            redirect('/index.php?page=auth&action=login');
+            redirect('/auth/login');
             exit;
         }
     }

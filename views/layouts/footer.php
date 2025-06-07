@@ -76,11 +76,16 @@
     <!-- Luxury Smooth Scrolling -->
     <script src="<?php echo SITE_URL; ?>/assets/js/luxury-scroll.js"></script>
     <!-- Custom JS -->
-    <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script><!-- CSRF Token for AJAX requests -->
+    <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>    <!-- CSRF Token for AJAX requests -->
     <script>
-        window.csrfToken = '<?php echo $_SESSION['csrf_token'] ?? generateCSRFToken(); ?>';
+        window.csrfToken = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
         window.siteUrl = '<?php echo SITE_URL; ?>';
-        <?php if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = generateCSRFToken(); ?>
+        <?php
+        // Only generate token if none exists and we're not overwriting existing one
+        if (!isset($_SESSION['csrf_token']) || empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = generateCSRFToken();
+        }
+        ?>
     </script>
 </body>
 </html>

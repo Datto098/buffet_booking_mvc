@@ -49,23 +49,42 @@ class BaseModel {
 
         return $stmt->execute();
     }
-
     public function update($id, $data) {
-        $setClause = [];
-        foreach ($data as $key => $value) {
-            $setClause[] = "$key = :$key";
+        try {
+            $setClause = [];
+            foreach ($data as $key => $value) {
+                $setClause[] = "$key = :$key";
+            }
+            $setClause = implode(', ', $setClause);
+
+            $sql = "UPDATE {$this->table} SET {$setClause} WHERE id = :id";
+            error_log("SQL Query: " . $sql);
+            error_log("Data for update: " . print_r($data, true));
+            error_log("ID: " . $id);
+
+            $stmt = $this->db->prepare($sql);
+
+            foreach ($data as $key => $value) {
+                $stmt->bindValue(":$key", $value);
+            }
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+
+            $result = $stmt->execute();
+            $rowCount = $stmt->rowCount();
+
+            error_log("Execute result: " . ($result ? 'true' : 'false'));
+            error_log("Rows affected: " . $rowCount);
+
+            if (!$result) {
+                $errorInfo = $stmt->errorInfo();
+                error_log("SQL Error: " . print_r($errorInfo, true));
+            }
+
+            return $result;
+        } catch (PDOException $e) {
+            error_log("PDO Exception in update: " . $e->getMessage());
+            return false;
         }
-        $setClause = implode(', ', $setClause);
-
-        $sql = "UPDATE {$this->table} SET {$setClause} WHERE id = :id";
-        $stmt = $this->db->prepare($sql);
-
-        foreach ($data as $key => $value) {
-            $stmt->bindValue(":$key", $value);
-        }
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-
-        return $stmt->execute();
     }
 
     public function delete($id) {

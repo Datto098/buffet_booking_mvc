@@ -7,10 +7,12 @@
 // Start session to check authentication
 session_start();
 
-// Include config for redirect function
-require_once '../config/config.php';
+// Change working directory to parent directory for proper path resolution
+chdir(dirname(__DIR__));
 
-// Debug: Log the access
+// Include config for redirect function
+require_once 'config/config.php';
+
 error_log("Admin directory accessed: " . $_SERVER['REQUEST_URI']);
 
 // Check if user is logged in and has admin privileges
@@ -20,7 +22,7 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'], ['manager'
     exit;
 } else {
     // Logged in as admin, load the dashboard directly
-    require_once '../controllers/AdminController.php';
+    require_once 'controllers/AdminController.php';
 
     try {
         $controller = new AdminController();

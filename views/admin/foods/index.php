@@ -1,218 +1,507 @@
-<?php
-$pageTitle = $data['title'];
-require_once 'views/admin/layouts/header.php';
-?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo $csrf_token ?? ''; ?>">
+    <title>Foods Management - Admin</title>
+    <?php require_once 'views/admin/layouts/header.php'; ?>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <?php require_once 'views/admin/layouts/sidebar.php'; ?>
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <?php require_once 'views/admin/layouts/sidebar.php'; ?>
-
-        <!-- Main Content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Food Management</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <a href="/admin/foods/create" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add New Food Item
-                    </a>
-                </div>
-            </div>
-
-            <!-- Flash Messages -->
-            <?php if (isset($_SESSION['flash'])): ?>
-                <?php foreach ($_SESSION['flash'] as $type => $message): ?>
-                    <div class="alert alert-<?= $type === 'error' ? 'danger' : $type ?> alert-dismissible fade show" role="alert">
-                        <?= htmlspecialchars($message) ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">Foods Management</h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/admin/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Foods</li>
+                            </ol>
+                        </nav>
                     </div>
-                <?php endforeach; ?>
-                <?php unset($_SESSION['flash']); ?>
-            <?php endif; ?>
-
-            <!-- Filter Bar -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <form method="GET" class="row g-3">
-                        <div class="col-md-4">
-                            <select name="category" class="form-select">
-                                <option value="">All Categories</option>
-                                <?php foreach ($data['categories'] as $category): ?>
-                                    <option value="<?= $category['id'] ?>" <?= isset($_GET['category']) && $_GET['category'] == $category['id'] ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($category['name']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <select name="status" class="form-select">
-                                <option value="">All Status</option>
-                                <option value="available" <?= isset($_GET['status']) && $_GET['status'] == 'available' ? 'selected' : '' ?>>Available</option>
-                                <option value="unavailable" <?= isset($_GET['status']) && $_GET['status'] == 'unavailable' ? 'selected' : '' ?>>Unavailable</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <button type="submit" class="btn btn-outline-primary">
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#filterModal">
                                 <i class="fas fa-filter"></i> Filter
                             </button>
-                            <a href="/admin/foods" class="btn btn-outline-secondary">
-                                <i class="fas fa-times"></i> Clear
-                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportFoods()">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                        </div>
+                        <a href="<?= SITE_URL ?>/admin/foods/create" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus"></i> Add Food
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                <?php if (isset($_SESSION['success'])): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle"></i> <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['error'])): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle"></i> <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 card-gradient-primary">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Total Foods
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $totalFoods ?? 0; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-utensils fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 card-gradient-success">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Available
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $availableFoods ?? 0; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 card-gradient-warning">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                            Categories
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $totalCategories ?? 0; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-list fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 card-gradient-info">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                            Popular Today
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $popularToday ?? 0; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-star fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search and Actions Bar -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" id="searchFoods" placeholder="Search by food name, category, or price...">
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleBulkActions()">
+                                <i class="fas fa-tasks"></i> Bulk Actions
+                            </button>
+                            <button type="button" class="btn btn-outline-info btn-sm" onclick="refreshFoods()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bulk Actions Bar (Hidden by default) -->
+                <div id="bulkActionsBar" class="row mb-3" style="display: none;">
+                    <div class="col-12">
+                        <div class="alert alert-light border">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <strong><span id="selectedCount">0</span> food(s) selected</strong>
+                                </div>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-success btn-sm" onclick="bulkUpdateStatus('available')">
+                                        <i class="fas fa-check"></i> Make Available
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-sm" onclick="bulkUpdateStatus('unavailable')">
+                                        <i class="fas fa-ban"></i> Make Unavailable
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearSelection()">
+                                        <i class="fas fa-times"></i> Clear Selection
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Foods Table -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-utensils"></i> Foods List
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <span class="badge bg-primary">
+                                <?php echo count($foods ?? []); ?> total
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <?php if (!empty($foods)): ?>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle" id="foodsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="40">
+                                                <input type="checkbox" class="form-check-input" id="selectAll">
+                                            </th>
+                                            <th>Food</th>
+                                            <th>Category</th>
+                                            <th>Price</th>
+                                            <th>Status</th>
+                                            <th>Created</th>
+                                            <th width="120">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($foods as $food): ?>
+                                            <tr>
+                                                <td>
+                                                    <input type="checkbox" class="form-check-input food-checkbox"
+                                                           value="<?php echo $food['id']; ?>">
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm me-2">
+                                                            <?php if (!empty($food['image'])): ?>
+                                                                <img src="<?php echo htmlspecialchars($food['image']); ?>"
+                                                                     alt="<?php echo htmlspecialchars($food['name']); ?>"
+                                                                     class="rounded" width="40" height="40" style="object-fit: cover;">
+                                                            <?php else: ?>
+                                                                <i class="fas fa-utensils fa-2x text-muted"></i>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-medium"><?php echo htmlspecialchars($food['name'] ?? ''); ?></div>
+                                                            <small class="text-muted"><?php echo htmlspecialchars(substr($food['description'] ?? '', 0, 50)); ?><?php echo strlen($food['description'] ?? '') > 50 ? '...' : ''; ?></small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark">
+                                                        <?php echo htmlspecialchars($food['category_name'] ?? 'Uncategorized'); ?>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-medium text-success">$<?php echo number_format($food['price'] ?? 0, 2); ?></div>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    $statusClass = ($food['is_available'] ?? 0) ? 'success' : 'danger';
+                                                    $statusText = ($food['is_available'] ?? 0) ? 'Available' : 'Unavailable';
+                                                    $statusIcon = ($food['is_available'] ?? 0) ? 'check-circle' : 'times-circle';
+                                                    ?>
+                                                    <span class="badge bg-<?php echo $statusClass; ?>">
+                                                        <i class="fas fa-<?php echo $statusIcon; ?>"></i> <?php echo $statusText; ?>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <div class="fw-medium"><?php echo date('M j, Y', strtotime($food['created_at'])); ?></div>
+                                                        <small class="text-muted"><?php echo date('g:i A', strtotime($food['created_at'])); ?></small>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group" role="group">                                                        <a href="<?= SITE_URL ?>/admin/foods/edit/<?php echo $food['id']; ?>"
+                                                           class="btn btn-sm btn-outline-primary"
+                                                           title="Edit Food">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-info"
+                                                                onclick="viewFood(<?php echo $food['id']; ?>)"
+                                                                title="View Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-danger"
+                                                                onclick="deleteFood(<?php echo $food['id']; ?>)"
+                                                                title="Delete Food">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <?php if (($totalPages ?? 0) > 1): ?>
+                                <nav aria-label="Foods pagination" class="mt-4">
+                                    <ul class="pagination justify-content-center">
+                                        <?php if ($currentPage > 1): ?>
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page=<?php echo $currentPage - 1; ?>">
+                                                    <i class="fas fa-chevron-left"></i> Previous
+                                                </a>
+                                            </li>
+                                        <?php endif; ?>
+
+                                        <?php for ($i = max(1, $currentPage - 2); $i <= min($totalPages, $currentPage + 2); $i++): ?>
+                                            <li class="page-item <?php echo $i == $currentPage ? 'active' : ''; ?>">
+                                                <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                            </li>
+                                        <?php endfor; ?>
+
+                                        <?php if ($currentPage < $totalPages): ?>
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page=<?php echo $currentPage + 1; ?>">
+                                                    Next <i class="fas fa-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                        <?php endif; ?>
+                                    </ul>
+                                </nav>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div class="text-center py-5">
+                                <div class="mb-3">
+                                    <i class="fas fa-utensils fa-4x text-muted"></i>
+                                </div>
+                                <h5 class="text-muted">No Foods Found</h5>
+                                <p class="text-muted">There are no food items to display.</p>                                <a href="<?= SITE_URL ?>/admin/foods/create" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Add First Food
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">
+                        <i class="fas fa-filter"></i> Filter Foods
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="filterForm">
+                        <div class="mb-3">
+                            <label for="categoryFilter" class="form-label">Category</label>
+                            <select class="form-select" id="categoryFilter" name="category">
+                                <option value="">All Categories</option>
+                                <?php if (!empty($categories)): ?>
+                                    <?php foreach ($categories as $category): ?>
+                                        <option value="<?php echo $category['id']; ?>">
+                                            <?php echo htmlspecialchars($category['name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="statusFilter" class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter" name="status">
+                                <option value="">All Status</option>
+                                <option value="available">Available</option>
+                                <option value="unavailable">Unavailable</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="minPrice" class="form-label">Min Price</label>
+                                <input type="number" class="form-control" id="minPrice" name="min_price" step="0.01" placeholder="0.00">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="maxPrice" class="form-label">Max Price</label>
+                                <input type="number" class="form-control" id="maxPrice" name="max_price" step="0.01" placeholder="999.99">
+                            </div>
                         </div>
                     </form>
                 </div>
-            </div>
-
-            <!-- Stats -->
-            <div class="row mb-4">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row text-center">
-                                <div class="col-md-3">
-                                    <div class="border-left-primary py-2">
-                                        <div class="text-primary font-weight-bold">Total Items</div>
-                                        <div class="h4"><?= number_format($data['totalFoods']) ?></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="border-left-success py-2">
-                                        <div class="text-success font-weight-bold">Available</div>
-                                        <div class="h4"><?= count(array_filter($data['foods'], fn($f) => $f['is_available'])) ?></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="border-left-info py-2">
-                                        <div class="text-info font-weight-bold">Featured</div>
-                                        <div class="h4"><?= count(array_filter($data['foods'], fn($f) => $f['is_featured'])) ?></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="border-left-warning py-2">
-                                        <div class="text-warning font-weight-bold">Categories</div>
-                                        <div class="h4"><?= count($data['categories']) ?></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">Clear</button>
                 </div>
             </div>
-
-            <!-- Food Items Grid -->
-            <div class="row">
-                <?php if (empty($data['foods'])): ?>
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-body text-center py-5">
-                                <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
-                                <h5 class="text-muted">No food items found</h5>
-                                <p class="text-muted">Start by adding your first food item.</p>
-                                <a href="/admin/foods/create" class="btn btn-primary">
-                                    <i class="fas fa-plus"></i> Add Food Item
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($data['foods'] as $food): ?>
-                        <div class="col-lg-4 col-md-6 mb-4">
-                            <div class="card shadow-sm h-100">
-                                <div class="position-relative">
-                                    <?php if ($food['image']): ?>
-                                        <img src="/assets/images/foods/<?= $food['image'] ?>" class="card-img-top" alt="<?= htmlspecialchars($food['name']) ?>" style="height: 200px; object-fit: cover;">
-                                    <?php else: ?>
-                                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
-                                            <i class="fas fa-utensils fa-3x text-muted"></i>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <!-- Status Badges -->
-                                    <div class="position-absolute top-0 end-0 m-2">
-                                        <?php if ($food['is_featured']): ?>
-                                            <span class="badge bg-warning text-dark mb-1 d-block">Featured</span>
-                                        <?php endif; ?>
-                                        <?php if ($food['is_available']): ?>
-                                            <span class="badge bg-success">Available</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-danger">Unavailable</span>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-
-                                <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title"><?= htmlspecialchars($food['name']) ?></h5>
-                                    <p class="card-text text-muted small flex-grow-1">
-                                        <?= htmlspecialchars(substr($food['description'], 0, 100)) ?>
-                                        <?= strlen($food['description']) > 100 ? '...' : '' ?>
-                                    </p>
-
-                                    <div class="mt-auto">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="badge bg-info"><?= htmlspecialchars($food['category_name']) ?></span>
-                                            <span class="h5 mb-0 text-primary">$<?= number_format($food['price'], 2) ?></span>
-                                        </div>
-
-                                        <div class="btn-group w-100" role="group">
-                                            <a href="/admin/foods/edit/<?= $food['id'] ?>" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </a>
-                                            <form method="POST" action="/admin/foods/delete/<?= $food['id'] ?>" class="d-inline flex-fill">
-                                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                                                <button type="submit" class="btn btn-outline-danger btn-sm btn-delete w-100">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-
-            <!-- Pagination -->
-            <?php if ($data['totalPages'] > 1): ?>
-                <nav aria-label="Food items pagination">
-                    <ul class="pagination justify-content-center">
-                        <?php if ($data['currentPage'] > 1): ?>
-                            <li class="page-item">
-                                <a class="page-link" href="/admin/foods?page=<?= $data['currentPage'] - 1 ?>">Previous</a>
-                            </li>
-                        <?php endif; ?>
-
-                        <?php for ($i = 1; $i <= $data['totalPages']; $i++): ?>
-                            <li class="page-item <?= $i === $data['currentPage'] ? 'active' : '' ?>">
-                                <a class="page-link" href="/admin/foods?page=<?= $i ?>"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?>
-
-                        <?php if ($data['currentPage'] < $data['totalPages']): ?>
-                            <li class="page-item">
-                                <a class="page-link" href="/admin/foods?page=<?= $data['currentPage'] + 1 ?>">Next</a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-            <?php endif; ?>
-        </main>
+        </div>
     </div>
-</div>
 
-<style>
-.border-left-primary {
-    border-left: 0.25rem solid #4e73df !important;
-}
-.border-left-success {
-    border-left: 0.25rem solid #1cc88a !important;
-}
-.border-left-info {
-    border-left: 0.25rem solid #36b9cc !important;
-}
-.border-left-warning {
-    border-left: 0.25rem solid #f6c23e !important;
-}
-</style>
+    <?php require_once 'views/admin/layouts/footer.php'; ?>
 
-<?php require_once 'views/admin/layouts/footer.php'; ?>
+    <script>
+        // Foods Management JavaScript
+        function toggleBulkActions() {
+            const bulkBar = document.getElementById('bulkActionsBar');
+            if (bulkBar) {
+                bulkBar.style.display = bulkBar.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function refreshFoods() {
+            location.reload();
+        }
+
+        function exportFoods() {
+            window.location.href = '<?= SITE_URL ?>/admin/foods?export=csv';
+        }
+
+        function viewFood(foodId) {
+            window.location.href = '<?= SITE_URL ?>/admin/foods/view/' + foodId;
+        }
+
+        function deleteFood(foodId) {
+            if (confirm('Are you sure you want to delete this food item?')) {
+                fetch('<?= SITE_URL ?>/admin/foods/delete/' + foodId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Failed to delete food item');
+                    }
+                });
+            }
+        }
+
+        function bulkUpdateStatus(status) {
+            const selected = document.querySelectorAll('.food-checkbox:checked');
+            if (selected.length === 0) {
+                alert('Please select at least one food item');
+                return;
+            }
+
+            const foodIds = Array.from(selected).map(cb => cb.value);
+
+            fetch('<?= SITE_URL ?>/admin/foods/bulk-update-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    food_ids: foodIds,
+                    status: status
+                })
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Failed to update food status');
+                }
+            });
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.food-checkbox').forEach(cb => cb.checked = false);
+            updateSelectedCount();
+            document.getElementById('bulkActionsBar').style.display = 'none';
+        }
+
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.food-checkbox:checked').length;
+            document.getElementById('selectedCount').textContent = count;
+        }
+
+        function applyFilters() {
+            const form = document.getElementById('filterForm');
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            window.location.href = '<?= SITE_URL ?>/admin/foods?' + params.toString();
+        }
+
+        function clearFilters() {
+            window.location.href = '<?= SITE_URL ?>/admin/foods';
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('searchFoods');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#foodsTable tbody tr');
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        }
+
+        // Select all functionality
+        document.getElementById('selectAll')?.addEventListener('change', function() {
+            document.querySelectorAll('.food-checkbox').forEach(cb => {
+                cb.checked = this.checked;
+            });
+            updateSelectedCount();
+        });
+
+        // Individual checkbox functionality
+        document.querySelectorAll('.food-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateSelectedCount);
+        });
+    </script>
+</body>
+</html>

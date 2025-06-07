@@ -189,8 +189,7 @@ class Booking extends BaseModel {
     }
 
     // Admin specific methods
-    public function getAllWithCustomers($limit = null, $offset = 0, $status = null, $search = null) {
-        $sql = "SELECT r.*, u.name as customer_email, u.email, t.table_number, t.capacity
+    public function getAllWithCustomers($limit = null, $offset = 0, $status = null, $search = null) {        $sql = "SELECT r.*, u.email as customer_email, u.email, t.table_number, t.capacity
                 FROM {$this->table} r
                 LEFT JOIN users u ON r.user_id = u.id
                 LEFT JOIN tables t ON r.table_id = t.id";
@@ -288,8 +287,7 @@ class Booking extends BaseModel {
         return $stmt->fetchAll();
     }
 
-    public function getUpcomingBookings($limit = 10) {
-        $sql = "SELECT r.*, u.name as customer_email, u.email, t.table_number
+    public function getUpcomingBookings($limit = 10) {        $sql = "SELECT r.*, u.email as customer_email, u.email, t.table_number
                 FROM {$this->table} r
                 LEFT JOIN users u ON r.user_id = u.id
                 LEFT JOIN tables t ON r.table_id = t.id
@@ -304,8 +302,7 @@ class Booking extends BaseModel {
         return $stmt->fetchAll();
     }
 
-    public function getTodayBookings() {
-        $sql = "SELECT r.*, u.name as customer_email, u.email, t.table_number
+    public function getTodayBookings() {        $sql = "SELECT r.*, u.email as customer_email, u.email, t.table_number
                 FROM {$this->table} r
                 LEFT JOIN users u ON r.user_id = u.id
                 LEFT JOIN tables t ON r.table_id = t.id
@@ -477,13 +474,142 @@ class Booking extends BaseModel {
             ':number_of_guests' => $mappedData['number_of_guests'],
             ':status' => $mappedData['status'],
             ':notes' => $mappedData['notes']
-        ]);
-
-        if ($result) {
+        ]);        if ($result) {
             return $this->db->lastInsertId();
         }
 
         return false;
+    }
+
+    /**
+     * Get recent bookings with customer information for dashboard
+     */    public function getRecentBookingsWithCustomer($limit = 5) {
+        $sql = "SELECT r.*,
+                       COALESCE(CONCAT(u.first_name, ' ', u.last_name), r.customer_name) as customer_name,
+                       DATE(r.reservation_time) as booking_date,
+                       TIME(r.reservation_time) as booking_time,
+                       u.email as customer_email,
+                       t.table_number
+                FROM {$this->table} r
+                LEFT JOIN users u ON r.user_id = u.id
+                LEFT JOIN tables t ON r.table_id = t.id
+                ORDER BY r.created_at DESC
+                LIMIT :limit";
+          $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Update a booking record
+     * @param int $bookingId Booking ID
+     * @param array $data Updated booking data
+     * @return bool Success status
+     */
+    public function updateBooking($bookingId, $data) {
+        try {
+            $sql = "UPDATE {$this->table} SET
+                        customer_name = :customer_name,
+                        phone_number = :phone_number,
+                        email = :email,
+                        number_of_guests = :number_of_guests,
+                        reservation_time = :reservation_time,
+                        special_requests = :special_requests
+                    WHERE id = :id";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindValue(':customer_name', $data['customer_name'], PDO::PARAM_STR);
+            $stmt->bindValue(':phone_number', $data['phone_number'], PDO::PARAM_STR);
+            $stmt->bindValue(':email', $data['email'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(':number_of_guests', $data['number_of_guests'], PDO::PARAM_INT);
+            $stmt->bindValue(':reservation_time', $data['reservation_time'], PDO::PARAM_STR);
+            $stmt->bindValue(':special_requests', $data['special_requests'] ?? null, PDO::PARAM_STR);
+            $stmt->bindValue(':id', $bookingId, PDO::PARAM_INT);
+
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error updating booking: " . $e->getMessage());
+            return false;
+        }
+    }    /**
+     * Transform booking data for admin interface compatibility
+     * Maps database fields to expected view fields
+     */
+    private function transformBookingData($booking) {
+        if (!$booking) return $booking;
+
+        // Split reservation_time into separate date and time fields
+        if (isset($booking['reservation_time'])) {
+            $booking['booking_date'] = date('Y-m-d', strtotime($booking['reservation_time']));
+            $booking['booking_time'] = date('H:i:s', strtotime($booking['reservation_time']));
+        }
+
+        // Ensure customer_email field exists (from user join or direct)
+        if (!isset($booking['customer_email']) && isset($booking['email'])) {
+            $booking['customer_email'] = $booking['email'];
+        }
+
+        // Map notes to special_requests for view compatibility
+        if (isset($booking['notes']) && !isset($booking['special_requests'])) {
+            $booking['special_requests'] = $booking['notes'];
+        }
+
+        return $booking;
+    }
+
+    /**
+     * Get all bookings with admin-compatible field mapping
+     */
+    public function getAllForAdmin($limit = null, $offset = 0, $status = null, $search = null) {
+        $sql = "SELECT r.*,
+                       COALESCE(u.email, '') as customer_email,
+                       u.email,
+                       t.table_number,
+                       t.capacity
+                FROM {$this->table} r
+                LEFT JOIN users u ON r.user_id = u.id
+                LEFT JOIN tables t ON r.table_id = t.id";
+
+        $conditions = [];
+        $params = [];
+
+        if ($status) {
+            $conditions[] = "r.status = :status";
+            $params[':status'] = $status;
+        }
+
+        if ($search) {
+            $conditions[] = "(r.customer_name LIKE :search OR u.email LIKE :search OR r.phone_number LIKE :search)";
+            $params[':search'] = "%{$search}%";
+        }
+
+        if (!empty($conditions)) {
+            $sql .= " WHERE " . implode(' AND ', $conditions);
+        }
+
+        $sql .= " ORDER BY r.reservation_time DESC";
+
+        if ($limit) {
+            $sql .= " LIMIT :limit OFFSET :offset";
+            $params[':limit'] = $limit;
+            $params[':offset'] = $offset;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $key => $value) {
+            if ($key === ':limit' || $key === ':offset') {
+                $stmt->bindValue($key, $value, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue($key, $value);
+            }
+        }
+
+        $stmt->execute();
+        $bookings = $stmt->fetchAll();
+
+        // Transform each booking for admin interface
+        return array_map([$this, 'transformBookingData'], $bookings);
     }
 }
 ?>

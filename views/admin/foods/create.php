@@ -9,14 +9,13 @@
                 <div>
                     <h1 class="page-title">Add New Food Item</h1>
                     <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
-                            <li class="breadcrumb-item"><a href="/admin/foods">Food Management</a></li>
+                        <ol class="breadcrumb">                            <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/admin/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/admin/foods">Food Management</a></li>
                             <li class="breadcrumb-item active">Add New</li>
                         </ol>
                     </nav>
                 </div>
-                <a href="/admin/foods" class="btn btn-outline-primary">
+                <a href="<?= SITE_URL ?>/admin/foods" class="btn btn-outline-primary">
                     <i class="fas fa-arrow-left"></i> Back to Foods
                 </a>
             </div>
@@ -30,7 +29,7 @@
                             <h5 class="card-title">Food Information</h5>
                         </div>
                         <div class="card-body">
-                            <form action="/admin/foods/create" method="POST" enctype="multipart/form-data" id="createFoodForm">
+                            <form action="<?= SITE_URL ?>/admin/foods/create" method="POST" enctype="multipart/form-data" id="createFoodForm">
                                 <?php echo $this->csrfToken(); ?>
 
                                 <div class="row">
@@ -136,7 +135,7 @@
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Create Food Item
                                     </button>
-                                    <a href="/admin/foods" class="btn btn-secondary">Cancel</a>
+                                    <a href="<?= SITE_URL ?>/admin/foods" class="btn btn-secondary">Cancel</a>
                                 </div>
                             </form>
                         </div>

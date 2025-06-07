@@ -6,6 +6,7 @@
 // Site settings
 define('SITE_NAME', 'Buffet Booking');
 define('SITE_URL', 'http://localhost/buffet_booking_mvc');
+// define('SITE_URL', 'http://localhost:8000');
 define('ADMIN_EMAIL', 'admin@buffetbooking.com');
 
 // Security settings
@@ -29,8 +30,24 @@ define('ASSETS_PATH', ROOT_PATH . '/assets');
 // Include database configuration
 require_once 'database.php';
 
-// Start session only if not already started and not in CLI mode
+// Configure session settings for better persistence
 if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
+    // Configure session for better persistence
+    ini_set('session.save_handler', 'files');
+    ini_set('session.use_only_cookies', 1);
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.cookie_samesite', 'Lax');
+    ini_set('session.gc_probability', 1);
+    ini_set('session.gc_divisor', 100);
+    ini_set('session.gc_maxlifetime', SESSION_TIMEOUT);
+
+    // Ensure session directory exists and is writable
+    $sessionPath = sys_get_temp_dir() . '/php_sessions';
+    if (!is_dir($sessionPath)) {
+        mkdir($sessionPath, 0755, true);
+    }
+    ini_set('session.save_path', $sessionPath);
+
     session_start();
 }
 
@@ -87,7 +104,7 @@ function verifyCSRFToken($token) {
  * @return string HTML input field with CSRF token
  */
 function csrf_token_field() {
-    if (!isset($_SESSION['csrf_token'])) {
+    if (!isset($_SESSION['csrf_token']) || empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = generateCSRFToken();
     }
     return '<input type="hidden" name="csrf_token" value="' . $_SESSION['csrf_token'] . '">';

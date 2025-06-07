@@ -252,5 +252,47 @@ class News extends BaseModel {
         $stmt->execute();
         return $stmt->fetchAll();
     }
+
+    /**
+     * Transform news data from database format to view format
+     * Maps is_published (1/0) to status ('published'/'draft')
+     */
+    public function transformNewsData($news) {
+        // Transform is_published to status
+        $status = ($news['is_published'] == 1) ? 'published' : 'draft';
+
+        // Return news data with additional transformed fields
+        return array_merge($news, [
+            'status' => $status
+        ]);
+    }    /**
+     * Get all news articles with transformed data format for admin view
+     */
+    public function getAllForAdmin($limit = null, $offset = 0) {
+        $sql = "SELECT n.*,
+                CONCAT(u.first_name, ' ', u.last_name) as author
+                FROM {$this->table} n
+                LEFT JOIN users u ON n.author_id = u.id
+                ORDER BY n.created_at DESC";
+
+        if ($limit) {
+            $sql .= " LIMIT :limit OFFSET :offset";
+        }
+
+        $stmt = $this->db->prepare($sql);
+
+        if ($limit) {
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        $news = $stmt->fetchAll();
+
+        // Transform each news item
+        return array_map(function($newsItem) {
+            return $this->transformNewsData($newsItem);
+        }, $news);
+    }
 }
 ?>
