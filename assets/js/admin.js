@@ -3,6 +3,12 @@
 document.addEventListener('DOMContentLoaded', function () {
 	// Initialize admin functionality
 	initializeAdmin();
+
+	// Handle sidebar toggle on mobile
+	handleSidebarToggle();
+
+	// Initialize any DataTables
+	initializeDataTables();
 });
 
 function initializeAdmin() {
@@ -20,6 +26,34 @@ function initializeAdmin() {
 
 	// Initialize image previews
 	initializeImagePreviews();
+
+	// Set active nav links
+	setActiveNavLinks();
+}
+
+// Handle sidebar toggle on mobile devices
+function handleSidebarToggle() {
+	const sidebarToggle = document.querySelector('.navbar-toggler');
+	if (sidebarToggle) {
+		sidebarToggle.addEventListener('click', function () {
+			document.body.classList.toggle('sidebar-toggled');
+			const sidebar = document.querySelector('.sidebar');
+			if (sidebar) {
+				sidebar.classList.toggle('toggled');
+			}
+		});
+	}
+
+	// Close sidebar when screen size is smaller on resize
+	window.addEventListener('resize', function () {
+		if (window.innerWidth < 768) {
+			const sidebar = document.querySelector('.sidebar.show');
+			if (sidebar) {
+				const bsCollapse = new bootstrap.Collapse(sidebar);
+				bsCollapse.hide();
+			}
+		}
+	});
 }
 
 // Auto-hide alert messages
@@ -42,6 +76,52 @@ function initializeTooltips() {
 	);
 	tooltipTriggerList.map(function (tooltipTriggerEl) {
 		return new bootstrap.Tooltip(tooltipTriggerEl);
+	});
+}
+
+// Initialize DataTables
+function initializeDataTables() {
+	if ($.fn.DataTable) {
+		const tables = document.querySelectorAll(
+			'table.dataTable, table.table-datatable'
+		);
+		tables.forEach(function (table) {
+			$(table).DataTable({
+				responsive: true,
+				language: {
+					search: '_INPUT_',
+					searchPlaceholder: 'Tìm kiếm...',
+					lengthMenu: 'Hiển thị _MENU_ mục',
+					info: 'Hiển thị _START_ đến _END_ của _TOTAL_ mục',
+					infoEmpty: 'Hiển thị 0 đến 0 của 0 mục',
+					infoFiltered: '(lọc từ _MAX_ mục)',
+					paginate: {
+						first: 'Đầu',
+						last: 'Cuối',
+						next: 'Sau',
+						previous: 'Trước',
+					},
+				},
+			});
+		});
+	}
+}
+
+// Set active nav links
+function setActiveNavLinks() {
+	const currentPath = window.location.pathname;
+	const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+	navLinks.forEach(function (link) {
+		const href = link.getAttribute('href');
+		if (href && currentPath.includes(href) && href !== '/admin') {
+			link.classList.add('active');
+		} else if (
+			href === '/admin' &&
+			(currentPath === '/admin' || currentPath === '/admin/')
+		) {
+			link.classList.add('active');
+		}
 	});
 }
 

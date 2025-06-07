@@ -1,30 +1,44 @@
-<?php
-/**
- * Admin - Create News View
- */
-?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo $csrf_token ?? ''; ?>">
+    <title>Create News - Admin</title>
+    <?php require_once 'views/admin/layouts/header.php'; ?>
+</head>
+<body class="admin-page">
+    <div class="container-fluid">
+        <div class="row">
+            <?php require_once 'views/admin/layouts/sidebar.php'; ?>
 
-<div class="container-fluid px-4">
-    <h1 class="mt-4">Thêm Tin Tức Mới</h1>
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="<?php echo SITE_URL; ?>/admin">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="<?php echo SITE_URL; ?>/news/manage">Tin Tức</a></li>
-        <li class="breadcrumb-item active">Thêm Mới</li>
-    </ol>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">Thêm Tin Tức Mới</h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/admin/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/admin/news">Tin Tức</a></li>
+                                <li class="breadcrumb-item active">Thêm Mới</li>
+                            </ol>
+                        </nav>
+                    </div>                </div>
 
-    <div class="card mb-4">
-        <div class="card-header">
-            <i class="fas fa-newspaper me-1"></i> Thông Tin Bài Viết
-        </div>
-        <div class="card-body">
-            <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php endif; ?>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-newspaper me-1"></i> Thông Tin Bài Viết
+                    </div>
+                    <div class="card-body">
+                        <?php if (isset($_SESSION['error'])): ?>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        <?php endif; ?>
 
-            <form action="<?php echo SITE_URL; ?>/news/create" method="POST" enctype="multipart/form-data">
+            <form action="<?php echo SITE_URL; ?>/admin/news/create" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
 
                 <div class="row mb-3">
@@ -70,28 +84,29 @@
                 <div class="mb-3 form-check">
                     <input type="checkbox" class="form-check-input" id="is_published" name="is_published" value="1"
                            <?php echo (isset($_SESSION['form_data']['is_published']) && $_SESSION['form_data']['is_published']) ? 'checked' : ''; ?>>
-                    <label class="form-check-label" for="is_published">Xuất Bản Ngay</label>
-                </div>
+                    <label class="form-check-label" for="is_published">Xuất Bản Ngay</label>                </div>
 
                 <div class="d-flex justify-content-between">
-                    <a href="<?php echo SITE_URL; ?>/news/manage" class="btn btn-secondary">
+                    <a href="<?php echo SITE_URL; ?>/admin/news" class="btn btn-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Quay Lại
                     </a>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-1"></i> Lưu Bài Viết
                     </button>
                 </div>
-            </form>
+            </form>                        <?php
+                        // Clear form data after displaying
+                        if (isset($_SESSION['form_data'])) {
+                            unset($_SESSION['form_data']);
+                        }
+                        ?>
+                    </form>
+                </div>
+            </div>
 
-            <?php
-            // Clear form data after displaying
-            if (isset($_SESSION['form_data'])) {
-                unset($_SESSION['form_data']);
-            }
-            ?>
+            </main>
         </div>
     </div>
-</div>
 
 <script>
     // Initialize CKEditor
@@ -105,3 +120,7 @@
         }
     });
 </script>
+
+<?php require_once 'views/admin/layouts/footer.php'; ?>
+</body>
+</html>

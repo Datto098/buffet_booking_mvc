@@ -49,17 +49,22 @@ class Category extends BaseModel {
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
-    }
+    }    public function getAllWithStats() {
+        try {
+            $sql = "SELECT c.*,
+                    (SELECT COUNT(*) FROM food_items f WHERE f.category_id = c.id) as food_count,
+                    CASE WHEN c.is_active = 1 THEN 'active' ELSE 'inactive' END as status,
+                    COALESCE(c.sort_order, 0) as sort_order
+                    FROM {$this->table} c
+                    ORDER BY COALESCE(c.sort_order, 0) ASC, c.name ASC";
 
-    public function getAllWithStats() {
-        $sql = "SELECT c.*,
-                (SELECT COUNT(*) FROM food_items f WHERE f.category_id = c.id) as food_count
-                FROM {$this->table} c
-                ORDER BY c.sort_order ASC, c.name ASC";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll();
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error in getAllWithStats: " . $e->getMessage());
+            return [];
+        }
     }
 
     public function getPopularCategories($limit = 5) {
@@ -75,18 +80,17 @@ class Category extends BaseModel {
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
-    }
-
-    /**
+    }    /**
      * Count categories, optionally by status
-     * @param string $status Optional status to filter by
+     * @param string $status Optional status to filter by ('active' or 'inactive')
      * @return int Number of categories
      */
     public function count($status = null) {
         if ($status) {
-            $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE status = :status";
+            $is_active = ($status === 'active') ? 1 : 0;
+            $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE is_active = :is_active";
             $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':status', $status);
+            $stmt->bindValue(':is_active', $is_active, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetch();
             return $result['count'] ?? 0;
@@ -101,6 +105,40 @@ class Category extends BaseModel {
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    public function transformForStorage($data) {
+        $result = $data;
+        // Convert string status to boolean is_active
+        if (isset($result['status'])) {
+            $result['is_active'] = ($result['status'] === 'active') ? 1 : 0;
+            unset($result['status']);
+        }
+        // Ensure sort_order is an integer
+        if (isset($result['sort_order'])) {
+            $result['sort_order'] = (int)$result['sort_order'];
+        }
+        return $result;
+    }
+
+    public function create($data) {
+        try {
+            $data = $this->transformForStorage($data);
+            return parent::create($data);
+        } catch (PDOException $e) {
+            error_log("Error creating category: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function update($id, $data) {
+        try {
+            $data = $this->transformForStorage($data);
+            return parent::update($id, $data);
+        } catch (PDOException $e) {
+            error_log("Error updating category: " . $e->getMessage());
+            return false;
+        }
     }
 }
 ?>

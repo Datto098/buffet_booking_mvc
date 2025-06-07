@@ -611,11 +611,72 @@ class Order extends BaseModel {
                     COALESCE(SUM(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND status != 'cancelled' THEN total_amount END), 0) as week_revenue,
                     COUNT(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 END) as month_orders,
                     COALESCE(SUM(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND status != 'cancelled' THEN total_amount END), 0) as month_revenue
-                FROM {$this->table}";
+                FROM {$this->table}";        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    /**
+     * Get current month revenue
+     */
+    public function getMonthlyRevenue() {
+        $sql = "SELECT SUM(total_amount) as revenue FROM {$this->table}
+                WHERE MONTH(created_at) = MONTH(CURDATE())
+                AND YEAR(created_at) = YEAR(CURDATE())
+                AND status != 'cancelled'";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
-        return $stmt->fetch();
+        $result = $stmt->fetch();
+        return $result['revenue'] ?? 0;
+    }
+
+    /**
+     * Get monthly revenue data for chart (last 12 months)
+     */
+    public function getMonthlyRevenueData() {
+        $sql = "SELECT
+                    MONTH(created_at) as month,
+                    YEAR(created_at) as year,
+                    SUM(total_amount) as revenue
+                FROM {$this->table}
+                WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+                AND status != 'cancelled'
+                GROUP BY YEAR(created_at), MONTH(created_at)
+                ORDER BY year, month";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $results = $stmt->fetchAll();
+
+        // Initialize array for 12 months with 0 values
+        $monthlyData = array_fill(0, 12, 0);
+
+        foreach ($results as $result) {
+            $monthIndex = $result['month'] - 1; // Convert to 0-based index
+            if ($monthIndex >= 0 && $monthIndex < 12) {
+                $monthlyData[$monthIndex] = (float)$result['revenue'];
+            }
+        }
+
+        return $monthlyData;
+    }
+
+    /**
+     * Get recent orders with customer information
+     */
+    public function getRecentOrdersWithCustomer($limit = 5) {
+        $sql = "SELECT o.*,
+                       COALESCE(CONCAT(u.first_name, ' ', u.last_name), o.customer_name) as customer_name
+                FROM {$this->table} o
+                LEFT JOIN users u ON o.user_id = u.id
+                ORDER BY o.created_at DESC
+                LIMIT :limit";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
 }
 ?>

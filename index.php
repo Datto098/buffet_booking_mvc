@@ -1,7 +1,11 @@
 <?php
+
 /**
  * Main index file - Front Controller
  */
+
+// Start session for authentication checks
+session_start();
 
 require_once 'config/config.php';
 
@@ -33,7 +37,8 @@ try {
     include 'views/errors/500.php';
 }
 
-function routeRequest($segments) {
+function routeRequest($segments)
+{
     // Handle query parameters if no segments are provided
     if (count($segments) === 1 && $segments[0] === 'index.php') {
         $page = $_GET['page'] ?? 'home';
@@ -68,10 +73,10 @@ function routeRequest($segments) {
     // Original segment-based routing
     $page = $segments[0] ?? 'home';
     $action = $segments[1] ?? 'index';
-    $param = $segments[2] ?? null;
-
-    // Handle admin routes
+    $param = $segments[2] ?? null;    // Handle admin routes
     if ($page === 'admin') {
+        error_log("Main router handling admin route: " . print_r($segments, true));
+        error_log("Session in main router: " . print_r($_SESSION, true));
         handleAdminRoute($segments);
         return;
     }
@@ -86,12 +91,38 @@ function routeRequest($segments) {
     handleCustomerRoute($page, $action, $param);
 }
 
-function handleAdminRoute($segments) {
-    // Require admin authentication
-    if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'], ['manager', 'super_admin'])) {
-        header('Location: /auth/login');
+function handleAdminRoute($segments)
+{
+    // Debug logging for admin authentication
+    file_put_contents('debug.log', "handleAdminRoute called with segments: " . print_r($segments, true) . "\n", FILE_APPEND);
+    file_put_contents('debug.log', "Session user_id: " . ($_SESSION['user_id'] ?? 'not set') . "\n", FILE_APPEND);
+    file_put_contents('debug.log', "Session user_role: " . ($_SESSION['user_role'] ?? 'not set') . "\n", FILE_APPEND);
+    file_put_contents('debug.log', "Role check result: " . (in_array($_SESSION['user_role'] ?? '', ['manager', 'super_admin']) ? 'pass' : 'fail') . "\n", FILE_APPEND);
+      // Require admin authentication - check both possible session structures
+    $isAuthenticated = false;
+    $userRole = null;
+
+    // Check standard session structure
+    if (isset($_SESSION['user_id']) && isset($_SESSION['user_role'])) {
+        $userRole = $_SESSION['user_role'];
+        $isAuthenticated = in_array($userRole, ['manager', 'super_admin', 'admin']);
+    }
+
+    // Also check user array structure (fallback)
+    if (!$isAuthenticated && isset($_SESSION['user']['id']) && isset($_SESSION['user']['role'])) {
+        $userRole = $_SESSION['user']['role'];
+        $isAuthenticated = in_array($userRole, ['manager', 'super_admin', 'admin']);
+    }
+
+    file_put_contents('debug.log', "Authentication check - role: $userRole, authenticated: " . ($isAuthenticated ? 'yes' : 'no') . "\n", FILE_APPEND);
+
+    if (!$isAuthenticated) {
+        file_put_contents('debug.log', "Admin authentication failed - redirecting to login\n", FILE_APPEND);
+        header('Location: ' . SITE_URL . '/auth/login');
         exit;
     }
+
+    file_put_contents('debug.log', "Admin authentication passed - proceeding with routing\n", FILE_APPEND);
 
     require_once 'controllers/AdminController.php';
     $controller = new AdminController();
@@ -118,18 +149,22 @@ function handleAdminRoute($segments) {
             break;
         case 'orders':
             handleAdminOrdersRoute($controller, $action, $param);
-            break;        case 'bookings':
-            handleAdminBookingsRoute($controller, $action, $param);
             break;
-        case 'tables':
+        case 'bookings':
+            handleAdminBookingsRoute($controller, $action, $param);
+            break;        case 'tables':
             handleAdminTablesRoute($controller, $action, $param);
+            break;
+        case 'news':
+            handleAdminNewsRoute($action, $param);
             break;
         default:
             $controller->dashboard();
     }
 }
 
-function handleAdminUsersRoute($controller, $action, $param) {
+function handleAdminUsersRoute($controller, $action, $param)
+{
     switch ($action) {
         case 'create':
             $controller->createUser();
@@ -145,7 +180,8 @@ function handleAdminUsersRoute($controller, $action, $param) {
     }
 }
 
-function handleAdminFoodsRoute($controller, $action, $param) {
+function handleAdminFoodsRoute($controller, $action, $param)
+{
     switch ($action) {
         case 'create':
             $controller->createFood();
@@ -161,10 +197,21 @@ function handleAdminFoodsRoute($controller, $action, $param) {
     }
 }
 
-function handleAdminCategoriesRoute($controller, $action, $param) {
+function handleAdminCategoriesRoute($controller, $action, $param)
+{
     switch ($action) {
         case 'create':
             $controller->createCategory();
+            break;
+        case 'edit': // Added case for edit
+            $controller->editCategory($param);
+            break;
+        case 'get': // Added case for get
+            $controller->getCategory($param);
+            break;        case 'update': // Added case for update
+            $controller->updateCategory($param);
+            break;        case 'delete': // Added case for delete
+            $controller->deleteCategory($param);
             break;
         case 'subcategories':
             $controller->getSubcategories($param);
@@ -174,7 +221,8 @@ function handleAdminCategoriesRoute($controller, $action, $param) {
     }
 }
 
-function handleAdminOrdersRoute($controller, $action, $param) {
+function handleAdminOrdersRoute($controller, $action, $param)
+{
     switch ($action) {
         case 'update-status':
             $controller->updateOrderStatus($param);
@@ -193,8 +241,15 @@ function handleAdminOrdersRoute($controller, $action, $param) {
     }
 }
 
-function handleAdminBookingsRoute($controller, $action, $param) {
+function handleAdminBookingsRoute($controller, $action, $param)
+{
     switch ($action) {
+        case 'create':
+            $controller->createBooking();
+            break;
+        case 'store':
+            $controller->storeBooking();
+            break;
         case 'update-status':
             $controller->updateBookingStatus();
             break;
@@ -207,12 +262,19 @@ function handleAdminBookingsRoute($controller, $action, $param) {
         case 'available-tables':
             $controller->getAvailableTables();
             break;
+        case 'edit':
+            $controller->editBooking($param);
+            break;
+        case 'update':
+            $controller->updateBooking();
+            break;
         default:
             $controller->bookings();
     }
 }
 
-function handleAdminTablesRoute($controller, $action, $param) {
+function handleAdminTablesRoute($controller, $action, $param)
+{
     switch ($action) {
         case 'create':
             $controller->createTable();
@@ -231,7 +293,28 @@ function handleAdminTablesRoute($controller, $action, $param) {
     }
 }
 
-function handleApiRoute($segments) {
+function handleAdminNewsRoute($action, $param)
+{
+    require_once 'controllers/NewsController.php';
+    $controller = new NewsController();
+
+    switch ($action) {
+        case 'create':
+            $controller->create();
+            break;
+        case 'edit':
+            $controller->edit($param);
+            break;
+        case 'delete':
+            $controller->delete($param);
+            break;
+        default:
+            $controller->manage();
+    }
+}
+
+function handleApiRoute($segments)
+{
     header('Content-Type: application/json');
 
     // Check if this is an admin API route
@@ -255,7 +338,8 @@ function handleApiRoute($segments) {
     }
 }
 
-function handleAdminApiRoute($segments) {
+function handleAdminApiRoute($segments)
+{
     // Require admin authentication for API routes
     if (!isset($_SESSION['user']) || !in_array($_SESSION['user']['role'], ['manager', 'super_admin'])) {
         http_response_code(401);
@@ -286,7 +370,8 @@ function handleAdminApiRoute($segments) {
             break;
         case 'foods':
             handleAdminFoodApi($controller, $segments);
-            break;        case 'bookings':
+            break;
+        case 'bookings':
             handleAdminBookingApi($controller, $segments);
             break;
         case 'tables':
@@ -298,7 +383,8 @@ function handleAdminApiRoute($segments) {
     }
 }
 
-function handleAdminCategoryApi($controller, $segments) {
+function handleAdminCategoryApi($controller, $segments)
+{
     $action = $segments[3] ?? '';
 
     switch ($action) {
@@ -321,7 +407,8 @@ function handleAdminCategoryApi($controller, $segments) {
     }
 }
 
-function handleAdminFoodApi($controller, $segments) {
+function handleAdminFoodApi($controller, $segments)
+{
     $action = $segments[3] ?? '';
 
     switch ($action) {
@@ -334,7 +421,8 @@ function handleAdminFoodApi($controller, $segments) {
     }
 }
 
-function handleAdminBookingApi($controller, $segments) {
+function handleAdminBookingApi($controller, $segments)
+{
     $action = $segments[3] ?? '';
 
     switch ($action) {
@@ -350,7 +438,8 @@ function handleAdminBookingApi($controller, $segments) {
     }
 }
 
-function handleAdminTableApi($controller, $segments) {
+function handleAdminTableApi($controller, $segments)
+{
     $action = $segments[3] ?? '';
     $param = $segments[4] ?? null;
 
@@ -370,7 +459,8 @@ function handleAdminTableApi($controller, $segments) {
     }
 }
 
-function handleCustomerRoute($page, $action, $param) {    // Customer route mapping
+function handleCustomerRoute($page, $action, $param)
+{    // Customer route mapping
     $routes = [
         'home' => 'controllers/HomeController.php',
         'about' => 'controllers/HomeController.php',
@@ -397,7 +487,8 @@ function handleCustomerRoute($page, $action, $param) {    // Customer route mapp
         http_response_code(404);
         include 'views/errors/404.php';
         return;
-    }    require_once $controllerFile;    // Create controller instance
+    }
+    require_once $controllerFile;    // Create controller instance
     $controllerMap = [
         'about' => 'HomeController',
         'promotions' => 'HomeController',
@@ -409,7 +500,8 @@ function handleCustomerRoute($page, $action, $param) {    // Customer route mapp
 
     if (!class_exists($controllerClass)) {
         throw new Exception("Controller class $controllerClass not found");
-    }    $controller = new $controllerClass();
+    }
+    $controller = new $controllerClass();
 
     // Call the appropriate method
     // For about and promotions pages, call the page method directly
@@ -425,4 +517,3 @@ function handleCustomerRoute($page, $action, $param) {    // Customer route mapp
         $controller->index();
     }
 }
-?>

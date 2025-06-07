@@ -1,317 +1,691 @@
-<?php
-$pageTitle = $data['title'];
-require_once 'views/admin/layouts/header.php';
-?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo $csrf_token ?? ''; ?>">
+    <title>Tables Management - Admin</title>
+    <?php require_once 'views/admin/layouts/header.php'; ?>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <?php require_once 'views/admin/layouts/sidebar.php'; ?>
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <?php require_once 'views/admin/layouts/sidebar.php'; ?>
-
-        <!-- Main Content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Table Management</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <button type="button" class="btn btn-outline-primary me-2" onclick="loadUtilizationReport()">
-                        <i class="fas fa-chart-bar"></i> Utilization Report
-                    </button>
-                    <a href="/admin/tables/create" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add New Table
-                    </a>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">Tables Management</h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/admin/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Tables</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-info" onclick="showUtilizationReport()">
+                                <i class="fas fa-chart-bar"></i> Report
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportTables()">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                        </div>
+                        <a href="<?= SITE_URL ?>/admin/tables/create" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus"></i> Add Table
+                        </a>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Flash Messages -->
-            <?php if (isset($_SESSION['flash'])): ?>
-                <?php foreach ($_SESSION['flash'] as $type => $message): ?>
-                    <div class="alert alert-<?= $type === 'error' ? 'danger' : $type ?> alert-dismissible fade show" role="alert">
-                        <?= htmlspecialchars($message) ?>
+                <!-- Flash Messages -->
+                <?php if (isset($_SESSION['success'])): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle"></i> <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                <?php endforeach; ?>
-                <?php unset($_SESSION['flash']); ?>
-            <?php endif; ?>
+                <?php endif; ?>
 
-            <!-- Stats Cards -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card text-center border-left-primary">
-                        <div class="card-body">
-                            <div class="text-primary font-weight-bold">Total Tables</div>
-                            <div class="h4"><?= number_format($data['stats']['total_tables']) ?></div>
-                        </div>
+                <?php if (isset($_SESSION['error'])): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle"></i> <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center border-left-success">
-                        <div class="card-body">
-                            <div class="text-success font-weight-bold">Available</div>
-                            <div class="h4"><?= number_format($data['stats']['available_tables']) ?></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center border-left-info">
-                        <div class="card-body">
-                            <div class="text-info font-weight-bold">Total Capacity</div>
-                            <div class="h4"><?= number_format($data['stats']['total_capacity']) ?></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center border-left-warning">
-                        <div class="card-body">
-                            <div class="text-warning font-weight-bold">Avg Capacity</div>
-                            <div class="h4"><?= number_format($data['stats']['average_capacity'], 1) ?></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <?php endif; ?>
 
-            <!-- Location Distribution -->
-            <div class="row mb-4">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="m-0 font-weight-bold text-primary">Tables by Location</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <?php foreach ($data['locationStats'] as $location): ?>
-                                    <div class="col-md-2 text-center">
-                                        <div class="border p-3 rounded">
-                                            <strong><?= htmlspecialchars($location['location'] ?: 'No Location') ?></strong>
-                                            <div class="text-primary"><?= $location['table_count'] ?> tables</div>
-                                            <div class="text-muted small"><?= $location['total_capacity'] ?> seats</div>
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 card-gradient-primary">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Total Tables
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $stats['total_tables'] ?? 0; ?>
                                         </div>
                                     </div>
-                                <?php endforeach; ?>
+                                    <div class="col-auto">
+                                        <i class="fas fa-table fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 card-gradient-success">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Available
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $stats['available_tables'] ?? 0; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 card-gradient-info">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                            Total Capacity
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo $stats['total_capacity'] ?? 0; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 card-gradient-warning">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                            Avg Capacity
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?php echo round($stats['average_capacity'] ?? 0, 1); ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Tables Table -->
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">All Tables</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Table #</th>
-                                    <th>Capacity</th>
-                                    <th>Location</th>
-                                    <th>Description</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($data['tables'])): ?>
-                                    <tr>
-                                        <td colspan="7" class="text-center py-4">
-                                            <i class="fas fa-table fa-3x text-muted mb-3"></i>
-                                            <p class="text-muted">No tables found.</p>
-                                        </td>
-                                    </tr>
-                                <?php else: ?>
-                                    <?php foreach ($data['tables'] as $table): ?>
-                                        <tr>
-                                            <td>
-                                                <strong><?= htmlspecialchars($table['table_number']) ?></strong>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-info">
-                                                    <i class="fas fa-users"></i> <?= $table['capacity'] ?>
-                                                </span>
-                                            </td>
-                                            <td><?= htmlspecialchars($table['location'] ?: 'N/A') ?></td>
-                                            <td>
-                                                <span class="text-muted">
-                                                    <?= $table['description'] ? htmlspecialchars(substr($table['description'], 0, 50)) . (strlen($table['description']) > 50 ? '...' : '') : 'N/A' ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <?php if ($table['is_available']): ?>
-                                                    <span class="badge bg-success">Available</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-secondary">Unavailable</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td><?= date('M j, Y', strtotime($table['created_at'])) ?></td>
-                                            <td>
-                                                <div class="btn-group" role="group">
-                                                    <a href="/admin/tables/edit/<?= $table['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="viewTableHistory(<?= $table['id'] ?>)" title="View History">
-                                                        <i class="fas fa-history"></i>
-                                                    </button>
-                                                    <form method="POST" action="/admin/tables/delete/<?= $table['id'] ?>" class="d-inline">
-                                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger btn-delete" title="Delete">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </form>
+                <!-- Location Distribution -->
+                <?php if (!empty($data['locationStats'])): ?>
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card shadow">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Tables by Location</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <?php foreach ($data['locationStats'] as $location): ?>
+                                        <div class="col-md-2 col-sm-6 mb-3">
+                                            <div class="text-center p-3 border rounded">
+                                                <div class="location-icon mb-2">
+                                                    <i class="fas fa-map-marker-alt fa-2x text-primary"></i>
                                                 </div>
-                                            </td>
-                                        </tr>
+                                                <h6 class="mb-1"><?php echo htmlspecialchars($location['location'] ?: 'Main Area'); ?></h6>
+                                                <div class="text-primary font-weight-bold"><?php echo $location['table_count']; ?> tables</div>
+                                                <small class="text-muted"><?php echo $location['total_capacity']; ?> seats</small>
+                                            </div>
+                                        </div>
                                     <?php endforeach; ?>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <?php if ($data['totalPages'] > 1): ?>
-                        <nav aria-label="Tables pagination">
-                            <ul class="pagination justify-content-center">
-                                <?php for ($i = 1; $i <= $data['totalPages']; $i++): ?>
-                                    <li class="page-item <?= $i == $data['currentPage'] ? 'active' : '' ?>">
-                                        <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
-                                    </li>
-                                <?php endfor; ?>
-                            </ul>
-                        </nav>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </main>
-    </div>
-</div>
-
-<!-- Table History Modal -->
-<div class="modal fade" id="tableHistoryModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Table Booking History</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="tableHistoryContent">
-                <!-- Content will be loaded via AJAX -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Utilization Report Modal -->
-<div class="modal fade" id="utilizationModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Table Utilization Report</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="utilizationContent">
-                <!-- Content will be loaded via AJAX -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Delete confirmation
-    document.querySelectorAll('.btn-delete').forEach(button => {
-        button.addEventListener('click', function(e) {
-            if (!confirm('Are you sure you want to delete this table? This action cannot be undone.')) {
-                e.preventDefault();
-            }
-        });
-    });
-});
-
-function viewTableHistory(tableId) {
-    fetch(`/admin/tables/${tableId}/history`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                let html = '<div class="table-responsive"><table class="table table-sm">';
-                html += '<thead><tr><th>Date</th><th>Time</th><th>Customer</th><th>Guests</th><th>Status</th></tr></thead><tbody>';
-
-                if (data.history && data.history.length > 0) {
-                    data.history.forEach(booking => {
-                        html += `<tr>
-                            <td>${new Date(booking.booking_date).toLocaleDateString()}</td>
-                            <td>${booking.booking_time}</td>
-                            <td>${booking.customer_name}</td>
-                            <td>${booking.guest_count}</td>
-                            <td><span class="badge bg-${getStatusColor(booking.status)}">${booking.status}</span></td>
-                        </tr>`;
-                    });
-                } else {
-                    html += '<tr><td colspan="5" class="text-center">No booking history found</td></tr>';
-                }
-
-                html += '</tbody></table></div>';
-                document.getElementById('tableHistoryContent').innerHTML = html;
-
-                const modal = new bootstrap.Modal(document.getElementById('tableHistoryModal'));
-                modal.show();
-            }
-        })
-        .catch(error => {
-            console.error('Error loading table history:', error);
-        });
-}
-
-function loadUtilizationReport() {
-    fetch('/admin/tables/utilization?days=30')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                let html = '<div class="mb-3"><h6>Table Utilization (Last 30 Days)</h6></div>';
-                html += '<div class="table-responsive"><table class="table table-striped">';
-                html += '<thead><tr><th>Table</th><th>Capacity</th><th>Total Bookings</th><th>Completed</th><th>Avg/Day</th><th>Utilization</th></tr></thead><tbody>';
-
-                data.utilization.forEach(table => {
-                    const utilizationRate = table.capacity > 0 ? (table.completed_bookings / (table.capacity * data.period_days)) * 100 : 0;
-                    html += `<tr>
-                        <td><strong>${table.table_number}</strong></td>
-                        <td>${table.capacity}</td>
-                        <td>${table.total_bookings}</td>
-                        <td>${table.completed_bookings}</td>
-                        <td>${parseFloat(table.avg_bookings_per_day).toFixed(1)}</td>
-                        <td>
-                            <div class="progress" style="height: 20px;">
-                                <div class="progress-bar bg-${utilizationRate > 70 ? 'success' : utilizationRate > 40 ? 'warning' : 'danger'}"
-                                     style="width: ${Math.min(utilizationRate, 100)}%">
-                                    ${utilizationRate.toFixed(1)}%
                                 </div>
                             </div>
-                        </td>
-                    </tr>`;
-                });
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
 
-                html += '</tbody></table></div>';
-                document.getElementById('utilizationContent').innerHTML = html;
+                <!-- Tables Table -->
+                <div class="card shadow">
+                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold text-primary">All Tables</h6>
+                        <div class="card-tools">
+                            <div class="input-group input-group-sm" style="width: 250px;">
+                                <input type="text" name="search" class="form-control float-right"
+                                       placeholder="Search tables..." id="searchInput"
+                                       value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-default" onclick="searchTables()">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <?php if (empty($data['tables'])): ?>
+                            <div class="text-center py-5">
+                                <i class="fas fa-table fa-4x text-muted mb-3"></i>
+                                <h5 class="text-muted">No tables found</h5>
+                                <p class="text-muted">Start by adding your first table to the restaurant.</p>                                <a href="<?= SITE_URL ?>/admin/tables/create" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Create Table
+                                </a>
+                            </div>
+                        <?php else: ?>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="5%">
+                                                <input type="checkbox" id="selectAll" onchange="toggleAllCheckboxes()">
+                                            </th>
+                                            <th width="15%">Table #</th>
+                                            <th width="10%">Capacity</th>
+                                            <th width="15%">Location</th>
+                                            <th width="25%">Description</th>
+                                            <th width="10%">Status</th>
+                                            <th width="10%">Created</th>
+                                            <th width="10%">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($data['tables'] as $table): ?>
+                                            <tr>
+                                                <td>
+                                                    <input type="checkbox" class="table-checkbox" value="<?php echo $table['id']; ?>">
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="table-icon me-2">
+                                                            <i class="fas fa-table text-primary"></i>
+                                                        </div>
+                                                        <strong><?php echo htmlspecialchars($table['table_number']); ?></strong>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info text-white">
+                                                        <i class="fas fa-users"></i> <?php echo $table['capacity']; ?>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <?php if (!empty($table['location'])): ?>
+                                                        <span class="badge bg-secondary">
+                                                            <i class="fas fa-map-marker-alt"></i>
+                                                            <?php echo htmlspecialchars($table['location']); ?>
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="text-muted">Main Area</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td>
+                                                    <?php if (!empty($table['description'])): ?>
+                                                        <span class="text-muted">
+                                                            <?php
+                                                            $desc = htmlspecialchars($table['description']);
+                                                            echo strlen($desc) > 50 ? substr($desc, 0, 50) . '...' : $desc;
+                                                            ?>
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="text-muted">No description</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox"
+                                                               id="status_<?php echo $table['id']; ?>"
+                                                               <?php echo $table['is_available'] ? 'checked' : ''; ?>
+                                                               onchange="toggleTableStatus(<?php echo $table['id']; ?>, this.checked)">
+                                                        <label class="form-check-label" for="status_<?php echo $table['id']; ?>">
+                                                            <span class="badge bg-<?php echo $table['is_available'] ? 'success' : 'secondary'; ?>">
+                                                                <?php echo $table['is_available'] ? 'Available' : 'Unavailable'; ?>
+                                                            </span>
+                                                        </label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <small><?php echo date('M j, Y', strtotime($table['created_at'])); ?></small>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-info"
+                                                                onclick="viewTableHistory(<?php echo $table['id']; ?>)"
+                                                                title="View History">
+                                                            <i class="fas fa-history"></i>
+                                                        </button>                                                        <a href="<?= SITE_URL ?>/admin/tables/edit/<?php echo $table['id']; ?>"
+                                                           class="btn btn-sm btn-outline-primary"
+                                                           title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-success"
+                                                                onclick="quickBooking(<?php echo $table['id']; ?>)"
+                                                                title="Quick Booking">
+                                                            <i class="fas fa-calendar-plus"></i>
+                                                        </button>
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-danger"
+                                                                onclick="deleteTable(<?php echo $table['id']; ?>)"
+                                                                title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                const modal = new bootstrap.Modal(document.getElementById('utilizationModal'));
-                modal.show();
+                            <!-- Bulk Actions -->
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <select class="form-select form-select-sm me-2" id="bulkAction" style="width: auto;">
+                                            <option value="">Bulk Actions</option>
+                                            <option value="enable">Make Available</option>
+                                            <option value="disable">Make Unavailable</option>
+                                            <option value="delete">Delete Selected</option>
+                                        </select>
+                                        <button type="button" class="btn btn-sm btn-secondary" onclick="executeBulkAction()">
+                                            Apply
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <small class="text-muted">
+                                        Showing <?php echo count($data['tables']); ?> tables
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Pagination -->
+                            <?php if (isset($data['totalPages']) && $data['totalPages'] > 1): ?>
+                                <nav aria-label="Tables pagination" class="mt-4">
+                                    <ul class="pagination justify-content-center">
+                                        <?php if ($data['currentPage'] > 1): ?>
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page=<?php echo $data['currentPage'] - 1; ?>">Previous</a>
+                                            </li>
+                                        <?php endif; ?>
+
+                                        <?php for ($i = 1; $i <= $data['totalPages']; $i++): ?>
+                                            <li class="page-item <?php echo $i == $data['currentPage'] ? 'active' : ''; ?>">
+                                                <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                            </li>
+                                        <?php endfor; ?>
+
+                                        <?php if ($data['currentPage'] < $data['totalPages']): ?>
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page=<?php echo $data['currentPage'] + 1; ?>">Next</a>
+                                            </li>
+                                        <?php endif; ?>
+                                    </ul>
+                                </nav>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Table History Modal -->
+    <div class="modal fade" id="tableHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Table Booking History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="tableHistoryContent">
+                    <!-- Content will be loaded via AJAX -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Utilization Report Modal -->
+    <div class="modal fade" id="utilizationModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Table Utilization Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="utilizationContent">
+                    <!-- Content will be loaded via AJAX -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filter Tables</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="filterForm" method="GET">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="filterStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="filterStatus" name="status">
+                                        <option value="">All Statuses</option>
+                                        <option value="available" <?php echo (isset($_GET['status']) && $_GET['status'] == 'available') ? 'selected' : ''; ?>>Available</option>
+                                        <option value="unavailable" <?php echo (isset($_GET['status']) && $_GET['status'] == 'unavailable') ? 'selected' : ''; ?>>Unavailable</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="filterLocation" class="form-label">Location</label>
+                                    <select class="form-select" id="filterLocation" name="location">
+                                        <option value="">All Locations</option>
+                                        <?php if (!empty($data['locationStats'])): ?>
+                                            <?php foreach ($data['locationStats'] as $location): ?>
+                                                <option value="<?php echo htmlspecialchars($location['location']); ?>"
+                                                        <?php echo (isset($_GET['location']) && $_GET['location'] == $location['location']) ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($location['location'] ?: 'Main Area'); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="filterCapacityMin" class="form-label">Min Capacity</label>
+                                    <input type="number" class="form-control" id="filterCapacityMin" name="capacity_min"
+                                           value="<?php echo htmlspecialchars($_GET['capacity_min'] ?? ''); ?>" min="1">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="filterCapacityMax" class="form-label">Max Capacity</label>
+                                    <input type="number" class="form-control" id="filterCapacityMax" name="capacity_max"
+                                           value="<?php echo htmlspecialchars($_GET['capacity_max'] ?? ''); ?>" min="1">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
+                    <button type="button" class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php require_once 'views/admin/layouts/footer.php'; ?>
+
+    <script>
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchTables();
+        }
+    });
+
+    function searchTables() {
+        const searchTerm = document.getElementById('searchInput').value;
+        const url = new URL(window.location);
+        if (searchTerm) {
+            url.searchParams.set('search', searchTerm);
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.location = url;
+    }
+
+    // Toggle table status
+    function toggleTableStatus(tableId, isAvailable) {
+        fetch('<?= SITE_URL ?>/admin/tables/toggle-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                id: tableId,
+                is_available: isAvailable
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Table status updated successfully', 'success');
+                // Update badge
+                const label = document.querySelector(`label[for="status_${tableId}"] .badge`);
+                if (label) {
+                    label.className = `badge bg-${isAvailable ? 'success' : 'secondary'}`;
+                    label.textContent = isAvailable ? 'Available' : 'Unavailable';
+                }
+            } else {
+                showNotification(data.message || 'Failed to update status', 'error');
+                // Revert checkbox
+                document.getElementById(`status_${tableId}`).checked = !isAvailable;
             }
         })
         .catch(error => {
-            console.error('Error loading utilization report:', error);
+            showNotification('An error occurred', 'error');
+            // Revert checkbox
+            document.getElementById(`status_${tableId}`).checked = !isAvailable;
         });
-}
+    }
 
-function getStatusColor(status) {
-    const colors = {
-        'pending': 'warning',
-        'confirmed': 'success',
-        'completed': 'primary',
-        'cancelled': 'danger',
-        'no_show': 'secondary'
-    };
-    return colors[status] || 'secondary';
-}
-</script>
+    // View table history
+    function viewTableHistory(tableId) {
+        const modal = new bootstrap.Modal(document.getElementById('tableHistoryModal'));
+        const content = document.getElementById('tableHistoryContent');
 
-<?php require_once 'views/admin/layouts/footer.php'; ?>
+        content.innerHTML = '<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
+        modal.show();
+
+        fetch(`/admin/tables/history/${tableId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let html = '<div class="table-responsive"><table class="table table-sm">';
+                    html += '<thead><tr><th>Date</th><th>Time</th><th>Customer</th><th>Guests</th><th>Status</th></tr></thead><tbody>';
+
+                    if (data.history && data.history.length > 0) {
+                        data.history.forEach(booking => {
+                            html += `<tr>
+                                <td>${new Date(booking.booking_date).toLocaleDateString()}</td>
+                                <td>${booking.booking_time}</td>
+                                <td>${booking.customer_name}</td>
+                                <td>${booking.guest_count}</td>
+                                <td><span class="badge bg-${getStatusColor(booking.status)}">${booking.status}</span></td>
+                            </tr>`;
+                        });
+                    } else {
+                        html += '<tr><td colspan="5" class="text-center">No booking history found</td></tr>';
+                    }
+
+                    html += '</tbody></table></div>';
+                    content.innerHTML = html;
+                } else {
+                    content.innerHTML = '<div class="alert alert-danger">Failed to load booking history.</div>';
+                }
+            })
+            .catch(error => {
+                content.innerHTML = '<div class="alert alert-danger">Error loading booking history.</div>';
+            });
+    }
+
+    // Quick booking
+    function quickBooking(tableId) {
+        window.location.href = `/admin/bookings/create?table_id=${tableId}`;
+    }
+
+    // Delete table
+    function deleteTable(tableId) {
+        if (!confirm('Are you sure you want to delete this table? This action cannot be undone.')) {
+            return;
+        }
+
+        fetch('<?= SITE_URL ?>/admin/tables/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ id: tableId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Table deleted successfully', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification(data.message || 'Failed to delete table', 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('An error occurred', 'error');
+        });
+    }
+
+    // Utilization report
+    function showUtilizationReport() {
+        const modal = new bootstrap.Modal(document.getElementById('utilizationModal'));
+        const content = document.getElementById('utilizationContent');
+
+        content.innerHTML = '<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
+        modal.show();
+
+        fetch('<?= SITE_URL ?>/admin/tables/utilization-report')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    content.innerHTML = data.html;
+                } else {
+                    content.innerHTML = '<div class="alert alert-danger">Failed to load utilization report.</div>';
+                }
+            })
+            .catch(error => {
+                content.innerHTML = '<div class="alert alert-danger">Error loading utilization report.</div>';
+            });
+    }
+
+    // Bulk actions
+    function toggleAllCheckboxes() {
+        const masterCheckbox = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.table-checkbox');
+
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = masterCheckbox.checked;
+        });
+    }
+
+    function executeBulkAction() {
+        const action = document.getElementById('bulkAction').value;
+        const selectedIds = Array.from(document.querySelectorAll('.table-checkbox:checked'))
+                                .map(cb => cb.value);
+
+        if (!action) {
+            alert('Please select an action');
+            return;
+        }
+
+        if (selectedIds.length === 0) {
+            alert('Please select at least one table');
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to ${action} ${selectedIds.length} table(s)?`)) {
+            return;
+        }
+
+        // Placeholder for bulk action implementation
+        showNotification('Bulk action feature coming soon', 'info');
+    }
+
+    // Filter functions
+    function applyFilters() {
+        document.getElementById('filterForm').submit();
+    }
+
+    function clearFilters() {
+        window.location.href = '<?= SITE_URL ?>/admin/tables';
+    }
+
+    // Export function
+    function exportTables() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('export', 'csv');
+        window.location.href = `/admin/tables?${params.toString()}`;
+    }
+
+    // Helper functions
+    function getStatusColor(status) {
+        switch(status) {
+            case 'confirmed': return 'success';
+            case 'pending': return 'warning';
+            case 'completed': return 'primary';
+            case 'cancelled': return 'danger';
+            default: return 'secondary';
+        }
+    }
+
+    // Notification function
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 5000);
+    }
+
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    </script>
+</body>
+</html>

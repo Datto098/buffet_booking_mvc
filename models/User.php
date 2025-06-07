@@ -51,6 +51,42 @@ class User extends BaseModel {
         return $this->create($data);
     }
 
+    /**
+     * Get all users with transformed data format for admin view
+     * Transforms database fields to match view template expectations
+     */
+    public function getAllForAdmin() {
+        $users = $this->findAll();
+
+        return array_map(function($user) {
+            return $this->transformUserData($user);
+        }, $users);
+    }
+
+    /**
+     * Transform user data from database format to view format
+     */
+    public function transformUserData($user) {
+        // Create full_name from first_name and last_name
+        $fullName = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
+        if (empty($fullName)) {
+            $fullName = explode('@', $user['email'])[0]; // Use email prefix if no name
+        }
+
+        // Create username from email (part before @)
+        $username = explode('@', $user['email'])[0];
+
+        // Transform is_active to status
+        $status = $user['is_active'] == 1 ? 'active' : 'inactive';
+
+        // Return user data with additional transformed fields
+        return array_merge($user, [
+            'full_name' => $fullName,
+            'username' => $username,
+            'status' => $status
+        ]);
+    }
+
     public function verifyPassword($password, $hashedPassword) {
         return password_verify($password, $hashedPassword);
     }
