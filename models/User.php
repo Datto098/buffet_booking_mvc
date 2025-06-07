@@ -43,11 +43,19 @@ class User extends BaseModel {
     }
 
     public function createUser($data) {
-        // Hash password before storing
+        if (isset($data['full_name'])) {
+            $parts = explode(' ', trim($data['full_name']));
+            $data['first_name'] = array_shift($parts);
+            $data['last_name'] = implode(' ', $parts);
+            unset($data['full_name']);
+        }
+        if (isset($data['phone_number'])) {
+            $data['phone'] = $data['phone_number'];
+            unset($data['phone_number']);
+        }
         if (isset($data['password'])) {
             $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
         }
-
         return $this->create($data);
     }
 

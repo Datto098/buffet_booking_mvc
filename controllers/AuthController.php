@@ -87,7 +87,7 @@ class AuthController extends BaseController {
             $_SESSION['success'] = 'Đăng nhập thành công!';
 
             // Redirect based on role
-            if ($user['role'] === 'admin') {
+            if ($user['role'] === 'super_admin') {
                 redirect('/superadmin/');
             } elseif ($user['role'] === 'manager') {
                 redirect('/admin/');
@@ -138,6 +138,9 @@ class AuthController extends BaseController {
             $this->showRegisterForm();
             return;
         }
+        //  echo '<pre>';
+        // print_r($_POST);
+        // echo '</pre>';
 
         // Create new user
         $userData = [
@@ -147,7 +150,10 @@ class AuthController extends BaseController {
             'password' => $password,
             'role' => 'customer'
         ];
-
+        // echo '<pre>';
+        // print_r($userData);
+        // echo '</pre>';
+        
         if ($this->userModel->createUser($userData)) {
             $_SESSION['success'] = 'Đăng ký thành công! Vui lòng đăng nhập.';
             redirect('/auth/login');
