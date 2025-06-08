@@ -7,7 +7,8 @@ require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Booking.php';
 require_once __DIR__ . '/../models/Table.php';
 
-class AdminController extends BaseController {
+class AdminController extends BaseController
+{
     private $categoryModel;
     private $userModel;
     private $foodModel;
@@ -15,7 +16,8 @@ class AdminController extends BaseController {
     private $bookingModel;
     private $tableModel;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->requireRole(['manager', 'super_admin']);
         $this->categoryModel = new Category();
         $this->userModel = new User();
@@ -23,14 +25,18 @@ class AdminController extends BaseController {
         $this->orderModel = new Order();
         $this->bookingModel = new Booking();
         $this->tableModel = new Table();
-    }    public function dashboard() {
+    }
+    public function dashboard()
+    {
         $data = [
             'title' => 'Admin Dashboard',
             'stats' => $this->getDashboardStats()
         ];
 
         $this->loadAdminView('dashboard', $data);
-    }    public function users() {
+    }
+    public function users()
+    {
         $userModel = new User();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
@@ -45,17 +51,18 @@ class AdminController extends BaseController {
         $users = array_slice($allUsers, $offset, $limit);
 
         // Calculate statistics for the dashboard cards
-        $activeUsers = count(array_filter($allUsers, function($user) {
+        $activeUsers = count(array_filter($allUsers, function ($user) {
             return $user['is_active'] == 1;
         }));
 
-        $adminUsers = count(array_filter($allUsers, function($user) {
+        $adminUsers = count(array_filter($allUsers, function ($user) {
             return in_array($user['role'], ['manager', 'super_admin']);
         }));
 
-        $newToday = count(array_filter($allUsers, function($user) {
+        $newToday = count(array_filter($allUsers, function ($user) {
             return date('Y-m-d', strtotime($user['created_at'])) === date('Y-m-d');
-        }));        $data = [
+        }));
+        $data = [
             'title' => 'User Management',
             'users' => $users,
             'pagination' => [
@@ -73,7 +80,9 @@ class AdminController extends BaseController {
         ];
 
         $this->loadAdminView('users/index', $data);
-    }public function createUser() {
+    }
+    public function createUser()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$this->validateCSRF()) {
                 $this->setFlash('error', 'Invalid security token.');
@@ -113,7 +122,8 @@ class AdminController extends BaseController {
         $this->loadAdminView('users/create', $data);
     }
 
-    public function editUser($id) {
+    public function editUser($id)
+    {
         $userModel = new User();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -121,7 +131,8 @@ class AdminController extends BaseController {
                 $this->setFlash('error', 'Invalid security token.');
                 $this->redirect('/admin/users');
                 return;
-            }            $userData = [
+            }
+            $userData = [
                 'first_name' => $this->sanitize($_POST['first_name']),
                 'last_name' => $this->sanitize($_POST['last_name']),
                 'email' => $this->sanitize($_POST['email']),
@@ -178,7 +189,8 @@ class AdminController extends BaseController {
         $this->loadAdminView('users/edit', $data);
     }
 
-    public function deleteUser($id) {
+    public function deleteUser($id)
+    {
         if (!$this->validateCSRF()) {
             $this->setFlash('error', 'Invalid security token.');
             $this->redirect('/admin/users');
@@ -194,7 +206,9 @@ class AdminController extends BaseController {
         }
 
         $this->redirect('/admin/users');
-    }    public function foods() {
+    }
+    public function foods()
+    {
         $foodModel = new Food();
         $categoryModel = new Category();
 
@@ -210,13 +224,13 @@ class AdminController extends BaseController {
         $totalPages = ceil($totalFoods / $limit);
 
         // Calculate statistics for the dashboard cards
-        $availableFoods = count(array_filter($allFoods, function($food) {
+        $availableFoods = count(array_filter($allFoods, function ($food) {
             return $food['is_available'] == 1;
         }));
 
         $totalCategories = count($categories);
 
-        $popularToday = count(array_filter($allFoods, function($food) {
+        $popularToday = count(array_filter($allFoods, function ($food) {
             // This is a simplified calculation - you can make it more sophisticated
             return $food['is_available'] == 1 && ($food['price'] ?? 0) > 10;
         }));
@@ -236,7 +250,8 @@ class AdminController extends BaseController {
         $this->loadAdminView('foods/index', $data);
     }
 
-    public function createFood() {
+    public function createFood()
+    {
         $categoryModel = new Category();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -245,16 +260,13 @@ class AdminController extends BaseController {
                 $this->redirect('/admin/foods');
                 return;
             }
-
-            $foodModel = new Food();
-            $foodData = [
+            $foodModel = new Food();            $foodData = [
                 'name' => $this->sanitize($_POST['name']),
-                'description' => $this->sanitize($_POST['description']),
+                'description' => $this->sanitize($_POST['description'] ?? ''),
                 'price' => (float)$_POST['price'],
                 'category_id' => (int)$_POST['category_id'],
                 'subcategory_id' => !empty($_POST['subcategory_id']) ? (int)$_POST['subcategory_id'] : null,
                 'is_available' => isset($_POST['is_available']) ? 1 : 0,
-                'is_featured' => isset($_POST['is_featured']) ? 1 : 0,
                 'created_at' => date('Y-m-d H:i:s')
             ];            // Handle image upload
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -268,8 +280,14 @@ class AdminController extends BaseController {
 
                 if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath)) {
                     $foodData['image'] = $fileName;
+                    error_log("Image uploaded successfully: " . $fileName);
+                } else {
+                    error_log("Failed to move uploaded file from " . $_FILES['image']['tmp_name'] . " to " . $uploadPath);
                 }
-            }
+            } else {
+                error_log("Image upload failed or no image provided. Error: " . ($_FILES['image']['error'] ?? 'No file'));            }
+
+            error_log("Food data to be inserted: " . print_r($foodData, true));
 
             if ($foodModel->create($foodData)) {
                 $this->setFlash('success', 'Food item created successfully.');
@@ -279,7 +297,8 @@ class AdminController extends BaseController {
 
             $this->redirect('/admin/foods');
             return;
-        }        $data = [
+        }
+        $data = [
             'title' => 'Create Food Item',
             'categories' => $categoryModel->getMainCategories(),
             'csrf_token' => $this->generateCSRF()
@@ -288,7 +307,9 @@ class AdminController extends BaseController {
         $this->loadAdminView('foods/create', $data);
     }
 
-    public function editFood($id) {        $foodModel = new Food();
+    public function editFood($id)
+    {
+        $foodModel = new Food();
         $categoryModel = new Category();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -296,23 +317,14 @@ class AdminController extends BaseController {
                 $this->setFlash('error', 'Invalid security token.');
                 $this->redirect('/admin/foods');
                 return;
-            }
-
-            $foodData = [
+            }            $foodData = [
                 'name' => $this->sanitize($_POST['name']),
                 'description' => $this->sanitize($_POST['description'] ?? ''),
-                'price' => (float)$_POST['price'],                'category_id' => (int)$_POST['category_id'],
+                'price' => (float)$_POST['price'],
+                'category_id' => (int)$_POST['category_id'],
                 'is_available' => isset($_POST['is_available']) ? 1 : 0,
-                'ingredients' => $this->sanitize($_POST['ingredients'] ?? ''),
-                'spice_level' => $_POST['spice_level'] ?? 'mild',
-                'prep_time' => !empty($_POST['prep_time']) ? (int)$_POST['prep_time'] : null,
-                'calories' => !empty($_POST['calories']) ? (int)$_POST['calories'] : null,
-                'is_vegetarian' => isset($_POST['is_vegetarian']) ? 1 : 0,
-                'is_featured' => isset($_POST['is_featured']) ? 1 : 0,
-                'is_popular' => isset($_POST['is_popular']) ? 1 : 0,
-                'sort_order' => !empty($_POST['sort_order']) ? (int)$_POST['sort_order'] : 0,
                 'updated_at' => date('Y-m-d H:i:s')
-            ];            // Handle image upload
+            ];// Handle image upload
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $uploadDir = 'uploads/food_images/';
                 if (!is_dir($uploadDir)) {
@@ -351,7 +363,8 @@ class AdminController extends BaseController {
             return;
         }
 
-        $categories = $categoryModel->findAll();        $data = [
+        $categories = $categoryModel->findAll();
+        $data = [
             'title' => 'Edit Food Item',
             'food' => $food,
             'categories' => $categories
@@ -360,7 +373,8 @@ class AdminController extends BaseController {
         $this->loadAdminView('foods/edit', $data);
     }
 
-    public function deleteFood($id) {
+    public function deleteFood($id)
+    {
         if (!$this->validateCSRF()) {
             $this->setFlash('error', 'Invalid security token.');
             $this->redirect('/admin/foods');
@@ -368,7 +382,8 @@ class AdminController extends BaseController {
         }
 
         $foodModel = new Food();
-        $food = $foodModel->findById($id);        if ($food && $foodModel->delete($id)) {
+        $food = $foodModel->findById($id);
+        if ($food && $foodModel->delete($id)) {
             // Delete image file
             if ($food['image'] && file_exists('uploads/food_images/' . $food['image'])) {
                 unlink('uploads/food_images/' . $food['image']);
@@ -379,7 +394,9 @@ class AdminController extends BaseController {
         }
 
         $this->redirect('/admin/foods');
-    }    public function orders() {
+    }
+    public function orders()
+    {
         $orderModel = new Order();
 
         $page = (int)($_GET['page'] ?? 1);
@@ -394,23 +411,23 @@ class AdminController extends BaseController {
         // Calculate statistics for the dashboard cards
         $allOrders = $orderModel->getAllOrders(); // Get all orders for statistics
 
-        $completedOrders = count(array_filter($allOrders, function($order) {
+        $completedOrders = count(array_filter($allOrders, function ($order) {
             return $order['status'] === 'completed';
         }));
 
-        $pendingOrders = count(array_filter($allOrders, function($order) {
+        $pendingOrders = count(array_filter($allOrders, function ($order) {
             return $order['status'] === 'pending';
         }));
 
-        $todayRevenue = array_sum(array_map(function($order) {
-            if (date('Y-m-d', strtotime($order['created_at'])) === date('Y-m-d')
-                && $order['status'] === 'completed') {
+        $todayRevenue = array_sum(array_map(function ($order) {
+            if (
+                date('Y-m-d', strtotime($order['created_at'])) === date('Y-m-d')
+                && $order['status'] === 'completed'
+            ) {
                 return $order['total_amount'] ?? 0;
             }
             return 0;
-        }, $allOrders));
-
-        $data = [
+        }, $allOrders));        $data = [
             'title' => 'Order Management',
             'orders' => $orders,
             'currentPage' => $page,
@@ -419,13 +436,15 @@ class AdminController extends BaseController {
             'statusFilter' => $status,
             'completedOrders' => $completedOrders,
             'pendingOrders' => $pendingOrders,
-            'todayRevenue' => $todayRevenue
+            'todayRevenue' => $todayRevenue,
+            'csrf_token' => $this->generateCSRF()
         ];
 
         $this->loadAdminView('orders/index', $data);
     }
 
-    public function updateOrderStatus($id) {
+    public function updateOrderStatus($id)
+    {
         if (!$this->validateCSRF()) {
             echo json_encode(['success' => false, 'message' => 'Invalid security token.']);
             return;
@@ -444,7 +463,9 @@ class AdminController extends BaseController {
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to update order status.']);
         }
-    }    public function bookings() {
+    }
+    public function bookings()
+    {
         $bookingModel = new Booking();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
@@ -461,7 +482,8 @@ class AdminController extends BaseController {
             $allBookings = $bookingModel->getAllForAdmin(null, 0, $status, $search);
             $this->exportBookingsCSV($allBookings);
             return;
-        }$data = [
+        }
+        $data = [
             'title' => 'Booking Management',
             'bookings' => $bookings,
             'currentPage' => $page,
@@ -477,7 +499,8 @@ class AdminController extends BaseController {
         $this->loadAdminView('bookings/index', $data);
     }
 
-    public function updateBookingStatus() {
+    public function updateBookingStatus()
+    {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
@@ -507,7 +530,8 @@ class AdminController extends BaseController {
         }
     }
 
-    public function assignTable() {
+    public function assignTable()
+    {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
@@ -531,7 +555,8 @@ class AdminController extends BaseController {
         }
     }
 
-    public function getBookingDetails($id) {
+    public function getBookingDetails($id)
+    {
         $bookingModel = new Booking();
         $booking = $bookingModel->getBookingDetails($id);
 
@@ -540,7 +565,9 @@ class AdminController extends BaseController {
         } else {
             echo json_encode(['success' => false, 'message' => 'Booking not found']);
         }
-    }    public function getCategory($id) {
+    }
+    public function getCategory($id)
+    {
         header('Content-Type: application/json');
         $category = $this->categoryModel->findById((int)$id);
         if ($category) {
@@ -554,7 +581,8 @@ class AdminController extends BaseController {
         exit; // Ensure no further output
     }
 
-    public function getAvailableTables() {
+    public function getAvailableTables()
+    {
         $reservationTime = $_GET['reservation_time'] ?? '';
         $numberOfGuests = (int)($_GET['number_of_guests'] ?? 1);
 
@@ -566,9 +594,11 @@ class AdminController extends BaseController {
         $bookingModel = new Booking();
         $availableTables = $bookingModel->getAvailableTables($reservationTime, $numberOfGuests);
 
-        echo json_encode(['success' => true, 'tables' => $availableTables]);    }
+        echo json_encode(['success' => true, 'tables' => $availableTables]);
+    }
 
-    public function createBooking() {
+    public function createBooking()
+    {
         $data = [
             'title' => 'Create New Booking',
             'csrf_token' => $this->generateCSRF()
@@ -577,7 +607,8 @@ class AdminController extends BaseController {
         $this->loadAdminView('bookings/create', $data);
     }
 
-    public function storeBooking() {
+    public function storeBooking()
+    {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $_SESSION['error'] = 'Invalid request method';
             header('Location: /admin/bookings');
@@ -660,13 +691,17 @@ class AdminController extends BaseController {
     }
 
     // API Endpoints for Dashboard
-    public function apiRecentOrders() {
+    public function apiRecentOrders()
+    {
         header('Content-Type: application/json');
 
         $orderModel = new Order();
         $recentOrders = $orderModel->getRecentOrders(10);
 
-        echo json_encode(['success' => true, 'orders' => $recentOrders]);    }    public function editBooking($id) {
+        echo json_encode(['success' => true, 'orders' => $recentOrders]);
+    }
+    public function editBooking($id)
+    {
         if (!$id) {
             $_SESSION['error'] = 'Invalid booking ID';
             header('Location: /admin/bookings');
@@ -698,7 +733,8 @@ class AdminController extends BaseController {
         $this->loadAdminView('bookings/edit', $data);
     }
 
-    public function updateBooking() {
+    public function updateBooking()
+    {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $_SESSION['error'] = 'Invalid request method';
             header('Location: /admin/bookings');
@@ -786,7 +822,8 @@ class AdminController extends BaseController {
         exit;
     }
 
-    public function apiUpcomingBookings() {
+    public function apiUpcomingBookings()
+    {
         header('Content-Type: application/json');
 
         $bookingModel = new Booking();
@@ -795,7 +832,8 @@ class AdminController extends BaseController {
         echo json_encode(['success' => true, 'bookings' => $upcomingBookings]);
     }
 
-    public function apiOrderStats() {
+    public function apiOrderStats()
+    {
         header('Content-Type: application/json');
 
         $orderModel = new Order();
@@ -804,14 +842,17 @@ class AdminController extends BaseController {
         echo json_encode(['success' => true, 'stats' => $orderStats]);
     }
 
-    public function apiBookingStats() {
+    public function apiBookingStats()
+    {
         header('Content-Type: application/json');
 
         $bookingModel = new Booking();
         $bookingStats = $bookingModel->getBookingStats();
 
         echo json_encode(['success' => true, 'stats' => $bookingStats]);
-    }    public function categories() {
+    }
+    public function categories()
+    {
         $categoryModel = new Category();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
@@ -834,12 +875,12 @@ class AdminController extends BaseController {
         $popularCategories = $categoryModel->getPopularCategories(5);
 
         // Calculate statistics for the dashboard cards (based on all categories)
-        $activeCategories = count(array_filter($allCategories, function($category) {
+        $activeCategories = count(array_filter($allCategories, function ($category) {
             return $category['is_active'] == 1;
         }));
 
         $foodItems = $this->foodModel->count();
-        $popularToday = count(array_filter($allCategories, function($category) {
+        $popularToday = count(array_filter($allCategories, function ($category) {
             // This is a simplified calculation - you can make it more sophisticated
             return isset($category['food_count']) && $category['food_count'] > 0;
         }));        // Ensure CSRF token exists
@@ -862,7 +903,9 @@ class AdminController extends BaseController {
         ];
 
         $this->loadAdminView('categories/index', $data);
-    }protected function transformCategoryData($data) {
+    }
+    protected function transformCategoryData($data)
+    {
         return [
             'name' => htmlspecialchars(trim($data['name'] ?? '')),
             'description' => htmlspecialchars(trim($data['description'] ?? '')),
@@ -872,9 +915,11 @@ class AdminController extends BaseController {
             // 'parent_id' => isset($data['parent_id']) && is_numeric($data['parent_id']) ? (int)$data['parent_id'] : null,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
-        ];    }
+        ];
+    }
 
-    public function createCategory() {
+    public function createCategory()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$this->validateCSRF()) {
                 $this->setFlash('error', 'Invalid security token.');
@@ -903,7 +948,9 @@ class AdminController extends BaseController {
 
         // If GET request, redirect to categories page
         $this->redirect('/admin/categories');
-    }public function updateCategory($id = null) {
+    }
+    public function updateCategory($id = null)
+    {
         try {
             error_log("=== updateCategory() method started ===");
             error_log("Request method: " . ($_SERVER['REQUEST_METHOD'] ?? 'unknown'));
@@ -945,8 +992,10 @@ class AdminController extends BaseController {
 
             if (empty($categoryData['name'])) {
                 throw new Exception('Category name is required');
-            }            $updateResult = $categoryModel->update($categoryId, $categoryData);
-            error_log("Update result: " . ($updateResult ? 'true' : 'false'));            if ($updateResult) {
+            }
+            $updateResult = $categoryModel->update($categoryId, $categoryData);
+            error_log("Update result: " . ($updateResult ? 'true' : 'false'));
+            if ($updateResult) {
                 // Verify the update by fetching the updated record
                 $updatedCategory = $categoryModel->findById($categoryId);
                 error_log("Updated category after save: " . print_r($updatedCategory, true));
@@ -956,7 +1005,8 @@ class AdminController extends BaseController {
                 return;
             }
 
-            throw new Exception('Failed to update category - Database operation returned false');        } catch (Exception $e) {
+            throw new Exception('Failed to update category - Database operation returned false');
+        } catch (Exception $e) {
             error_log("Exception in updateCategory: " . $e->getMessage());
             error_log("Exception trace: " . $e->getTraceAsString());
 
@@ -966,7 +1016,8 @@ class AdminController extends BaseController {
         }
     }
 
-    public function editCategory($id) {
+    public function editCategory($id)
+    {
         $categoryModel = new Category();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -1018,7 +1069,9 @@ class AdminController extends BaseController {
         ];
 
         $this->loadAdminView('categories/edit', $data);
-    }    public function deleteCategory($id = null) {
+    }
+    public function deleteCategory($id = null)
+    {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->setFlash('error', 'Method not allowed.');
             $this->redirect('/admin/categories');
@@ -1068,7 +1121,8 @@ class AdminController extends BaseController {
         $this->redirect('/admin/categories');
     }
 
-    public function tables() {
+    public function tables()
+    {
         $tableModel = new Table();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
@@ -1078,7 +1132,8 @@ class AdminController extends BaseController {
         $totalTables = $tableModel->count();
         $totalPages = ceil($totalTables / $limit);
         $stats = $tableModel->getTableStats();
-        $locationStats = $tableModel->getTablesByLocation();        $data = [
+        $locationStats = $tableModel->getTablesByLocation();
+        $data = [
             'title' => 'Table Management',
             'tables' => $tables,
             'stats' => $stats,
@@ -1091,7 +1146,8 @@ class AdminController extends BaseController {
         $this->loadAdminView('tables/index', $data);
     }
 
-    public function createTable() {
+    public function createTable()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$this->validateCSRF()) {
                 $this->setFlash('error', 'Invalid security token.');
@@ -1137,7 +1193,8 @@ class AdminController extends BaseController {
 
             $this->redirect('/admin/tables');
             return;
-        }        $data = [
+        }
+        $data = [
             'title' => 'Create Table',
             'csrf_token' => $this->generateCSRF()
         ];
@@ -1145,7 +1202,8 @@ class AdminController extends BaseController {
         $this->loadAdminView('tables/create', $data);
     }
 
-    public function editTable($id) {
+    public function editTable($id)
+    {
         $tableModel = new Table();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -1202,7 +1260,8 @@ class AdminController extends BaseController {
         }
 
         // Get table booking history
-        $bookingHistory = $tableModel->getTableBookingHistory($id, 10);        $data = [
+        $bookingHistory = $tableModel->getTableBookingHistory($id, 10);
+        $data = [
             'title' => 'Edit Table',
             'table' => $table,
             'bookingHistory' => $bookingHistory,
@@ -1212,7 +1271,8 @@ class AdminController extends BaseController {
         $this->loadAdminView('tables/edit', $data);
     }
 
-    public function deleteTable($id) {
+    public function deleteTable($id)
+    {
         if (!$this->validateCSRF()) {
             $this->setFlash('error', 'Invalid security token.');
             $this->redirect('/admin/tables');
@@ -1230,7 +1290,8 @@ class AdminController extends BaseController {
         $this->redirect('/admin/tables');
     }
 
-    public function tableUtilization() {
+    public function tableUtilization()
+    {
         $tableModel = new Table();
         $days = (int)($_GET['days'] ?? 30);
 
@@ -1244,7 +1305,8 @@ class AdminController extends BaseController {
         ]);
     }
 
-    public function getTableHistory($tableId) {
+    public function getTableHistory($tableId)
+    {
         header('Content-Type: application/json');
 
         $tableModel = new Table();
@@ -1252,7 +1314,7 @@ class AdminController extends BaseController {
         $history = $tableModel->getTableBookingHistory($tableId, $limit);
 
         // Format the history data for display
-        $formattedHistory = array_map(function($booking) {
+        $formattedHistory = array_map(function ($booking) {
             return [
                 'id' => $booking['id'],
                 'booking_date' => $booking['booking_date'],
@@ -1273,7 +1335,8 @@ class AdminController extends BaseController {
         ]);
     }
 
-    public function checkTableAvailability($tableId) {
+    public function checkTableAvailability($tableId)
+    {
         header('Content-Type: application/json');
 
         $date = $_GET['date'] ?? '';
@@ -1300,7 +1363,8 @@ class AdminController extends BaseController {
         ]);
     }
 
-    private function exportBookingsCSV($bookings) {
+    private function exportBookingsCSV($bookings)
+    {
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="bookings_' . date('Y-m-d') . '.csv"');
 
@@ -1339,15 +1403,19 @@ class AdminController extends BaseController {
         fclose($output);
     }
 
-    private function getTotalFoodsInCategories($categories) {
+    private function getTotalFoodsInCategories($categories)
+    {
         return array_sum(array_column($categories, 'food_count'));
     }
 
-    private function getEmptyCategories($categories) {
-        return count(array_filter($categories, function($cat) {
+    private function getEmptyCategories($categories)
+    {
+        return count(array_filter($categories, function ($cat) {
             return ($cat['food_count'] ?? 0) == 0;
         }));
-    }    private function getDashboardStats() {
+    }
+    private function getDashboardStats()
+    {
         $userModel = new User();
         $foodModel = new Food();
         $orderModel = new Order();
@@ -1367,7 +1435,7 @@ class AdminController extends BaseController {
         // Get revenue data
         $monthlyRevenue = $orderModel->getMonthlyRevenue();
         $monthlyRevenueData = $orderModel->getMonthlyRevenueData();
-          // Get recent data
+        // Get recent data
         $recentOrders = $orderModel->getRecentOrdersWithCustomer(5);
         $recentBookings = $bookingModel->getRecentBookingsWithCustomer(5);
 
@@ -1390,7 +1458,8 @@ class AdminController extends BaseController {
         ];
     }
 
-    public function getSubcategories($categoryId) {
+    public function getSubcategories($categoryId)
+    {
         $categoryModel = new Category();
         $subcategories = $categoryModel->getSubcategories($categoryId);
 
@@ -1399,7 +1468,8 @@ class AdminController extends BaseController {
     }
 
     // Order Details for Modal
-    public function orderDetails($id) {
+    public function orderDetails($id)
+    {
         $orderModel = new Order();
         $order = $orderModel->getOrderWithItems($id);
 
@@ -1414,7 +1484,8 @@ class AdminController extends BaseController {
     }
 
     // Print Order
-    public function printOrder($id) {
+    public function printOrder($id)
+    {
         $orderModel = new Order();
         $order = $orderModel->getOrderWithItems($id);
 
@@ -1429,7 +1500,8 @@ class AdminController extends BaseController {
     }
 
     // Export Orders to CSV
-    public function exportOrdersCSV() {
+    public function exportOrdersCSV()
+    {
         $orderModel = new Order();
 
         // Get filter parameters
@@ -1490,7 +1562,8 @@ class AdminController extends BaseController {
     }
 
     // Enhanced Order Filtering
-    public function ordersFiltered() {
+    public function ordersFiltered()
+    {
         $orderModel = new Order();
 
         $page = (int)($_GET['page'] ?? 1);
@@ -1510,15 +1583,284 @@ class AdminController extends BaseController {
 
         $orders = $orderModel->getFilteredOrders($filters, $limit, $offset);
         $totalOrders = $orderModel->countFilteredOrders($filters);
-        $totalPages = ceil($totalOrders / $limit);        $data = [
+        $totalPages = ceil($totalOrders / $limit);
+        $data = [
             'title' => 'Order Management',
             'orders' => $orders,
             'currentPage' => $page,
             'totalPages' => $totalPages,
             'totalOrders' => $totalOrders,
             'filters' => $filters
-        ];
+        ];        $this->loadAdminView('orders/index', $data);
+    }
 
-        $this->loadAdminView('orders/index', $data);
+    // Get Order for Editing
+    public function getOrder($id)
+    {
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        $orderModel = new Order();
+        $order = $orderModel->getOrderWithItems($id);
+
+        if (!$order) {
+            $this->jsonResponse(['success' => false, 'message' => 'Order not found'], 404);
+            return;
+        }
+
+        $this->jsonResponse(['success' => true, 'order' => $order]);
+    }
+
+    // Update Order
+    public function updateOrder($id)
+    {
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        $orderModel = new Order();
+
+        // Build update data from POST
+        $updateData = [];
+
+        if (isset($_POST['customer_name'])) {
+            $updateData['customer_name'] = $this->sanitize($_POST['customer_name']);
+        }
+        if (isset($_POST['customer_email'])) {
+            $updateData['customer_email'] = $this->sanitize($_POST['customer_email']);
+        }
+        if (isset($_POST['customer_phone'])) {
+            $updateData['customer_phone'] = $this->sanitize($_POST['customer_phone']);
+        }
+        if (isset($_POST['status'])) {
+            $updateData['status'] = $this->sanitize($_POST['status']);
+        }
+        if (isset($_POST['payment_method'])) {
+            $updateData['payment_method'] = $this->sanitize($_POST['payment_method']);
+        }
+        if (isset($_POST['total_amount'])) {
+            $updateData['total_amount'] = floatval($_POST['total_amount']);
+        }
+        if (isset($_POST['delivery_address'])) {
+            $updateData['delivery_address'] = $this->sanitize($_POST['delivery_address']);
+        }
+        if (isset($_POST['order_notes'])) {
+            $updateData['order_notes'] = $this->sanitize($_POST['order_notes']);
+        }
+
+        $updateData['updated_at'] = date('Y-m-d H:i:s');
+
+        try {
+            // Update order in database
+            $sql = "UPDATE orders SET ";
+            $setParts = [];
+            $params = [];
+
+            foreach ($updateData as $key => $value) {
+                $setParts[] = "$key = :$key";
+                $params[":$key"] = $value;
+            }
+
+            $sql .= implode(', ', $setParts) . " WHERE id = :id";
+            $params[':id'] = $id;
+
+            $stmt = $orderModel->db->prepare($sql);
+            $result = $stmt->execute($params);
+
+            if ($result) {
+                $this->jsonResponse(['success' => true, 'message' => 'Order updated successfully']);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to update order'], 500);
+            }
+        } catch (Exception $e) {
+            error_log("Order update error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Database error occurred'], 500);
+        }
+    }
+
+    // Duplicate Order
+    public function duplicateOrder($id)
+    {
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        $orderModel = new Order();
+        $originalOrder = $orderModel->getOrderWithItems($id);
+
+        if (!$originalOrder) {
+            $this->jsonResponse(['success' => false, 'message' => 'Original order not found'], 404);
+            return;
+        }
+
+        try {
+            // Create new order data based on original
+            $newOrderData = [
+                'user_id' => $originalOrder['user_id'],
+                'customer_name' => $originalOrder['customer_name'],
+                'customer_email' => $originalOrder['customer_email'],
+                'customer_phone' => $originalOrder['customer_phone'],
+                'total_amount' => $originalOrder['total_amount'],
+                'status' => 'pending', // Reset status for new order
+                'payment_method' => $originalOrder['payment_method'],
+                'delivery_address' => $originalOrder['delivery_address'],
+                'order_notes' => 'Duplicate of Order #' . $id . ($originalOrder['order_notes'] ? "\n\n" . $originalOrder['order_notes'] : ''),
+                'subtotal' => $originalOrder['subtotal'],
+                'delivery_fee' => $originalOrder['delivery_fee'],
+                'service_fee' => $originalOrder['service_fee'],
+                'order_type' => $originalOrder['order_type'] ?? 'delivery'
+            ];
+
+            // Duplicate order items if they exist
+            $orderItems = [];
+            if (!empty($originalOrder['items'])) {
+                foreach ($originalOrder['items'] as $item) {
+                    $orderItems[] = [
+                        'food_item_id' => $item['food_item_id'],
+                        'quantity' => $item['quantity'],
+                        'price' => $item['price']
+                    ];
+                }
+                $newOrderData['items'] = $orderItems;
+            }
+
+            $newOrderId = $orderModel->createOrder($newOrderData);
+
+            if ($newOrderId) {
+                $this->jsonResponse(['success' => true, 'message' => 'Order duplicated successfully', 'new_order_id' => $newOrderId]);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to duplicate order'], 500);
+            }
+        } catch (Exception $e) {
+            error_log("Order duplication error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to duplicate order'], 500);
+        }
+    }
+
+    // Send Order Email
+    public function sendOrderEmail($id)
+    {
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        $orderModel = new Order();
+        $order = $orderModel->getOrderWithItems($id);
+
+        if (!$order) {
+            $this->jsonResponse(['success' => false, 'message' => 'Order not found'], 404);
+            return;
+        }
+
+        if (empty($order['customer_email'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'No email address found for this order'], 400);
+            return;
+        }
+
+        try {
+            // Prepare email content
+            $subject = "Order Confirmation #" . str_pad($id, 6, '0', STR_PAD_LEFT) . " - " . SITE_NAME;
+
+            $message = "Dear " . htmlspecialchars($order['customer_name']) . ",\n\n";
+            $message .= "Thank you for your order! Here are your order details:\n\n";
+            $message .= "Order ID: #" . str_pad($id, 6, '0', STR_PAD_LEFT) . "\n";
+            $message .= "Order Date: " . date('M j, Y \a\t g:i A', strtotime($order['created_at'])) . "\n";
+            $message .= "Status: " . ucfirst($order['status']) . "\n";
+            $message .= "Total Amount: $" . number_format($order['total_amount'], 2) . "\n\n";
+
+            if (!empty($order['items'])) {
+                $message .= "Order Items:\n";
+                foreach ($order['items'] as $item) {
+                    $message .= "- " . $item['food_name'] . " x" . $item['quantity'] . " = $" . number_format($item['price'] * $item['quantity'], 2) . "\n";
+                }
+                $message .= "\n";
+            }
+
+            if (!empty($order['delivery_address'])) {
+                $message .= "Delivery Address: " . $order['delivery_address'] . "\n\n";
+            }
+
+            if (!empty($order['order_notes'])) {
+                $message .= "Order Notes: " . $order['order_notes'] . "\n\n";
+            }
+
+            $message .= "Thank you for choosing " . SITE_NAME . "!\n\n";
+            $message .= "Best regards,\n";
+            $message .= "The " . SITE_NAME . " Team";
+
+            $headers = [
+                'From: ' . SITE_NAME . ' <noreply@' . $_SERVER['HTTP_HOST'] . '>',
+                'Reply-To: noreply@' . $_SERVER['HTTP_HOST'],
+                'Content-Type: text/plain; charset=UTF-8'
+            ];
+
+            // Send email
+            if (mail($order['customer_email'], $subject, $message, implode("\r\n", $headers))) {
+                $this->jsonResponse(['success' => true, 'message' => 'Email sent successfully to ' . $order['customer_email']]);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to send email'], 500);
+            }
+        } catch (Exception $e) {
+            error_log("Email sending error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to send email'], 500);
+        }
+    }
+
+    // Delete Order
+    public function deleteOrder($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid request method'], 405);
+            return;
+        }
+
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        $orderModel = new Order();
+
+        // Check if order exists
+        $order = $orderModel->findById($id);
+        if (!$order) {
+            $this->jsonResponse(['success' => false, 'message' => 'Order not found'], 404);
+            return;
+        }
+
+        // Check if order can be deleted (only pending or cancelled orders)
+        if ($order['status'] === 'delivered' || $order['status'] === 'completed') {
+            $this->jsonResponse(['success' => false, 'message' => 'Cannot delete completed or delivered orders'], 400);
+            return;
+        }
+
+        try {
+            $orderModel->db->beginTransaction();
+
+            // Delete order items first
+            $stmt = $orderModel->db->prepare("DELETE FROM order_items WHERE order_id = :order_id");
+            $stmt->execute([':order_id' => $id]);
+
+            // Delete the order
+            $stmt = $orderModel->db->prepare("DELETE FROM orders WHERE id = :id");
+            $result = $stmt->execute([':id' => $id]);
+
+            $orderModel->db->commit();
+
+            if ($result) {
+                $this->jsonResponse(['success' => true, 'message' => 'Order deleted successfully']);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to delete order'], 500);
+            }
+        } catch (Exception $e) {
+            $orderModel->db->rollBack();
+            error_log("Order deletion error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to delete order'], 500);
+        }
     }
 }

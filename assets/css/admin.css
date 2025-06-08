@@ -664,8 +664,6 @@ main.col-md-9.ms-sm-auto.col-lg-10 {
 
 /* Image Previews */
 .image-preview {
-    max-width: 60px;
-    max-height: 60px;
     object-fit: cover;
     border-radius: 0.5rem;
 }
@@ -840,6 +838,11 @@ main.col-md-9.ms-sm-auto.col-lg-10 {
 .modal-footer {
     border-top: 1px solid #e8ecf1;
     padding: 1.5rem;
+}
+
+.input-group {
+    flex-wrap: nowrap !important;
+    padding-bottom: 20px !important;
 }
 
 /* Input Group Improvements */

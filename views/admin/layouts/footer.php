@@ -30,11 +30,15 @@
                         }
                     }
                 });
-            }
-            // Initialize DataTables if present
+            }            // Initialize DataTables if present
             $(document).ready(function() {
                 if ($.fn.DataTable && $('table.dataTable').length > 0) {
                     $('table.dataTable').each(function() {
+                        // Skip tables with data-dt-disable attribute
+                        if ($(this).attr('data-dt-disable')) {
+                            return;
+                        }
+
                         const tableId = $(this).attr('id');
 
                         // Check if DataTable is already initialized
@@ -101,7 +105,7 @@
                         }
                     });
                 }
-            });            // Debug function for DataTables issues (remove in production)
+            });
             window.debugDataTables = function() {
                 console.log('DataTables Debug Info:');
                 $('table.dataTable').each(function(index) {

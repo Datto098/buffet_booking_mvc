@@ -512,7 +512,7 @@
         content.innerHTML = '<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
         modal.show();
 
-        fetch(`/admin/tables/history/${tableId}`)
+        fetch(`<?= SITE_URL ?>/admin/tables/history/${tableId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -546,7 +546,7 @@
 
     // Quick booking
     function quickBooking(tableId) {
-        window.location.href = `/admin/bookings/create?table_id=${tableId}`;
+        window.location.href = `<?= SITE_URL ?>/admin/bookings/create?table_id=${tableId}`;
     }
 
     // Delete table
@@ -645,7 +645,7 @@
     function exportTables() {
         const params = new URLSearchParams(window.location.search);
         params.set('export', 'csv');
-        window.location.href = `/admin/tables?${params.toString()}`;
+        window.location.href = `<?= SITE_URL ?>/admin/tables?${params.toString()}`;
     }
 
     // Helper functions

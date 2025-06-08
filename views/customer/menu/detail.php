@@ -36,9 +36,8 @@
     <div class="container">
         <div class="row align-items-start">
             <!-- Food Image and Gallery -->
-            <div class="col-lg-6 mb-5">
-                <div class="food-detail-image">
-                    <img src="<?= !empty($food['image']) ? htmlspecialchars($food['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
+            <div class="col-lg-6 mb-5">                <div class="food-detail-image">
+                    <img src="<?= !empty($food['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($food['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
                          class="card-img-luxury food-main-image" alt="<?= htmlspecialchars($food['name']) ?>">
 
                     <!-- Luxury Badges -->

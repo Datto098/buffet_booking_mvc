@@ -18,7 +18,8 @@
                     <div>
                         <h1 class="h2">Foods Management</h1>
                         <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb">                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/admin/dashboard">Dashboard</a></li>
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/admin/dashboard">Dashboard</a></li>
                                 <li class="breadcrumb-item active">Foods</li>
                             </ol>
                         </nav>
@@ -219,10 +220,9 @@
                                                            value="<?php echo $food['id']; ?>">
                                                 </td>
                                                 <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-sm me-2">
+                                                    <div class="d-flex align-items-center">                                                        <div class="avatar-sm me-2">
                                                             <?php if (!empty($food['image'])): ?>
-                                                                <img src="<?php echo htmlspecialchars($food['image']); ?>"
+                                                                <img src="<?php echo SITE_URL . '/uploads/food_images/' . htmlspecialchars($food['image']); ?>"
                                                                      alt="<?php echo htmlspecialchars($food['name']); ?>"
                                                                      class="rounded" width="40" height="40" style="object-fit: cover;">
                                                             <?php else: ?>

@@ -23,6 +23,7 @@
 
         .image-container {
             width: 100%;
+            height: 200px;
             border-radius: 12px;
             overflow: hidden;
             display: flex;
@@ -106,15 +107,14 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0">
-                                    <i class="fas fa-utensils"></i>
-                                    Food Information
+                                    <i class="fas fa-utensils"></i> Food Information
                                 </h5>
-                                <span class="badge bg-<?= ($food['is_available'] ?? 0) == 1 ? 'success' : 'danger' ?>">
-                                    <?= ($food['is_available'] ?? 0) == 1 ? 'Available' : 'Unavailable' ?>
+                                <span class="badge bg-<?= ($food['status'] ?? 'inactive') == 'active' ? 'success' : 'danger' ?>">
+                                    <?= ucfirst($food['status'] ?? 'inactive') ?>
                                 </span>
                             </div>
                             <div class="card-body">
-                                <form action="<?= SITE_URL ?>/admin/foods/edit/<?= $food['id'] ?>" method="POST" enctype="multipart/form-data" id="editFoodForm">
+                                <form action="<?= SITE_URL ?>/admin/foods/update/<?= $food['id'] ?>" method="POST" enctype="multipart/form-data" id="editFoodForm">
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 
                                     <!-- Food Name and Category -->
@@ -156,14 +156,11 @@
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label for="is_available" class="form-label">Availability</label>
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="is_available" name="is_available" value="1"
-                                                    <?= ($food['is_available'] ?? 0) == 1 ? 'checked' : '' ?>>
-                                                <label class="form-check-label" for="is_available">
-                                                    Available for Order
-                                                </label>
-                                            </div>
+                                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="status" name="status" required>
+                                                <option value="active" <?= ($food['status'] ?? '') == 'active' ? 'selected' : '' ?>>Available</option>
+                                                <option value="inactive" <?= ($food['status'] ?? '') == 'inactive' ? 'selected' : '' ?>>Unavailable</option>
+                                            </select>
                                         </div>
                                     </div>
 
@@ -206,10 +203,8 @@
                                     <i class="fas fa-image"></i> Food Image
                                 </h6>
                             </div>
-                            <div class="card-body text-center"
-                                style="overflow: hidden;">
-                                <div class="image-preview"
-                                    style="max-width: 100%">
+                            <div class="card-body text-center">
+                                <div class="image-preview">
                                     <?php if (!empty($food['image'])): ?>
                                         <div class="image-container">
                                             <img src="<?= SITE_URL ?>/uploads/food_images/<?= htmlspecialchars($food['image']) ?>"

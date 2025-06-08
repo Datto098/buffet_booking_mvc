@@ -93,9 +93,7 @@ class FoodController extends BaseController {
         $subcategories = [];
         if ($categoryId > 0) {
             $subcategories = $this->categoryModel->getSubcategories($categoryId);
-        }
-
-        $data = [
+        }        $data = [
             'title' => 'Thực Đơn - ' . SITE_NAME,
             'foods' => $foods,
             'categories' => $categories,
@@ -103,6 +101,7 @@ class FoodController extends BaseController {
             'currentPage' => $page,
             'totalPages' => $totalPages,
             'totalFoods' => $totalFoods,
+            'SITE_URL' => SITE_URL,
             'filters' => [
                 'category' => $categoryId,
                 'subcategory' => $subcategoryId,

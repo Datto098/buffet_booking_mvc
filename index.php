@@ -236,6 +236,21 @@ function handleAdminOrdersRoute($controller, $action, $param)
         case 'export-csv':
             $controller->exportOrdersCSV();
             break;
+        case 'get':
+            $controller->getOrder($param);
+            break;
+        case 'update':
+            $controller->updateOrder($param);
+            break;
+        case 'duplicate':
+            $controller->duplicateOrder($param);
+            break;
+        case 'send-email':
+            $controller->sendOrderEmail($param);
+            break;
+        case 'delete':
+            $controller->deleteOrder($param);
+            break;
         default:
             $controller->orders();
     }
