@@ -15,14 +15,16 @@
                             <i class="fas fa-exclamation-circle"></i>
                             <?php echo $_SESSION['error'];
                             unset($_SESSION['error']); ?>
-                        </div> <?php endif; ?>                    <form action="<?php echo SITE_URL; ?>/auth/register" method="POST" data-validate="true" class="fade-in-up" data-delay="0.2s">
+                        </div> 
+                        <?php endif; ?> 
+                        <form action="<?php echo SITE_URL; ?>/auth/register" method="POST" data-validate="true" class="fade-in-up" data-delay="0.2s">
                         <input type="hidden" name="csrf_token" value="<?php echo isset($_SESSION['csrf_token']) ? $_SESSION['csrf_token'] : ''; ?>">
 
                         <div class="row fade-in-up" data-delay="0.3s">
                             <div class="col-md-12 mb-3">
                                 <label for="full_name" class="form-label">
                                     <i class="fas fa-user"></i> Họ và Tên <span class="text-danger">*</span>
-                                </label>                                <input type="text"
+                                </label> <input type="text"
                                     class="form-control smooth-transition"
                                     id="full_name"
                                     name="full_name"
@@ -30,7 +32,8 @@
                                     value="<?php echo $_POST['full_name'] ?? ''; ?>"
                                     required>
                             </div>
-                        </div>                        <div class="row fade-in-up" data-delay="0.4s">
+                        </div>
+                        <div class="row fade-in-up" data-delay="0.4s">
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">
                                     <i class="fas fa-envelope"></i> Email <span class="text-danger">*</span>
@@ -60,7 +63,8 @@
                             <div class="col-md-6 mb-3">
                                 <label for="password" class="form-label">
                                     <i class="fas fa-lock"></i> Mật khẩu <span class="text-danger">*</span>
-                                </label>                                <div class="input-group">
+                                </label>
+                                <div class="input-group">
                                     <input type="password"
                                         class="form-control smooth-transition"
                                         id="password"
@@ -81,7 +85,8 @@
                             <div class="col-md-6 mb-3">
                                 <label for="confirm_password" class="form-label">
                                     <i class="fas fa-lock"></i> Xác nhận mật khẩu <span class="text-danger">*</span>
-                                </label>                                <div class="input-group">
+                                </label>
+                                <div class="input-group">
                                     <input type="password"
                                         class="form-control smooth-transition"
                                         id="confirm_password"
@@ -95,7 +100,8 @@
                                     </button>
                                 </div>
                             </div>
-                        </div>                        <div class="mb-3 form-check fade-in-up" data-delay="0.6s">
+                        </div>
+                        <div class="mb-3 form-check fade-in-up" data-delay="0.6s">
                             <input type="checkbox" class="form-check-input smooth-transition" id="terms" required>
                             <label class="form-check-label" for="terms">
                                 Tôi đồng ý với
@@ -118,7 +124,8 @@
                                 <i class="fas fa-user-plus"></i> Tạo Tài Khoản
                             </button>
                         </div>
-                    </form>                    <hr class="my-4">
+                    </form>
+                    <hr class="my-4">
                     <div class="text-center fade-in-up" data-delay="0.9s">
                         <p class="mb-0">Đã có tài khoản?</p>
                         <a href="<?php echo SITE_URL; ?>/auth/login"

@@ -17,8 +17,8 @@
                     <li class="breadcrumb-item active" style="color: var(--primary-gold);">Khuyến Mãi</li>
                 </ol>
             </nav>
-            <h1 class="hero-title banner-title">
-                <span class="text-luxury">Ưu Đãi</span> <br>
+            <h1 class="hero-title " >
+                <span  style="color: var(--text-primary);">Ưu Đãi</span> <br>
                 <span class="text-white">Độc Quyền</span>
             </h1>
             <p class="hero-subtitle banner-subtitle">

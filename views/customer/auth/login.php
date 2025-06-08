@@ -68,8 +68,7 @@
                                 <i class="fas fa-sign-in-alt"></i> Đăng Nhập
                             </button>
                         </div>                        <div class="text-center">
-                            <a href="<?php echo SITE_URL; ?>/auth/forgotPassword"
-                               class="text-decoration-none">
+                            <a href="#" class="text-decoration-none" onclick="goToForgotPassword()">
                                 <i class="fas fa-key"></i> Quên mật khẩu?
                             </a>
                         </div>
@@ -108,5 +107,14 @@ function togglePassword(fieldId) {
         icon.classList.remove('fa-eye-slash');
         icon.classList.add('fa-eye');
     }
+}
+
+function goToForgotPassword() {
+    var email = document.getElementById('email').value;
+    var url = "<?php echo SITE_URL; ?>/auth/forgotPassword";
+    if(email) {
+        url += "?email=" + encodeURIComponent(email);
+    }
+    window.location.href = url;
 }
 </script>

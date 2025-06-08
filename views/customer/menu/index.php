@@ -9,7 +9,7 @@
 <section class="hero-section">
     <div class="container">
         <div class="hero-content text-center">
-            <h1 class="hero-title text-luxury">
+            <h1 class="hero-title " style="color: var(--text-primary);">
                 Thực Đơn Buffet <br>
                 <span class="text-white">Đẳng Cấp Quốc Tế</span>
             </h1>

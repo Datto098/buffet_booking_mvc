@@ -2,7 +2,7 @@
 /**
  * Order Details View
  */
-$title = "Order Details - " . APP_NAME;
+$title = "Order Details - " . SITE_NAME;
 $current_page = 'orders';
 ?>
 

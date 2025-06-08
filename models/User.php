@@ -43,11 +43,19 @@ class User extends BaseModel {
     }
 
     public function createUser($data) {
-        // Hash password before storing
+        if (isset($data['full_name'])) {
+            $parts = explode(' ', trim($data['full_name']));
+            $data['first_name'] = array_shift($parts);
+            $data['last_name'] = implode(' ', $parts);
+            unset($data['full_name']);
+        }
+        if (isset($data['phone_number'])) {
+            $data['phone'] = $data['phone_number'];
+            unset($data['phone_number']);
+        }
         if (isset($data['password'])) {
             $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
         }
-
         return $this->create($data);
     }
 
@@ -245,5 +253,64 @@ class User extends BaseModel {
         $stmt->execute();
         return $stmt->fetchAll();
     }
+
+    public function saveResetToken($email, $token) {
+        $stmt = $this->db->prepare("UPDATE users SET password_reset_token = :token WHERE email = :email");
+        $stmt->bindValue(':token', $token);
+        $stmt->bindValue(':email', $email);
+        return $stmt->execute();
+    }
+
+    public function findByResetToken($token) {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE password_reset_token = :token");
+        $stmt->bindValue(':token', $token);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function updatePasswordAndClearToken($userId, $hashedPassword) {
+        $stmt = $this->db->prepare("UPDATE users SET password = :password, password_reset_token = NULL WHERE id = :id");
+        $stmt->bindValue(':password', $hashedPassword);
+        $stmt->bindValue(':id', $userId);
+        return $stmt->execute();
+    }
+    //profile
+    public function getProfile($userId) {
+        $sql = "SELECT * FROM {$this->table} WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function findById($id) {
+        $sql = "SELECT * FROM {$this->table} WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    public function updateProfile($userId, $data) {
+        $fields = [];
+        $params = [];
+        foreach ($data as $key => $value) {
+            if ($value !== null && $value !== '') {
+                $fields[] = "$key = :$key";
+                $params[":$key"] = $value;
+            }
+        }
+        if (empty($fields)) return false;
+        $params[':id'] = $userId;
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute($params);
+    }
 }
 ?>
+
+<?php if (!empty($_SESSION['error'])): ?>
+    <div class="alert alert-danger"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
+<?php endif; ?>
+<?php if (!empty($_SESSION['success'])): ?>
+    <div class="alert alert-success"><?= $_SESSION['success']; unset($_SESSION['success']); ?></div>
+<?php endif; ?>

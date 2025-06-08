@@ -2,7 +2,7 @@
 /**
  * Booking Details View
  */
-$title = "Booking Details - " . APP_NAME;
+$title = "Booking Details - " . SITE_NAME;
 $current_page = 'bookings';
 ?>
 
@@ -177,13 +177,13 @@ $current_page = 'bookings';
 
             <!-- Action Buttons -->
             <div class="text-center">
-                <a href="<?= BASE_URL ?>/booking/history" class="btn btn-outline-primary me-2">
+                <a href="<?= SITE_NAME ?>/booking/history" class="btn btn-outline-primary me-2">
                     <i class="fas fa-arrow-left me-2"></i>Back to Bookings
                 </a>
 
                 <?php if ($booking['status'] === 'pending' || $booking['status'] === 'confirmed'): ?>
                     <?php if (strtotime($booking['booking_date'] . ' ' . $booking['booking_time']) > time() + 7200): // At least 2 hours before ?>
-                    <a href="<?= BASE_URL ?>/booking/modify/<?= $booking['id'] ?>" class="btn btn-warning me-2">
+                    <a href="<?= SITE_NAME ?>/booking/modify/<?= $booking['id'] ?>" class="btn btn-warning me-2">
                         <i class="fas fa-edit me-2"></i>Modify Booking
                     </a>
                     <button class="btn btn-danger me-2" onclick="cancelBooking(<?= $booking['id'] ?>)">
@@ -335,7 +335,7 @@ updateCountdown(); // Initial update
 
 function cancelBooking(bookingId) {
     if (confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
-        fetch(`<?= BASE_URL ?>/booking/cancel/${bookingId}`, {
+        fetch(`<?= SITE_NAME ?>/booking/cancel/${bookingId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -359,7 +359,7 @@ function cancelBooking(bookingId) {
 }
 
 function rebookTable(bookingId) {
-    fetch(`<?= BASE_URL ?>/booking/rebook/${bookingId}`, {
+    fetch(`<?= SITE_NAME ?>/booking/rebook/${bookingId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -370,7 +370,7 @@ function rebookTable(bookingId) {
     .then(data => {
         if (data.success) {
             showAlert('Booking details copied. Redirecting to booking form...', 'success');
-            setTimeout(() => window.location.href = '<?= BASE_URL ?>/booking', 1500);
+            setTimeout(() => window.location.href = '<?= SITE_NAME ?>/booking', 1500);
         } else {
             showAlert(data.message || 'Failed to copy booking details', 'error');
         }
