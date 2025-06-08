@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<?php require_once 'config/config.php'; ?>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -170,10 +171,9 @@
                             </span>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <?php if (!empty($orders)): ?>
+                    <div class="card-body">                        <?php if (!empty($orders)): ?>
                             <div class="table-responsive">
-                                <table class="table table-hover align-middle" id="ordersTable">
+                                <table class="table table-hover align-middle" id="ordersTable" data-dt-disable="true">
                                     <thead class="table-light">
                                         <tr>
                                             <th width="40">
@@ -223,33 +223,19 @@
                                                 </td>
                                                 <td>
                                                     <div class="fw-medium text-success">$<?php echo number_format($order['total_amount'] ?? 0, 2); ?></div>
-                                                </td>
-                                                <td>
-                                                    <?php
-                                                    $statusClass = 'secondary';
-                                                    $statusIcon = 'circle';
-                                                    switch($order['status']) {
-                                                        case 'completed':
-                                                            $statusClass = 'success';
-                                                            $statusIcon = 'check-circle';
-                                                            break;
-                                                        case 'pending':
-                                                            $statusClass = 'warning';
-                                                            $statusIcon = 'clock';
-                                                            break;
-                                                        case 'processing':
-                                                            $statusClass = 'info';
-                                                            $statusIcon = 'cog';
-                                                            break;
-                                                        case 'cancelled':
-                                                            $statusClass = 'danger';
-                                                            $statusIcon = 'times-circle';
-                                                            break;
-                                                    }
-                                                    ?>
-                                                    <span class="badge bg-<?php echo $statusClass; ?>">
-                                                        <i class="fas fa-<?php echo $statusIcon; ?>"></i> <?php echo ucfirst(htmlspecialchars($order['status'])); ?>
-                                                    </span>
+                                                </td>                                                <td>
+                                                    <div class="status-update-container">
+                                                        <select class="form-select form-select-sm status-select"
+                                                                data-order-id="<?php echo $order['id']; ?>"
+                                                                data-current-status="<?php echo $order['status'] ?? 'pending'; ?>">
+                                                            <option value="pending" <?php echo ($order['status'] ?? 'pending') === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                                            <option value="confirmed" <?php echo ($order['status'] ?? 'pending') === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
+                                                            <option value="preparing" <?php echo ($order['status'] ?? 'pending') === 'preparing' ? 'selected' : ''; ?>>Preparing</option>
+                                                            <option value="ready" <?php echo ($order['status'] ?? 'pending') === 'ready' ? 'selected' : ''; ?>>Ready</option>
+                                                            <option value="delivered" <?php echo ($order['status'] ?? 'pending') === 'delivered' ? 'selected' : ''; ?>>Delivered</option>
+                                                            <option value="cancelled" <?php echo ($order['status'] ?? 'pending') === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                                        </select>
+                                                    </div>
                                                 </td>
                                                 <td>
                                                     <?php if (isset($order['payment_status']) && $order['payment_status'] === 'paid'): ?>
@@ -261,16 +247,17 @@
                                                             <i class="fas fa-exclamation-triangle"></i> Unpaid
                                                         </span>
                                                     <?php endif; ?>
-                                                </td>
-                                                <td>
-                                                    <div class="btn-group" role="group">                                                        <a href="<?= SITE_URL ?>/admin/orders/edit/<?php echo $order['id']; ?>"
-                                                           class="btn btn-sm btn-outline-primary"
-                                                           title="Edit Order">
+                                                </td>                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-primary"
+                                                                onclick="editOrder(<?php echo $order['id']; ?>)"
+                                                                title="Edit Order">
                                                             <i class="fas fa-edit"></i>
-                                                        </a>
+                                                        </button>
                                                         <button type="button"
                                                                 class="btn btn-sm btn-outline-info"
-                                                                onclick="viewOrder(<?php echo $order['id']; ?>)"
+                                                                onclick="viewOrderDetails(<?php echo $order['id']; ?>)"
                                                                 title="View Details">
                                                             <i class="fas fa-eye"></i>
                                                         </button>
@@ -280,6 +267,24 @@
                                                                 title="Print Receipt">
                                                             <i class="fas fa-print"></i>
                                                         </button>
+                                                        <div class="btn-group" role="group">
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                                <i class="fas fa-ellipsis-v"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu">
+                                                                <li><a class="dropdown-item" href="#" onclick="duplicateOrder(<?php echo $order['id']; ?>)">
+                                                                    <i class="fas fa-copy"></i> Duplicate Order
+                                                                </a></li>
+                                                                <li><a class="dropdown-item" href="#" onclick="sendOrderEmail(<?php echo $order['id']; ?>)">
+                                                                    <i class="fas fa-envelope"></i> Send Email
+                                                                </a></li>
+                                                                <li><hr class="dropdown-divider"></li>
+                                                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteOrder(<?php echo $order['id']; ?>)">
+                                                                    <i class="fas fa-trash"></i> Delete Order
+                                                                </a></li>
+                                                            </ul>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -299,16 +304,473 @@
                             </div>
                         <?php endif; ?>
                     </div>
-                </div>
-
-            </main>
+                </div>            </main>
         </div>
     </div>
 
-    <?php require_once 'views/admin/layouts/footer.php'; ?>
+    <!-- Order Details Modal -->
+    <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderDetailsModalLabel">
+                        <i class="fas fa-receipt"></i> Order Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="orderDetailsContent">
+                    <!-- Order details will be loaded here -->
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="printCurrentOrder()">
+                        <i class="fas fa-print"></i> Print Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        // Orders Management JavaScript
+    <!-- Edit Order Modal -->
+    <div class="modal fade" id="editOrderModal" tabindex="-1" aria-labelledby="editOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editOrderModalLabel">
+                        <i class="fas fa-edit"></i> Edit Order
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editOrderForm">
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="edit_customer_name" class="form-label">Customer Name</label>
+                                <input type="text" class="form-control" id="edit_customer_name" name="customer_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_customer_email" class="form-label">Customer Email</label>
+                                <input type="email" class="form-control" id="edit_customer_email" name="customer_email" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="edit_customer_phone" class="form-label">Customer Phone</label>
+                                <input type="tel" class="form-control" id="edit_customer_phone" name="customer_phone">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_status" class="form-label">Order Status</label>
+                                <select class="form-select" id="edit_status" name="status" required>
+                                    <option value="pending">Pending</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="preparing">Preparing</option>
+                                    <option value="ready">Ready</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="edit_payment_method" class="form-label">Payment Method</label>
+                                <select class="form-select" id="edit_payment_method" name="payment_method">
+                                    <option value="cash">Cash</option>
+                                    <option value="card">Credit Card</option>
+                                    <option value="transfer">Bank Transfer</option>
+                                    <option value="digital">Digital Wallet</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_total_amount" class="form-label">Total Amount</label>
+                                <input type="number" class="form-control" id="edit_total_amount" name="total_amount" step="0.01" min="0">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_delivery_address" class="form-label">Delivery Address</label>
+                            <textarea class="form-control" id="edit_delivery_address" name="delivery_address" rows="2"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_order_notes" class="form-label">Order Notes</label>
+                            <textarea class="form-control" id="edit_order_notes" name="order_notes" rows="3"></textarea>
+                        </div>
+
+                        <input type="hidden" id="edit_order_id" name="order_id">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Bar (Hidden by default) -->
+    <div id="bulkActionsBar" class="position-fixed bottom-0 start-50 translate-middle-x mb-3" style="display: none; z-index: 1050;">
+        <div class="card border-0 shadow-lg">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="fw-bold text-primary" id="selectedCount">0 orders selected</span>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="bulkUpdateStatus('confirmed')">
+                            <i class="fas fa-check"></i> Confirm All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="bulkUpdateStatus('delivered')">
+                            <i class="fas fa-truck"></i> Mark Delivered
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="bulkUpdateStatus('cancelled')">
+                            <i class="fas fa-times"></i> Cancel All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info" onclick="bulkPrintOrders()">
+                            <i class="fas fa-print"></i> Print All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php require_once 'views/admin/layouts/footer.php'; ?>    <script>
+        // Global variables
+        let currentOrderId = null;
+        let selectedOrders = [];        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - Initializing order management...');
+            initializeStatusUpdates();
+            initializeBulkSelection();
+            initializeEditForm();
+            console.log('Order management initialization complete');
+        });        // Status update functionality
+        function initializeStatusUpdates() {
+            console.log('Initializing status updates...');
+            // Remove existing event listeners to prevent duplicates
+            const statusSelects = document.querySelectorAll('.status-select');
+            console.log('Found', statusSelects.length, 'status select elements');
+
+            statusSelects.forEach(select => {
+                // Clone node to remove all event listeners
+                const newSelect = select.cloneNode(true);
+                select.parentNode.replaceChild(newSelect, select);
+            });
+
+            // Add fresh event listeners
+            const newStatusSelects = document.querySelectorAll('.status-select');
+            newStatusSelects.forEach((select, index) => {
+                console.log('Adding event listener to select', index);
+                select.addEventListener('change', function(e) {
+                    console.log('Status select changed:', this.value);
+                    // Prevent multiple simultaneous calls
+                    if (this.classList.contains('updating')) {
+                        console.log('Already updating, skipping...');
+                        return;
+                    }
+
+                    const orderId = this.dataset.orderId;
+                    const newStatus = this.value;
+                    const currentStatus = this.dataset.currentStatus;
+
+                    if (newStatus !== currentStatus) {
+                        console.log('Updating order', orderId, 'from', currentStatus, 'to', newStatus);
+                        this.classList.add('updating');
+                        updateOrderStatus(orderId, newStatus, this);
+                    }
+                });
+            });
+            console.log('Status updates initialization complete');
+        }        // Update order status
+        function updateOrderStatus(orderId, status, selectElement) {
+            console.log('updateOrderStatus called for order', orderId, 'with status', status);
+            const originalStatus = selectElement.dataset.currentStatus;
+
+            fetch('<?= SITE_URL ?>/admin/orders/update-status/' + orderId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'csrf_token=' + encodeURIComponent(document.querySelector('meta[name="csrf-token"]').getAttribute('content')) +
+                      '&status=' + encodeURIComponent(status)
+            })
+            .then(response => {
+                console.log('Response received:', response.status, response.url);
+                selectElement.classList.remove('updating');
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    selectElement.dataset.currentStatus = status;
+                    showAlert('success', data.message || 'Order status updated successfully');
+                } else {
+                    selectElement.value = originalStatus;
+                    showAlert('error', data.message || 'Failed to update order status');
+                }
+            })
+            .catch(error => {
+                console.error('Update error:', error);
+                selectElement.classList.remove('updating');
+                selectElement.value = originalStatus;
+                showAlert('error', 'Failed to update order status');
+            });
+        }
+
+        // Edit Order Modal
+        function editOrder(orderId) {
+            currentOrderId = orderId;
+
+            // Fetch order data
+            fetch('<?= SITE_URL ?>/admin/orders/get/' + orderId)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        populateEditForm(data.order);
+                        new bootstrap.Modal(document.getElementById('editOrderModal')).show();
+                    } else {
+                        showAlert('error', 'Failed to load order data');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('error', 'Failed to load order data');
+                });
+        }
+
+        // Populate edit form with order data
+        function populateEditForm(order) {
+            document.getElementById('edit_order_id').value = order.id;
+            document.getElementById('edit_customer_name').value = order.customer_name || '';
+            document.getElementById('edit_customer_email').value = order.customer_email || '';
+            document.getElementById('edit_customer_phone').value = order.customer_phone || '';
+            document.getElementById('edit_status').value = order.status || 'pending';
+            document.getElementById('edit_payment_method').value = order.payment_method || 'cash';
+            document.getElementById('edit_total_amount').value = order.total_amount || '';
+            document.getElementById('edit_delivery_address').value = order.delivery_address || '';
+            document.getElementById('edit_order_notes').value = order.order_notes || '';
+        }
+
+        // Initialize edit form submission
+        function initializeEditForm() {
+            const editForm = document.getElementById('editOrderForm');
+            if (editForm) {
+                editForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveOrderChanges();
+                });
+            }
+        }
+
+        // Save order changes
+        function saveOrderChanges() {
+            const formData = new FormData(document.getElementById('editOrderForm'));
+
+            fetch('<?= SITE_URL ?>/admin/orders/update/' + currentOrderId, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', 'Order updated successfully');
+                    bootstrap.Modal.getInstance(document.getElementById('editOrderModal')).hide();
+                    refreshOrders();
+                } else {
+                    showAlert('error', data.message || 'Failed to update order');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('error', 'Failed to update order');
+            });
+        }
+
+        // View Order Details
+        function viewOrderDetails(orderId) {
+            currentOrderId = orderId;
+
+            fetch('<?= SITE_URL ?>/admin/orders/details/' + orderId)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('orderDetailsContent').innerHTML = data;
+                    new bootstrap.Modal(document.getElementById('orderDetailsModal')).show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('error', 'Failed to load order details');
+                });
+        }
+
+        // Print order
+        function printOrder(orderId) {
+            window.open('<?= SITE_URL ?>/admin/orders/print/' + orderId, '_blank');
+        }
+
+        function printCurrentOrder() {
+            if (currentOrderId) {
+                printOrder(currentOrderId);
+            }
+        }
+
+        // Bulk selection functionality
+        function initializeBulkSelection() {
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+
+            selectAllCheckbox?.addEventListener('change', function() {
+                orderCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateSelectedOrders();
+            });
+
+            orderCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectedOrders);
+            });
+        }
+
+        function updateSelectedOrders() {
+            const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+            selectedOrders = Array.from(checkedBoxes).map(cb => cb.value);
+
+            const count = selectedOrders.length;
+            document.getElementById('selectedCount').textContent = count + (count === 1 ? ' order selected' : ' orders selected');
+
+            const bulkBar = document.getElementById('bulkActionsBar');
+            if (count > 0) {
+                bulkBar.style.display = 'block';
+            } else {
+                bulkBar.style.display = 'none';
+            }
+        }
+
+        // Bulk operations
+        function bulkUpdateStatus(status) {
+            if (selectedOrders.length === 0) {
+                showAlert('warning', 'Please select orders first');
+                return;
+            }
+
+            if (confirm(`Are you sure you want to update ${selectedOrders.length} orders to ${status}?`)) {
+                Promise.all(selectedOrders.map(orderId => {
+                    return fetch('<?= SITE_URL ?>/admin/orders/update-status/' + orderId, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: 'csrf_token=' + encodeURIComponent(document.querySelector('meta[name="csrf-token"]').getAttribute('content')) +
+                              '&status=' + encodeURIComponent(status)
+                    });
+                }))
+                .then(() => {
+                    showAlert('success', 'Orders updated successfully');
+                    refreshOrders();
+                    clearSelection();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('error', 'Failed to update some orders');
+                });
+            }
+        }
+
+        function bulkPrintOrders() {
+            selectedOrders.forEach(orderId => {
+                printOrder(orderId);
+            });
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('selectAll').checked = false;
+            updateSelectedOrders();
+        }
+
+        // Additional functions
+        function duplicateOrder(orderId) {
+            if (confirm('Create a duplicate of this order?')) {
+                fetch('<?= SITE_URL ?>/admin/orders/duplicate/' + orderId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'csrf_token=' + encodeURIComponent(document.querySelector('meta[name="csrf-token"]').getAttribute('content'))
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', 'Order duplicated successfully');
+                        refreshOrders();
+                    } else {
+                        showAlert('error', data.message || 'Failed to duplicate order');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('error', 'Failed to duplicate order');
+                });
+            }
+        }
+
+        function sendOrderEmail(orderId) {
+            fetch('<?= SITE_URL ?>/admin/orders/send-email/' + orderId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'csrf_token=' + encodeURIComponent(document.querySelector('meta[name="csrf-token"]').getAttribute('content'))
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', 'Email sent successfully');
+                } else {
+                    showAlert('error', data.message || 'Failed to send email');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('error', 'Failed to send email');
+            });
+        }
+
+        function deleteOrder(orderId) {
+            if (confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+                fetch('<?= SITE_URL ?>/admin/orders/delete/' + orderId, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'csrf_token=' + encodeURIComponent(document.querySelector('meta[name="csrf-token"]').getAttribute('content'))
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', 'Order deleted successfully');
+                        refreshOrders();
+                    } else {
+                        showAlert('error', data.message || 'Failed to delete order');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('error', 'Failed to delete order');
+                });
+            }
+        }
+
+        // Utility functions
         function toggleBulkActions() {
             const bulkBar = document.getElementById('bulkActionsBar');
             if (bulkBar) {
@@ -321,15 +783,26 @@
         }
 
         function exportOrders() {
-            window.location.href = '<?= SITE_URL ?>/admin/orders?export=csv';
+            window.location.href = '<?= SITE_URL ?>/admin/orders/export-csv';
         }
 
-        function viewOrder(orderId) {
-            window.location.href = '<?= SITE_URL ?>/admin/orders/view/' + orderId;
-        }
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
 
-        function printOrder(orderId) {
-            window.open('<?= SITE_URL ?>/admin/orders/print/' + orderId, '_blank');
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
         }
 
         // Search functionality

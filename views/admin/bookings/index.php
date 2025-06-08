@@ -609,7 +609,7 @@
         content.innerHTML = '<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
         modal.show();
 
-        fetch(`/admin/bookings/details/${bookingId}`)
+        fetch(`<?= SITE_URL ?>/admin/bookings/details/${bookingId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -657,7 +657,7 @@
         document.getElementById('bookingIdForTable').value = bookingId;
 
         // Load available tables
-        fetch(`/admin/bookings/available-tables/${bookingId}`)
+        fetch(`<?= SITE_URL ?>/admin/bookings/available-tables/${bookingId}`)
             .then(response => response.json())
             .then(data => {
                 const select = document.getElementById('tableNumber');
@@ -733,7 +733,7 @@
     function exportBookings() {
         const params = new URLSearchParams(window.location.search);
         params.set('export', 'csv');
-        window.location.href = `/admin/bookings?${params.toString()}`;
+        window.location.href = `<?= SITE_URL ?>/admin/bookings?${params.toString()}`;
     }
 
     function showNotification(message, type) {

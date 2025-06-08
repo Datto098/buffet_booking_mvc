@@ -42,15 +42,15 @@
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-white text-uppercase mb-1">
+                                        <div class="text-xs font-weight-bold  text-uppercase mb-1">
                                             Total Orders
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-white">
+                                        <div class="h5 mb-0 font-weight-bold ">
                                             <?= number_format($stats['total_orders'] ?? 0) ?>
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-shopping-cart fa-2x text-white-50"></i>
+                                        <i class="fas fa-shopping-cart fa-2x -50"></i>
                                     </div>
                                 </div>
                             </div>
@@ -62,15 +62,15 @@
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-white text-uppercase mb-1">
+                                        <div class="text-xs font-weight-bold  text-uppercase mb-1">
                                             Revenue (This Month)
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-white">
+                                        <div class="h5 mb-0 font-weight-bold ">
                                             $<?= number_format($stats['monthly_revenue'] ?? 0, 2) ?>
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-dollar-sign fa-2x text-white-50"></i>
+                                        <i class="fas fa-dollar-sign fa-2x -50"></i>
                                     </div>
                                 </div>
                             </div>
@@ -82,15 +82,15 @@
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-white text-uppercase mb-1">
+                                        <div class="text-xs font-weight-bold  text-uppercase mb-1">
                                             Active Bookings
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-white">
+                                        <div class="h5 mb-0 font-weight-bold ">
                                             <?= number_format($stats['active_bookings'] ?? 0) ?>
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-calendar-check fa-2x text-white-50"></i>
+                                        <i class="fas fa-calendar-check fa-2x -50"></i>
                                     </div>
                                 </div>
                             </div>
@@ -102,15 +102,15 @@
                             <div class="card-body">
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-white text-uppercase mb-1">
+                                        <div class="text-xs font-weight-bold  text-uppercase mb-1">
                                             Total Users
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-white">
+                                        <div class="h5 mb-0 font-weight-bold ">
                                             <?= number_format($stats['total_users'] ?? 0) ?>
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-users fa-2x text-white-50"></i>
+                                        <i class="fas fa-users fa-2x -50"></i>
                                     </div>
                                 </div>
                             </div>

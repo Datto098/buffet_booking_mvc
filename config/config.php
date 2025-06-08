@@ -3,6 +3,15 @@
  * Configuration file - General settings
  */
 
+// Path settings (moved up for error logging)
+define('ROOT_PATH', dirname(__DIR__));
+
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+ini_set('error_log', ROOT_PATH . '/debug.log');
+
 // Site settings
 define('SITE_NAME', 'Buffet Booking');
 define('SITE_URL', 'http://localhost/buffet_booking_mvc');
@@ -22,8 +31,7 @@ define('ALLOWED_IMAGE_TYPES', ['jpg', 'jpeg', 'png', 'gif']);
 define('ITEMS_PER_PAGE', 12);
 define('ADMIN_ITEMS_PER_PAGE', 20);
 
-// Path settings
-define('ROOT_PATH', dirname(__DIR__));
+// Path settings (already defined above)
 define('UPLOAD_PATH', ROOT_PATH . '/uploads');
 define('ASSETS_PATH', ROOT_PATH . '/assets');
 

@@ -578,21 +578,7 @@ class Order extends BaseModel {
      * Count orders by user (alias for countUserOrders)
      * @param int $userId User ID
      * @return int Number of orders
-     */
-    public function countByUser($userId) {
-        return $this->countUserOrders($userId);
-    }
-
-    /**
-     * Get total amount spent by user (alias for getUserTotalSpent)
-     * @param int $userId User ID
-     * @return float Total spent amount
-     */
-    public function getTotalSpentByUser($userId) {
-        return $this->getUserTotalSpent($userId);
-    }
-
-    /**
+     */    /**
      * Get comprehensive order statistics for admin dashboard
      * @return array Order statistics
      */
@@ -674,9 +660,70 @@ class Order extends BaseModel {
                 LIMIT :limit";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
-        $stmt->execute();
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);        $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Find order by ID
+     * @param int $id Order ID
+     * @return array|false Order data or false if not found
+     */
+    public function findById($id) {
+        $sql = "SELECT * FROM {$this->table} WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    /**
+     * Update order data
+     * @param int $id Order ID
+     * @param array $data Update data
+     * @return bool Success status
+     */
+    public function update($id, $data) {
+        $setParts = [];
+        $params = [':id' => $id];
+
+        foreach ($data as $key => $value) {
+            $setParts[] = "`$key` = :$key";
+            $params[":$key"] = $value;
+        }
+
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $setParts) . " WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute($params);
+    }
+
+    /**
+     * Get total spent by user (for AdminController usage)
+     * @param int $userId User ID
+     * @return float Total amount spent
+     */
+    public function getTotalSpentByUser($userId) {
+        $sql = "SELECT SUM(total_amount) as total FROM {$this->table}
+                WHERE user_id = :user_id AND status IN ('completed', 'delivered')";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':user_id', (int)$userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        return $result['total'] ?? 0;
+    }
+
+    /**
+     * Count orders by user
+     * @param int $userId User ID
+     * @return int Order count
+     */
+    public function countByUser($userId) {
+        $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE user_id = :user_id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':user_id', (int)$userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        return $result['count'] ?? 0;
     }
 }
 ?>

@@ -1,12 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo $csrf_token ?? ''; ?>">
     <title>Edit Food Item - Admin</title>
     <?php require_once 'views/admin/layouts/header.php'; ?>
+    <style>
+        .image-placeholder {
+            width: 100%;
+            background: linear-gradient(135deg, #f8f9fc 0%, #e8ecf1 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px dashed #dee2e6;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            padding: 15px;
+        }
+
+        .image-container {
+            width: 100%;
+            height: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+            /* background: #f8f9fa; */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .food-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .form-control:focus {
+            border-color: var(--admin-primary);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+
+        .input-group-text {
+            background: linear-gradient(135deg, #f8f9fc 0%, #ffffff 100%);
+            border-color: #e3e6f0;
+        }
+    </style>
 </head>
+
 <body>
     <div class="container-fluid">
         <div class="row">
@@ -42,14 +89,16 @@
                 <!-- Flash Messages -->
                 <?php if (isset($_SESSION['success'])): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle"></i> <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+                        <i class="fas fa-check-circle"></i> <?php echo $_SESSION['success'];
+                                                            unset($_SESSION['success']); ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 <?php endif; ?>
 
                 <?php if (isset($_SESSION['error'])): ?>
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="fas fa-exclamation-circle"></i> <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                        <i class="fas fa-exclamation-circle"></i> <?php echo $_SESSION['error'];
+                                                                    unset($_SESSION['error']); ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 <?php endif; ?>
@@ -76,7 +125,7 @@
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="fas fa-utensils"></i></span>
                                                 <input type="text" class="form-control" id="name" name="name"
-                                                       value="<?= htmlspecialchars($food['name'] ?? '') ?>" required>
+                                                    value="<?= htmlspecialchars($food['name'] ?? '') ?>" required>
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
@@ -86,7 +135,7 @@
                                                 <?php if (!empty($categories)): ?>
                                                     <?php foreach ($categories as $category): ?>
                                                         <option value="<?= $category['id'] ?>"
-                                                                <?= ($food['category_id'] ?? '') == $category['id'] ? 'selected' : '' ?>>
+                                                            <?= ($food['category_id'] ?? '') == $category['id'] ? 'selected' : '' ?>>
                                                             <?= htmlspecialchars($category['name']) ?>
                                                         </option>
                                                     <?php endforeach; ?>
@@ -101,7 +150,7 @@
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
                                                 <input type="number" class="form-control" id="price" name="price" step="0.01" min="0"
-                                                       value="<?= htmlspecialchars($food['price'] ?? '') ?>" required>
+                                                    value="<?= htmlspecialchars($food['price'] ?? '') ?>" required>
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
@@ -109,7 +158,7 @@
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="fas fa-clock"></i></span>
                                                 <input type="number" class="form-control" id="cooking_time" name="cooking_time" min="1"
-                                                       value="<?= htmlspecialchars($food['cooking_time'] ?? '') ?>">
+                                                    value="<?= htmlspecialchars($food['cooking_time'] ?? '') ?>">
                                             </div>
                                         </div>
                                     </div>
@@ -131,13 +180,13 @@
                                     <div class="mb-3">
                                         <label for="description" class="form-label">Description</label>
                                         <textarea class="form-control" id="description" name="description" rows="4"
-                                                  placeholder="Describe the food item, ingredients, etc..."><?= htmlspecialchars($food['description'] ?? '') ?></textarea>
+                                            placeholder="Describe the food item, ingredients, etc..."><?= htmlspecialchars($food['description'] ?? '') ?></textarea>
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="ingredients" class="form-label">Ingredients</label>
                                         <textarea class="form-control" id="ingredients" name="ingredients" rows="3"
-                                                  placeholder="List main ingredients..."><?= htmlspecialchars($food['ingredients'] ?? '') ?></textarea>
+                                            placeholder="List main ingredients..."><?= htmlspecialchars($food['ingredients'] ?? '') ?></textarea>
                                     </div>
 
                                     <div class="row">
@@ -156,14 +205,14 @@
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="fas fa-fire"></i></span>
                                                 <input type="number" class="form-control" id="calories" name="calories" min="0"
-                                                       value="<?= htmlspecialchars($food['calories'] ?? '') ?>">
+                                                    value="<?= htmlspecialchars($food['calories'] ?? '') ?>">
                                             </div>
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label for="is_vegetarian" class="form-label">Dietary</label>
                                             <div class="form-check mt-2">
                                                 <input class="form-check-input" type="checkbox" id="is_vegetarian" name="is_vegetarian" value="1"
-                                                       <?= ($food['is_vegetarian'] ?? 0) ? 'checked' : '' ?>>
+                                                    <?= ($food['is_vegetarian'] ?? 0) ? 'checked' : '' ?>>
                                                 <label class="form-check-label" for="is_vegetarian">
                                                     Vegetarian
                                                 </label>
@@ -192,19 +241,20 @@
                                     <i class="fas fa-image"></i> Food Image
                                 </h6>
                             </div>
-                            <div class="card-body text-center">
-                                <div class="image-preview mb-3">
-                                    <?php if (!empty($food['image'])): ?>
-                                        <img src="<?= SITE_URL ?>/uploads/foods/<?= htmlspecialchars($food['image']) ?>"
-                                             class="img-fluid rounded" style="max-height: 200px; object-fit: cover;" alt="Food Image">
+                            <div class="card-body text-center " style="display: flex; flex-direction: column; align-items: center; overflow: hidden">
+                                <div class="image-preview" style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; max-width: 100%; margin-top: 15px; ">
+                                    <?php if (!empty($food['image'])): ?>                                        <div class="image-container">
+                                            <img src="<?= SITE_URL ?>/uploads/food_images/<?= htmlspecialchars($food['image']) ?>"
+                                                class="food-image" alt="Food Image">
+                                        </div>
                                     <?php else: ?>
                                         <div class="image-placeholder">
-                                            <i class="fas fa-utensils fa-4x text-muted"></i>
-                                            <p class="text-muted mt-2">No image uploaded</p>
+                                            <i class="fas fa-utensils fa-2x text-muted"></i>
+                                            <p class="text-muted mt-2 mb-0">No image uploaded</p>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                                <p class="text-muted small">Choose a file above to upload a new image</p>
+                                <p class="text-muted small mt-3">Choose a file above to upload a new image</p>
                             </div>
                         </div>
 
@@ -376,34 +426,13 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const preview = document.querySelector('.image-preview');
-                    preview.innerHTML = `<img src="${e.target.result}" class="img-fluid rounded" style="max-height: 200px; object-fit: cover;" alt="Preview">`;
+                    preview.innerHTML = ''; // Clear previous preview
+                    preview.innerHTML = `<div class="image-container"><img src="${e.target.result}" class="food-image" alt="Preview"></div>`;
                 };
                 reader.readAsDataURL(file);
             }
         });
     </script>
-
-    <style>
-        .image-placeholder {
-            height: 150px;
-            background: linear-gradient(135deg, #f8f9fc 0%, #e8ecf1 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 3px dashed #dee2e6;
-            border-radius: 8px;
-        }
-
-        .form-control:focus {
-            border-color: var(--admin-primary);
-            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
-        }
-
-        .input-group-text {
-            background: linear-gradient(135deg, #f8f9fc 0%, #ffffff 100%);
-            border-color: #e3e6f0;
-        }
-    </style>
 </body>
+
 </html>
