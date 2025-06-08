@@ -292,17 +292,9 @@
         <p>Thank you for your order!</p>
         <p>For questions about this order, please contact us at (555) 123-4567</p>
         <p>Printed on <?= date('M j, Y \a\t g:i A') ?></p>
-    </div>
-
+    </div>    <script src="<?= SITE_URL ?>/assets/js/admin.js"></script>
     <script>
-        // Auto-print when page loads if opened in new window
-        if (window.location !== window.parent.location) {
-            window.onload = function() {
-                setTimeout(function() {
-                    window.print();
-                }, 500);
-            };
-        }
+        autoPrintOrder();
     </script>
 </body>
 </html>

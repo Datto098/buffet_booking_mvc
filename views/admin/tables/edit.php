@@ -300,87 +300,20 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <?php require_once 'views/admin/layouts/footer.php'; ?>
+    </div>    <?php require_once 'views/admin/layouts/footer.php'; ?>
 
     <script>
-        // Form validation
-        document.getElementById('editTableForm').addEventListener('submit', function(e) {
-            const tableNumber = document.getElementById('table_number').value.trim();
-            const capacity = document.getElementById('capacity').value;
+        window.SITE_URL = '<?= SITE_URL ?>';
 
-            if (!tableNumber) {
-                e.preventDefault();
-                alert('Table number is required!');
-                return false;
-            }
-
-            if (!capacity || capacity < 1) {
-                e.preventDefault();
-                alert('Valid seating capacity is required!');
-                return false;
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTableEditForm();
         });
 
-        // Delete confirmation
-        function confirmDelete() {
-            new bootstrap.Modal(document.getElementById('deleteTableModal')).show();
-        }
-
-        // Quick action functions
-        function viewTableBookings(tableId) {
-            window.location.href = `<?= SITE_URL ?>/admin/bookings?table_id=${tableId}`;
-        }
-
-        function createBooking(tableId) {
-            window.location.href = `<?= SITE_URL ?>/admin/bookings/create?table_id=${tableId}`;
-        }
-
-        function markMaintenance(tableId) {
-            if (confirm('Mark this table for maintenance? This will make it unavailable for bookings.')) {
-                toggleTableStatus(tableId, 'maintenance');
-            }
-        }
-
-        function toggleTableStatus(tableId, status) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `<?= SITE_URL ?>/admin/tables/${tableId}/toggle-status`;
-
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = 'csrf_token';
-            csrfToken.value = '<?= $data['csrf_token'] ?? $_SESSION['csrf_token'] ?? '' ?>';
-
-            const statusInput = document.createElement('input');
-            statusInput.type = 'hidden';
-            statusInput.name = 'status';
-            statusInput.value = status;
-
-            form.appendChild(csrfToken);
-            form.appendChild(statusInput);
-            document.body.appendChild(form);
-            form.submit();
-        }
-
-        // Update table preview when capacity changes
-        document.getElementById('capacity').addEventListener('input', function(e) {
-            const capacity = e.target.value;
-            const preview = document.querySelector('.table-visual small');
-            if (preview) {
-                preview.textContent = `${capacity} seats`;
-            }
-        });
-
-        // Update table preview when table number changes
-        document.getElementById('table_number').addEventListener('input', function(e) {
-            const tableNumber = e.target.value;
-            const preview = document.querySelector('.table-visual strong');
-            if (preview) {
-                preview.textContent = tableNumber || 'T#';
-            }
-        });
+        // Override global functions with table-specific data
+        window.viewFullHistory = () => viewFullHistory('<?= $data['table']['id'] ?>');
+        window.createBooking = () => createBookingForTable('<?= $data['table']['id'] ?>');
+        window.toggleAvailability = toggleTableAvailability;
+        window.confirmDelete = confirmTableDelete;
     </script>
 
     <style>
@@ -585,98 +518,6 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Form validation
-    const forms = document.querySelectorAll('.needs-validation');
-    Array.prototype.slice.call(forms).forEach(function(form) {
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        }, false);
-    });
 
-    // Real-time preview
-    const tableNumberInput = document.getElementById('table_number');
-    const capacityInput = document.getElementById('capacity');
-    const locationSelect = document.getElementById('location');
-    const availableCheckbox = document.getElementById('is_available');
-
-    function updatePreview() {
-        // Update table number
-        const number = tableNumberInput.value || '#';
-        document.getElementById('preview-number').textContent = `Table ${number}`;
-
-        // Update capacity
-        const capacity = capacityInput.value || '0';
-        document.getElementById('preview-capacity').textContent = capacity;
-
-        // Update location
-        const location = locationSelect.value || 'No location';
-        document.getElementById('preview-location').textContent = location;
-
-        // Update status
-        const statusBadge = document.getElementById('preview-status');
-        if (availableCheckbox.checked) {
-            statusBadge.textContent = 'Available';
-            statusBadge.className = 'badge bg-success';
-        } else {
-            statusBadge.textContent = 'Unavailable';
-            statusBadge.className = 'badge bg-secondary';
-        }
-    }
-
-    // Add event listeners for real-time preview
-    tableNumberInput.addEventListener('input', updatePreview);
-    capacityInput.addEventListener('input', updatePreview);
-    locationSelect.addEventListener('change', updatePreview);
-    availableCheckbox.addEventListener('change', updatePreview);
-
-    // Capacity validation
-    capacityInput.addEventListener('input', function() {
-        const capacity = parseInt(this.value);
-        if (capacity < 1) {
-            this.setCustomValidity('Capacity must be at least 1');
-        } else if (capacity > 20) {
-            this.setCustomValidity('Capacity cannot exceed 20');
-        } else {
-            this.setCustomValidity('');
-        }
-    });
-});
-
-function viewFullHistory() {
-    // Redirect to full booking history for this table
-    window.location.href = `<?= SITE_URL ?>/admin/bookings?table_id=<?= $data['table']['id'] ?>`;
-}
-
-function createBooking() {
-    // Redirect to create booking with this table pre-selected
-    window.location.href = `<?= SITE_URL ?>/admin/bookings/create?table_id=<?= $data['table']['id'] ?>`;
-}
-
-function toggleAvailability() {
-    const checkbox = document.getElementById('is_available');
-    checkbox.checked = !checkbox.checked;
-
-    // Trigger preview update
-    const event = new Event('change');
-    checkbox.dispatchEvent(event);
-
-    // Show confirmation
-    const action = checkbox.checked ? 'available' : 'unavailable';
-    if (confirm(`Make this table ${action}?`)) {
-        // Auto-submit form or make AJAX call
-        document.querySelector('form').submit();
-    } else {
-        // Revert checkbox
-        checkbox.checked = !checkbox.checked;
-        checkbox.dispatchEvent(event);
-    }
-}
-</script>
 
 <?php require_once 'views/admin/layouts/footer.php'; ?>

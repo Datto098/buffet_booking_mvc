@@ -222,10 +222,12 @@ function handleAdminCategoriesRoute($controller, $action, $param)
 }
 
 function handleAdminOrdersRoute($controller, $action, $param)
-{
-    switch ($action) {
+{    switch ($action) {
         case 'update-status':
             $controller->updateOrderStatus($param);
+            break;
+        case 'update-payment-status':
+            $controller->updatePaymentStatus($param);
             break;
         case 'details':
             $controller->orderDetails($param);

@@ -456,14 +456,41 @@ class AdminController extends BaseController
         $updateData = [
             'status' => $status,
             'updated_at' => date('Y-m-d H:i:s')
-        ];
-
-        if ($orderModel->update($id, $updateData)) {
+        ];        if ($orderModel->update($id, $updateData)) {
             echo json_encode(['success' => true, 'message' => 'Order status updated successfully.']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to update order status.']);
         }
     }
+
+    public function updatePaymentStatus($id) {
+        if (!$this->validateCSRF()) {
+            echo json_encode(['success' => false, 'message' => 'Invalid security token.']);
+            return;
+        }
+
+        $orderModel = new Order();
+        $paymentStatus = $this->sanitize($_POST['payment_status']);
+
+        // Validate payment status
+        $allowedStatuses = ['pending', 'paid', 'failed', 'refunded'];
+        if (!in_array($paymentStatus, $allowedStatuses)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid payment status.']);
+            return;
+        }
+
+        $updateData = [
+            'payment_status' => $paymentStatus,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        if ($orderModel->update($id, $updateData)) {
+            echo json_encode(['success' => true, 'message' => 'Payment status updated successfully.']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to update payment status.']);
+        }
+    }
+
     public function bookings()
     {
         $bookingModel = new Booking();

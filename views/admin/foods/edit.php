@@ -320,110 +320,13 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>    <?php require_once 'views/admin/layouts/footer.php'; ?>    <script>
+        // Set up site URL for admin functions
+        window.SITE_URL = '<?= SITE_URL ?>';
 
-    <?php require_once 'views/admin/layouts/footer.php'; ?>
-
-    <script>
-        // Form validation
-        document.getElementById('editFoodForm').addEventListener('submit', function(e) {
-            const name = document.getElementById('name').value.trim();
-            const price = document.getElementById('price').value;
-            const categoryId = document.getElementById('category_id').value;
-
-            if (!name) {
-                e.preventDefault();
-                alert('Food name is required!');
-                document.getElementById('name').focus();
-                return false;
-            }
-
-            if (!categoryId) {
-                e.preventDefault();
-                alert('Please select a category!');
-                document.getElementById('category_id').focus();
-                return false;
-            }
-
-            if (!price || price <= 0) {
-                e.preventDefault();
-                alert('Valid price is required!');
-                document.getElementById('price').focus();
-                return false;
-            }
-        });
-
-        // Delete confirmation
-        function confirmDelete() {
-            new bootstrap.Modal(document.getElementById('deleteFoodModal')).show();
-        }
-
-        // Quick action functions
-        function viewFoodOrders(foodId) {
-            window.location.href = `<?= SITE_URL ?>/admin/orders?food_id=${foodId}`;
-        }
-
-        function viewFoodReviews(foodId) {
-            window.location.href = `<?= SITE_URL ?>/admin/reviews?food_id=${foodId}`;
-        }
-
-        function duplicateFood(foodId) {
-            if (confirm('Create a duplicate of this food item?')) {
-                window.location.href = `<?= SITE_URL ?>/admin/foods/duplicate/${foodId}`;
-            }
-        }
-
-        function toggleFoodStatus(foodId, status) {
-            const actionText = status === 'active' ? 'make available' : 'make unavailable';
-            if (confirm(`Are you sure you want to ${actionText} this food item?`)) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `<?= SITE_URL ?>/admin/foods/${foodId}/toggle-status`;
-
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = 'csrf_token';
-                csrfToken.value = '<?= $_SESSION['csrf_token'] ?? '' ?>';
-
-                const statusInput = document.createElement('input');
-                statusInput.type = 'hidden';
-                statusInput.name = 'status';
-                statusInput.value = status;
-
-                form.appendChild(csrfToken);
-                form.appendChild(statusInput);
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-
-        // Image preview functionality
-        document.getElementById('image').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // Validate file type
-                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-                if (!allowedTypes.includes(file.type)) {
-                    alert('Please select a valid image file (JPG, PNG, or GIF)');
-                    this.value = '';
-                    return;
-                }
-
-                // Validate file size (5MB max)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('File size must be less than 5MB');
-                    this.value = '';
-                    return;
-                }
-
-                // Show preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.querySelector('.image-preview');
-                    preview.innerHTML = `<div class="image-container"><img src="${e.target.result}" class="food-image" alt="Preview"></div>`;
-                };
-                reader.readAsDataURL(file);
-            }
+        // Page initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFoodEditForm();
         });
     </script>
 </body>
