@@ -303,98 +303,20 @@
                 </div>
             </main>
         </div>
-    </div>
-
-    <?php require_once 'views/admin/layouts/footer.php'; ?>
-
-    <script>
-        // Dashboard specific JavaScript
+    </div>    <?php require_once 'views/admin/layouts/footer.php'; ?>    <script>
+        window.SITE_URL = '<?= SITE_URL ?>';
         document.addEventListener('DOMContentLoaded', function() {
-            initializeCharts();
+            const chartData = {
+                monthly_revenue_data: <?= json_encode($stats['monthly_revenue_data'] ?? [0,0,0,0,0,0,0,0,0,0,0,0]) ?>,
+                booking_stats: {
+                    confirmed: <?= $stats['confirmed_bookings'] ?? 0 ?>,
+                    pending: <?= $stats['pending_bookings'] ?? 0 ?>,
+                    cancelled: <?= $stats['cancelled_bookings'] ?? 0 ?>
+                }
+            };
+            initializeCharts(chartData);
         });
-
-        function refreshDashboard() {
-            location.reload();
-        }
-
-        function exportChart(chartType) {
-            // Placeholder for chart export functionality
-            alert('Export functionality would be implemented here');
-        }
-
-        function initializeCharts() {
-            // Revenue Chart
-            const revenueCtx = document.getElementById('revenueChart');
-            if (revenueCtx) {
-                new Chart(revenueCtx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                        datasets: [{
-                            label: 'Revenue',
-                            data: <?= json_encode($stats['monthly_revenue_data'] ?? [0,0,0,0,0,0,0,0,0,0,0,0]) ?>,
-                            borderColor: 'rgb(54, 162, 235)',
-                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                            tension: 0.1,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: function(value) {
-                                        return '$' + value.toLocaleString();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Booking Status Chart
-            const statusCtx = document.getElementById('bookingStatusChart');
-            if (statusCtx) {
-                new Chart(statusCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Confirmed', 'Pending', 'Cancelled'],
-                        datasets: [{
-                            data: [
-                                <?= $stats['confirmed_bookings'] ?? 0 ?>,
-                                <?= $stats['pending_bookings'] ?? 0 ?>,
-                                <?= $stats['cancelled_bookings'] ?? 0 ?>
-                            ],
-                            backgroundColor: [
-                                '#28a745',
-                                '#ffc107',
-                                '#dc3545'
-                            ],
-                            borderWidth: 2,
-                            borderColor: '#fff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
-                            }
-                        }
-                    }
-                });
-            }
-        }
+    </script>
     </script>
 </body>
 </html>

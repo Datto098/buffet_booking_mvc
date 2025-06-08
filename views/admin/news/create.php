@@ -109,15 +109,12 @@
     </div>
 
 <script>
-    // Initialize CKEditor
-    $(document).ready(function() {
-        if (typeof CKEDITOR !== 'undefined') {
-            CKEDITOR.replace('content', {
-                height: 400,
-                removePlugins: 'elementspath',
-                resize_enabled: false
-            });
-        }
+    // Set up site URL for admin functions
+    window.SITE_URL = '<?= SITE_URL ?>';
+
+    // Initialize news create form
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeNewsCreateForm();
     });
 </script>
 

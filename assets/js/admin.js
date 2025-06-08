@@ -1,14 +1,35 @@
 // Admin Panel JavaScript Functions
 
+// Global variables and configuration
+window.adminConfig = {
+	csrfToken:
+		document
+			.querySelector('meta[name="csrf-token"]')
+			?.getAttribute('content') || '',
+	initialized: false,
+};
+
 document.addEventListener('DOMContentLoaded', function () {
+	if (window.adminConfig.initialized) return;
+
 	// Initialize admin functionality
 	initializeAdmin();
 
 	// Handle sidebar toggle on mobile
 	handleSidebarToggle();
 
-	// Initialize any DataTables
-	initializeDataTables();
+	// Initialize CSRF token for requests
+	initializeCSRF();
+
+	// Initialize DataTables
+	initializeDataTablesAdvanced();
+
+	// Initialize notifications if in admin area
+	if (window.location.pathname.includes('/admin')) {
+		initializeNotifications();
+	}
+
+	window.adminConfig.initialized = true;
 });
 
 function initializeAdmin() {
@@ -17,9 +38,11 @@ function initializeAdmin() {
 
 	// Initialize tooltips
 	initializeTooltips();
-
 	// Initialize status updates
 	initializeStatusUpdates();
+
+	// Initialize payment status updates
+	initializePaymentStatusUpdates();
 
 	// Initialize form validation
 	initializeFormValidation();
@@ -79,31 +102,49 @@ function initializeTooltips() {
 	});
 }
 
-// Initialize DataTables
-function initializeDataTables() {
-	if ($.fn.DataTable) {
-		const tables = document.querySelectorAll(
-			'table.dataTable, table.table-datatable'
-		);
-		tables.forEach(function (table) {
-			$(table).DataTable({
-				responsive: true,
-				language: {
-					search: '_INPUT_',
-					searchPlaceholder: 'Tìm kiếm...',
-					lengthMenu: 'Hiển thị _MENU_ mục',
-					info: 'Hiển thị _START_ đến _END_ của _TOTAL_ mục',
-					infoEmpty: 'Hiển thị 0 đến 0 của 0 mục',
-					infoFiltered: '(lọc từ _MAX_ mục)',
-					paginate: {
-						first: 'Đầu',
-						last: 'Cuối',
-						next: 'Sau',
-						previous: 'Trước',
-					},
-				},
-			});
+// Initialize CSRF token for all AJAX requests
+function initializeCSRF() {
+	// Set global CSRF token
+	window.csrfToken = window.adminConfig.csrfToken;
+
+	// Set CSRF token for jQuery AJAX requests
+	if (window.jQuery) {
+		$.ajaxSetup({
+			beforeSend: function (xhr, settings) {
+				if (
+					!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) &&
+					!this.crossDomain
+				) {
+					xhr.setRequestHeader('X-CSRFToken', window.csrfToken);
+				}
+			},
 		});
+	}
+
+	// Override fetch to include CSRF token
+	if (window.fetch) {
+		const originalFetch = window.fetch;
+		window.fetch = function (url, options = {}) {
+			if (options.method && options.method.toUpperCase() !== 'GET') {
+				if (options.body instanceof FormData) {
+					if (!options.body.has('csrf_token')) {
+						options.body.append('csrf_token', window.csrfToken);
+					}
+				} else if (
+					typeof options.body === 'string' &&
+					options.headers &&
+					options.headers['Content-Type'] ===
+						'application/x-www-form-urlencoded'
+				) {
+					if (!options.body.includes('csrf_token=')) {
+						options.body +=
+							'&csrf_token=' +
+							encodeURIComponent(window.csrfToken);
+					}
+				}
+			}
+			return originalFetch(url, options);
+		};
 	}
 }
 
@@ -154,14 +195,24 @@ function updateStatus(id, status, selectElement, type) {
 	// Show loading state
 	selectElement.classList.add('loading');
 
-	fetch(endpoint + id, {
+	// Get CSRF token from meta tag or window variable
+	const csrfToken =
+		document
+			.querySelector('meta[name="csrf-token"]')
+			?.getAttribute('content') ||
+		window.csrfToken ||
+		window.adminConfig?.csrfToken ||
+		'';
+
+	// Build the full URL with site URL
+	const fullEndpoint = (window.SITE_URL || '') + endpoint + id;
+
+	fetch(fullEndpoint, {
 		method: 'POST',
-		headers: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-		},
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body:
 			'csrf_token=' +
-			encodeURIComponent(window.csrfToken) +
+			encodeURIComponent(csrfToken) +
 			'&status=' +
 			encodeURIComponent(status),
 	})
@@ -171,20 +222,26 @@ function updateStatus(id, status, selectElement, type) {
 
 			if (data.success) {
 				selectElement.dataset.currentStatus = status;
-				showAlert('success', data.message);
+				showNotification(
+					data.message || type + ' status updated successfully',
+					'success'
+				);
 
 				// Update any status badges or indicators
 				updateStatusIndicators(selectElement, status);
 			} else {
 				selectElement.value = originalStatus;
-				showAlert('error', data.message);
+				showNotification(
+					data.message || 'Failed to update ' + type + ' status',
+					'error'
+				);
 			}
 		})
 		.catch((error) => {
 			selectElement.classList.remove('loading');
 			selectElement.value = originalStatus;
-			showAlert('error', 'Failed to update ' + type + ' status');
-			console.error('Error:', error);
+			showNotification('Failed to update ' + type + ' status', 'error');
+			console.error('Error updating ' + type + ' status:', error);
 		});
 }
 
@@ -216,6 +273,105 @@ function updateStatusIndicators(selectElement, status) {
 			}
 		});
 	}
+}
+
+// Initialize payment status update functionality
+function initializePaymentStatusUpdates() {
+	const paymentStatusSelects = document.querySelectorAll(
+		'.payment-status-select'
+	);
+
+	paymentStatusSelects.forEach((select) => {
+		select.addEventListener('change', function () {
+			const orderId = this.dataset.orderId;
+			const newPaymentStatus = this.value;
+			const currentPaymentStatus = this.dataset.currentPaymentStatus;
+
+			if (newPaymentStatus !== currentPaymentStatus) {
+				updatePaymentStatus(orderId, newPaymentStatus, this);
+			}
+		});
+	});
+}
+
+// Update payment status
+function updatePaymentStatus(id, paymentStatus, selectElement) {
+	const originalPaymentStatus = selectElement.dataset.currentPaymentStatus;
+	const endpoint = '/admin/orders/update-payment-status/';
+
+	// Show loading state
+	selectElement.classList.add('loading');
+
+	// Get CSRF token from meta tag or window variable
+	const csrfToken =
+		document
+			.querySelector('meta[name="csrf-token"]')
+			?.getAttribute('content') ||
+		window.csrfToken ||
+		window.adminConfig?.csrfToken ||
+		'';
+
+	// Build the full URL with site URL
+	const fullEndpoint = (window.SITE_URL || '') + endpoint + id;
+
+	fetch(fullEndpoint, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		body:
+			'csrf_token=' +
+			encodeURIComponent(csrfToken) +
+			'&payment_status=' +
+			encodeURIComponent(paymentStatus),
+	})
+		.then((response) => response.json())
+		.then((data) => {
+			selectElement.classList.remove('loading');
+
+			if (data.success) {
+				selectElement.dataset.currentPaymentStatus = paymentStatus;
+				showNotification(
+					data.message || 'Payment status updated successfully',
+					'success'
+				);
+
+				// Update payment status styling based on the new status
+				updatePaymentStatusStyling(selectElement, paymentStatus);
+			} else {
+				selectElement.value = originalPaymentStatus;
+				showNotification(
+					data.message || 'Failed to update payment status',
+					'error'
+				);
+			}
+		})
+		.catch((error) => {
+			selectElement.classList.remove('loading');
+			selectElement.value = originalPaymentStatus;
+			showNotification('Failed to update payment status', 'error');
+			console.error('Error updating payment status:', error);
+		});
+}
+
+// Update payment status styling
+function updatePaymentStatusStyling(selectElement, paymentStatus) {
+	// Remove existing styling classes
+	selectElement.classList.remove(
+		'text-warning',
+		'text-success',
+		'text-danger',
+		'text-info'
+	);
+
+	// Apply styling based on payment status
+	const statusClasses = {
+		pending: 'text-warning',
+		paid: 'text-success',
+		failed: 'text-danger',
+		refunded: 'text-info',
+	};
+
+	const statusClass = statusClasses[paymentStatus] || 'text-secondary';
+	selectElement.classList.add(statusClass);
 }
 
 // Initialize form validation
@@ -494,32 +650,118 @@ function updateBookingBadge(count) {
 	}
 }
 
-// CSRF token management
-window.csrfToken =
-	document
-		.querySelector('meta[name="csrf-token"]')
-		?.getAttribute('content') || '';
+// Initialize notifications on load
+document.addEventListener('DOMContentLoaded', function () {
+	if (window.location.pathname.includes('/admin')) {
+		initializeNotifications();
+	}
+});
 
-// Set CSRF token for all AJAX requests
-if (window.fetch) {
-	const originalFetch = window.fetch;
-	window.fetch = function (url, options = {}) {
-		if (options.method && options.method.toUpperCase() !== 'GET') {
-			if (options.body instanceof FormData) {
-				options.body.append('csrf_token', window.csrfToken);
-			} else if (
-				typeof options.body === 'string' &&
-				options.headers &&
-				options.headers['Content-Type'] ===
-					'application/x-www-form-urlencoded'
-			) {
-				options.body +=
-					'&csrf_token=' + encodeURIComponent(window.csrfToken);
-			}
+// Advanced DataTables initialization with comprehensive configuration
+function initializeDataTablesAdvanced() {
+	// Use jQuery document ready to ensure DataTables is loaded
+	$(document).ready(function () {
+		if ($.fn.DataTable && $('table.dataTable').length > 0) {
+			$('table.dataTable').each(function () {
+				// Skip tables with data-dt-disable attribute
+				if ($(this).attr('data-dt-disable')) {
+					return;
+				}
+
+				const tableId = $(this).attr('id');
+
+				// Check if DataTable is already initialized
+				if (!$.fn.DataTable.isDataTable(this)) {
+					let config = {
+						responsive: true,
+						pageLength: 10,
+						processing: true,
+						language: {
+							search: '_INPUT_',
+							searchPlaceholder: 'Search...',
+							lengthMenu: 'Show _MENU_ entries',
+							info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+							infoEmpty: 'No entries found',
+							emptyTable: 'No data available in table',
+							zeroRecords: 'No matching records found',
+							paginate: {
+								first: 'First',
+								last: 'Last',
+								next: 'Next',
+								previous: 'Previous',
+							},
+						},
+						drawCallback: function () {
+							// Reinitialize tooltips after table redraw
+							$('[data-bs-toggle="tooltip"]').tooltip();
+						},
+					};
+
+					// Custom configuration for specific tables
+					switch (tableId) {
+						case 'usersTable':
+						case 'foodsTable':
+						case 'ordersTable':
+						case 'categoriesTable':
+							config.order = [[1, 'desc']]; // Sort by ID column
+							config.columnDefs = [
+								{
+									targets: 0, // Checkbox column
+									orderable: false,
+									searchable: false,
+									className: 'text-center',
+								},
+								{
+									targets: -1, // Actions column
+									orderable: false,
+									searchable: false,
+									className: 'text-center',
+								},
+							];
+							break;
+						default:
+							// Default configuration for other tables
+							config.order = [[0, 'desc']];
+							break;
+					}
+
+					try {
+						$(this).DataTable(config);
+						console.log(
+							`DataTable initialized successfully for ${
+								tableId || 'unnamed table'
+							}`
+						);
+					} catch (error) {
+						console.error(
+							`Failed to initialize DataTable for ${
+								tableId || 'unnamed table'
+							}:`,
+							error
+						);
+					}
+				}
+			});
 		}
-		return originalFetch(url, options);
-	};
+	});
 }
+
+// DataTables debug function
+function debugDataTables() {
+	console.log('DataTables Debug Info:');
+	$('table.dataTable').each(function (index) {
+		const tableId = this.id || 'table-' + index;
+		const isInitialized = $.fn.DataTable.isDataTable(this);
+		console.log(
+			`Table ${tableId}: ${
+				isInitialized ? 'Initialized' : 'Not initialized'
+			}`
+		);
+	});
+}
+
+// Make debug function available globally
+window.debugDataTables = debugDataTables;
 
 // Utility functions
 function formatCurrency(amount) {
@@ -585,9 +827,604 @@ function printElement(elementId) {
 	printWindow.document.close();
 }
 
-// Initialize notifications on load
-document.addEventListener('DOMContentLoaded', function () {
-	if (window.location.pathname.includes('/admin')) {
-		initializeNotifications();
+// News management functions
+function searchNews() {
+	const searchTerm = document.getElementById('searchInput')?.value;
+	const url = new URL(window.location);
+	if (searchTerm) {
+		url.searchParams.set('search', searchTerm);
+	} else {
+		url.searchParams.delete('search');
 	}
-});
+	window.location = url;
+}
+
+function toggleNewsStatus(newsId, newStatus) {
+	if (
+		!confirm(
+			`Are you sure you want to ${
+				newStatus === 'published' ? 'publish' : 'unpublish'
+			} this article?`
+		)
+	) {
+		return;
+	}
+
+	fetch(window.SITE_URL + '/admin/news/toggle-status', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'X-CSRF-Token': window.adminConfig.csrfToken,
+		},
+		body: JSON.stringify({
+			id: newsId,
+			status: newStatus,
+		}),
+	})
+		.then((response) => response.json())
+		.then((data) => {
+			if (data.success) {
+				showNotification(
+					'Article status updated successfully',
+					'success'
+				);
+				setTimeout(() => location.reload(), 1000);
+			} else {
+				showNotification(
+					data.message || 'Failed to update status',
+					'error'
+				);
+			}
+		})
+		.catch((error) => {
+			showNotification('An error occurred', 'error');
+		});
+}
+
+function deleteNews(newsId) {
+	if (
+		!confirm(
+			'Are you sure you want to delete this article? This action cannot be undone.'
+		)
+	) {
+		return;
+	}
+
+	fetch(window.SITE_URL + '/admin/news/delete', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'X-CSRF-Token': window.adminConfig.csrfToken,
+		},
+		body: JSON.stringify({ id: newsId }),
+	})
+		.then((response) => response.json())
+		.then((data) => {
+			if (data.success) {
+				showNotification('Article deleted successfully', 'success');
+				setTimeout(() => location.reload(), 1000);
+			} else {
+				showNotification(
+					data.message || 'Failed to delete article',
+					'error'
+				);
+			}
+		})
+		.catch((error) => {
+			showNotification('An error occurred', 'error');
+		});
+}
+
+// Additional Booking Index Functions
+function viewBookingDetails(bookingId) {
+	const modal = new bootstrap.Modal(
+		document.getElementById('bookingDetailsModal')
+	);
+	const content = document.getElementById('bookingDetailsContent');
+
+	content.innerHTML =
+		'<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
+	modal.show();
+
+	fetch(`${window.SITE_URL}/admin/bookings/details/${bookingId}`)
+		.then((response) => response.json())
+		.then((data) => {
+			if (data.success) {
+				content.innerHTML = data.html;
+			} else {
+				content.innerHTML =
+					'<div class="alert alert-danger">Failed to load booking details.</div>';
+			}
+		})
+		.catch((error) => {
+			content.innerHTML =
+				'<div class="alert alert-danger">Error loading booking details.</div>';
+		});
+}
+
+// Tables Index Functions
+function quickBooking(tableId) {
+	window.location.href = `${window.SITE_URL}/admin/bookings/create?table_id=${tableId}`;
+}
+
+function deleteTable(tableId) {
+	if (
+		!confirm(
+			'Are you sure you want to delete this table? This action cannot be undone.'
+		)
+	) {
+		return;
+	}
+
+	fetch(`${window.SITE_URL}/admin/tables/delete`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'X-CSRF-Token': window.adminConfig.csrfToken,
+		},
+		body: JSON.stringify({ id: tableId }),
+	})
+		.then((response) => response.json())
+		.then((data) => {
+			if (data.success) {
+				showNotification('Table deleted successfully', 'success');
+				location.reload();
+			} else {
+				showNotification(
+					data.message || 'Failed to delete table',
+					'error'
+				);
+			}
+		})
+		.catch((error) => {
+			showNotification('An error occurred', 'error');
+		});
+}
+
+// Dashboard Chart Functions
+function initializeCharts(chartData) {
+	// Initialize monthly revenue chart
+	const revenueCtx = document.getElementById('monthlyRevenueChart');
+	if (revenueCtx) {
+		new Chart(revenueCtx, {
+			type: 'line',
+			data: {
+				labels: [
+					'Jan',
+					'Feb',
+					'Mar',
+					'Apr',
+					'May',
+					'Jun',
+					'Jul',
+					'Aug',
+					'Sep',
+					'Oct',
+					'Nov',
+					'Dec',
+				],
+				datasets: [
+					{
+						label: 'Revenue',
+						data: chartData.monthly_revenue_data,
+						borderColor: 'rgb(75, 192, 192)',
+						backgroundColor: 'rgba(75, 192, 192, 0.2)',
+						fill: true,
+					},
+				],
+			},
+			options: {
+				responsive: true,
+				plugins: {
+					title: {
+						display: true,
+						text: 'Monthly Revenue',
+					},
+				},
+			},
+		});
+	}
+
+	// Initialize booking status chart
+	const bookingCtx = document.getElementById('bookingStatusChart');
+	if (bookingCtx) {
+		new Chart(bookingCtx, {
+			type: 'doughnut',
+			data: {
+				labels: ['Confirmed', 'Pending', 'Cancelled'],
+				datasets: [
+					{
+						data: [
+							chartData.booking_stats.confirmed,
+							chartData.booking_stats.pending,
+							chartData.booking_stats.cancelled,
+						],
+						backgroundColor: [
+							'rgba(75, 192, 192, 0.8)',
+							'rgba(255, 206, 86, 0.8)',
+							'rgba(255, 99, 132, 0.8)',
+						],
+					},
+				],
+			},
+			options: {
+				responsive: true,
+				plugins: {
+					title: {
+						display: true,
+						text: 'Booking Status Distribution',
+					},
+				},
+			},
+		});
+	}
+}
+
+// User Management Functions
+function viewUserDetails(userId) {
+	fetch(`${window.SITE_URL}/admin/users/${userId}/details`)
+		.then((response) => response.text())
+		.then((html) => {
+			document.getElementById('userDetailsContent').innerHTML = html;
+			new bootstrap.Modal(
+				document.getElementById('userDetailsModal')
+			).show();
+		})
+		.catch((error) => {
+			console.error('Error:', error);
+			showNotification('Error loading user details', 'error');
+		});
+}
+
+function viewUserBookings(userId) {
+	window.location.href = `${window.SITE_URL}/admin/bookings?user_id=${userId}`;
+}
+
+function viewUserOrders(userId) {
+	window.location.href = `${window.SITE_URL}/admin/orders?user_id=${userId}`;
+}
+
+function sendNotification(userId) {
+	showNotification('Notification feature coming soon!', 'info');
+}
+
+function togglePasswordVisibility(toggleId, passwordId) {
+	const toggleButton = document.getElementById(toggleId);
+	const passwordField = document.getElementById(passwordId);
+	const icon = toggleButton.querySelector('i');
+
+	if (passwordField.type === 'password') {
+		passwordField.type = 'text';
+		icon.classList.remove('fa-eye');
+		icon.classList.add('fa-eye-slash');
+	} else {
+		passwordField.type = 'password';
+		icon.classList.remove('fa-eye-slash');
+		icon.classList.add('fa-eye');
+	}
+}
+
+// Category Functions
+function setupIconPreview() {
+	const iconInput = document.getElementById('icon');
+	const iconPreview = document.querySelector('.icon-preview i');
+
+	if (iconInput && iconPreview) {
+		iconInput.addEventListener('input', function () {
+			const iconClass = this.value.trim();
+			iconPreview.className = iconClass || 'fas fa-utensils';
+		});
+	}
+
+	const colorInput = document.getElementById('color');
+	const colorPreview = document.querySelector('.color-preview');
+
+	if (colorInput && colorPreview) {
+		colorInput.addEventListener('input', function () {
+			colorPreview.style.backgroundColor = this.value;
+		});
+	}
+}
+
+// Additional Booking Functions
+function bulkUpdateBookingStatus(status) {
+	const selectedIds = Array.from(
+		document.querySelectorAll('.booking-checkbox:checked')
+	).map((checkbox) => checkbox.value);
+
+	if (selectedIds.length === 0) {
+		showNotification('Please select bookings to update', 'warning');
+		return;
+	}
+
+	if (
+		!confirm(
+			`Are you sure you want to ${status} ${selectedIds.length} booking(s)?`
+		)
+	) {
+		return;
+	}
+
+	fetch(`${window.SITE_URL}/admin/bookings/bulk-update-status`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'X-CSRF-Token': window.adminConfig.csrfToken,
+		},
+		body: JSON.stringify({
+			booking_ids: selectedIds,
+			status: status,
+		}),
+	})
+		.then((response) => response.json())
+		.then((data) => {
+			if (data.success) {
+				showNotification(
+					`${selectedIds.length} booking(s) updated successfully`,
+					'success'
+				);
+				location.reload();
+			} else {
+				showNotification(
+					data.message || 'Failed to update bookings',
+					'error'
+				);
+			}
+		})
+		.catch((error) => {
+			showNotification('Error updating bookings', 'error');
+		});
+}
+
+function sendConfirmationEmail(bookingId) {
+	fetch(`${window.SITE_URL}/admin/bookings/send-confirmation`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'X-CSRF-Token': window.adminConfig.csrfToken,
+		},
+		body: JSON.stringify({ booking_id: bookingId }),
+	})
+		.then((response) => response.json())
+		.then((data) => {
+			if (data.success) {
+				showNotification(
+					'Confirmation email sent successfully',
+					'success'
+				);
+			} else {
+				showNotification(
+					data.message || 'Failed to send email',
+					'error'
+				);
+			}
+		})
+		.catch((error) => {
+			showNotification('Error sending email', 'error');
+		});
+}
+
+function applyFilters() {
+	const form = document.getElementById('filterForm');
+	if (form) {
+		form.submit();
+	}
+}
+
+function exportBookings() {
+	const params = new URLSearchParams(window.location.search);
+	params.set('export', 'csv');
+	window.location.href = `${
+		window.SITE_URL
+	}/admin/bookings?${params.toString()}`;
+}
+
+function refreshBookings() {
+	location.reload();
+}
+
+// Make booking functions globally available
+window.bulkUpdateBookingStatus = bulkUpdateBookingStatus;
+window.sendConfirmationEmail = sendConfirmationEmail;
+window.applyFilters = applyFilters;
+window.exportBookings = exportBookings;
+window.refreshBookings = refreshBookings;
+
+// Make additional functions globally available
+window.viewBookingDetails = viewBookingDetails;
+window.quickBooking = quickBooking;
+window.deleteTable = deleteTable;
+window.initializeCharts = initializeCharts;
+window.viewUserDetails = viewUserDetails;
+window.viewUserBookings = viewUserBookings;
+window.viewUserOrders = viewUserOrders;
+window.sendNotification = sendNotification;
+window.togglePasswordVisibility = togglePasswordVisibility;
+window.setupIconPreview = setupIconPreview;
+
+// Alias for backward compatibility
+window.toggleStatus = window.toggleNewsStatus;
+
+// Table Management Functions
+function showUtilizationReport() {
+	loadUtilizationReport();
+}
+
+function loadUtilizationReport() {
+	fetch(`${window.SITE_URL}/admin/tables/utilization-report`)
+		.then((response) => response.json())
+		.then((data) => {
+			if (data.success) {
+				const modal = new bootstrap.Modal(
+					document.getElementById('utilizationModal')
+				);
+				document.getElementById('utilizationContent').innerHTML =
+					data.html;
+				modal.show();
+			} else {
+				showNotification('Failed to load utilization report', 'error');
+			}
+		})
+		.catch((error) => {
+			showNotification('Error loading utilization report', 'error');
+		});
+}
+
+function executeBulkTableAction() {
+	const action = document.getElementById('bulkAction').value;
+	const selectedIds = Array.from(
+		document.querySelectorAll('.table-checkbox:checked')
+	).map((cb) => cb.value);
+
+	if (!action) {
+		showNotification('Please select an action', 'warning');
+		return;
+	}
+
+	if (selectedIds.length === 0) {
+		showNotification('Please select at least one table', 'warning');
+		return;
+	}
+
+	if (
+		!confirm(
+			`Are you sure you want to ${action} ${selectedIds.length} table(s)?`
+		)
+	) {
+		return;
+	}
+
+	fetch(`${window.SITE_URL}/admin/tables/bulk-action`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'X-CSRF-Token': window.adminConfig.csrfToken,
+		},
+		body: JSON.stringify({
+			action: action,
+			table_ids: selectedIds,
+		}),
+	})
+		.then((response) => response.json())
+		.then((data) => {
+			if (data.success) {
+				showNotification(
+					`${selectedIds.length} table(s) ${action} successfully`,
+					'success'
+				);
+				location.reload();
+			} else {
+				showNotification(
+					data.message || `Failed to ${action} tables`,
+					'error'
+				);
+			}
+		})
+		.catch((error) => {
+			showNotification('An error occurred', 'error');
+		});
+}
+
+function clearTableFilters() {
+	window.location.href = `${window.SITE_URL}/admin/tables`;
+}
+
+function exportTables() {
+	const params = new URLSearchParams(window.location.search);
+	params.set('export', 'csv');
+	window.location.href = `${
+		window.SITE_URL
+	}/admin/tables?${params.toString()}`;
+}
+
+// Make table functions globally available
+window.showUtilizationReport = showUtilizationReport;
+window.loadUtilizationReport = loadUtilizationReport;
+window.executeBulkTableAction = executeBulkTableAction;
+window.clearTableFilters = clearTableFilters;
+window.exportTables = exportTables;
+
+// Additional User Management Functions
+function toggleBulkActions() {
+	const bulkBar = document.getElementById('bulkActionsBar');
+	if (bulkBar) {
+		bulkBar.style.display =
+			bulkBar.style.display === 'none' ? 'block' : 'none';
+	}
+}
+
+function clearSelection() {
+	const selectAll = document.getElementById('selectAll');
+	const checkboxes = document.querySelectorAll('.user-checkbox');
+
+	if (selectAll) selectAll.checked = false;
+	checkboxes.forEach((cb) => (cb.checked = false));
+
+	updateSelectedCount();
+
+	const bulkBar = document.getElementById('bulkActionsBar');
+	if (bulkBar) bulkBar.style.display = 'none';
+}
+
+function updateSelectedCount() {
+	const count = document.querySelectorAll('.user-checkbox:checked').length;
+	const countElement = document.getElementById('selectedCount');
+	if (countElement) {
+		countElement.textContent = count;
+	}
+}
+
+function initializeUserSelection() {
+	// Select all checkbox functionality
+	const selectAll = document.getElementById('selectAll');
+	if (selectAll) {
+		selectAll.addEventListener('change', function () {
+			const checkboxes = document.querySelectorAll('.user-checkbox');
+			checkboxes.forEach((checkbox) => {
+				checkbox.checked = this.checked;
+			});
+			updateSelectedCount();
+		});
+	}
+
+	// Individual checkbox change
+	document.addEventListener('change', function (e) {
+		if (e.target.classList.contains('user-checkbox')) {
+			updateSelectedCount();
+
+			// Update select all checkbox state
+			const total = document.querySelectorAll('.user-checkbox').length;
+			const checked = document.querySelectorAll(
+				'.user-checkbox:checked'
+			).length;
+			const selectAllElement = document.getElementById('selectAll');
+
+			if (selectAllElement) {
+				selectAllElement.indeterminate = checked > 0 && checked < total;
+				selectAllElement.checked = checked === total;
+			}
+		}
+	});
+}
+
+function initializeUserSearch() {
+	const searchInput = document.getElementById('searchUsers');
+	if (searchInput) {
+		searchInput.addEventListener('input', function () {
+			const searchTerm = this.value.toLowerCase();
+			const rows = document.querySelectorAll('#usersTable tbody tr');
+
+			rows.forEach((row) => {
+				const text = row.textContent.toLowerCase();
+				row.style.display = text.includes(searchTerm) ? '' : 'none';
+			});
+		});
+	}
+}
+
+// Make additional user functions globally available
+window.toggleBulkActions = toggleBulkActions;
+window.clearSelection = clearSelection;
+window.updateSelectedCount = updateSelectedCount;
+window.initializeUserSelection = initializeUserSelection;
+window.initializeUserSearch = initializeUserSearch;

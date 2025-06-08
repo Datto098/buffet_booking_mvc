@@ -144,95 +144,12 @@ require_once 'views/admin/layouts/header.php';
 <?php require_once 'views/admin/layouts/footer.php'; ?>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Image preview functionality
-    const imageInput = document.getElementById('image');
-    const imagePreview = document.getElementById('imagePreview');
-    const previewImg = imagePreview.querySelector('img');
+    // Set up site URL for admin functions
+    window.SITE_URL = '<?= SITE_URL ?>';
 
-    imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                imagePreview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            imagePreview.style.display = 'none';
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeFoodCreateForm();
     });
-
-    // Get subcategories when category changes
-    const categorySelect = document.getElementById('category_id');
-    const subcategorySelect = document.getElementById('subcategory_id');
-
-    categorySelect.addEventListener('change', function() {
-        const categoryId = this.value;
-
-        // Clear current subcategories
-        subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
-
-        if (categoryId) {
-            fetch('<?= SITE_URL ?>/admin/categories/subcategories?category_id=' + categoryId)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.subcategories) {
-                        data.subcategories.forEach(function(subcategory) {
-                            const option = document.createElement('option');
-                            option.value = subcategory.id;
-                            option.textContent = subcategory.name;
-                            subcategorySelect.appendChild(option);
-                        });
-                    }
-                })
-                .catch(function() {
-                    console.error('Failed to load subcategories');
-                });
-        }
-    });
-
-    // Form validation
-    const form = document.getElementById('createFoodForm');
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        // Reset previous validation states
-        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
-        let isValid = true;
-
-        // Validate required fields
-        const requiredFields = ['name', 'price', 'category_id'];
-        requiredFields.forEach(fieldName => {
-            const field = form.querySelector(`[name="${fieldName}"]`);
-            if (!field.value.trim()) {
-                field.classList.add('is-invalid');
-                const feedback = field.nextElementSibling;
-                if (feedback && feedback.classList.contains('invalid-feedback')) {
-                    feedback.textContent = 'This field is required';
-                }
-                isValid = false;
-            }
-        });
-
-        // Validate price
-        const priceField = form.querySelector('[name="price"]');
-        if (priceField.value && (parseFloat(priceField.value) < 0 || parseFloat(priceField.value) > 9999)) {
-            priceField.classList.add('is-invalid');
-            const feedback = priceField.nextElementSibling;
-            if (feedback && feedback.classList.contains('invalid-feedback')) {
-                feedback.textContent = 'Price must be between 0 and 9999';
-            }
-            isValid = false;
-        }
-
-        if (isValid) {
-            form.submit();
-        }
-    });
-});
 </script>
 
 </body>

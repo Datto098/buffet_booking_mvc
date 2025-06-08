@@ -296,90 +296,14 @@
         </div>
     </div>
 
-    <?php require_once 'views/admin/layouts/footer.php'; ?>
-
-    <script>
-        // Toggle password visibility
-        document.getElementById('togglePassword').addEventListener('click', function() {
-            const password = document.getElementById('password');
-            const icon = this.querySelector('i');
-
-            if (password.type === 'password') {
-                password.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                password.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        });
-
-        // Form validation
-        document.getElementById('editUserForm').addEventListener('submit', function(e) {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
-
-            if (password && password !== confirmPassword) {
-                e.preventDefault();
-                alert('Passwords do not match!');
-                return false;
-            }
-
-            if (password && password.length < 8) {
-                e.preventDefault();
-                alert('Password must be at least 8 characters long!');
-                return false;
-            }
-        });
-
-        // Delete confirmation
-        function confirmDelete() {
-            new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
-        }
-
-        // Quick action functions
-        function viewUserBookings(userId) {
-            window.location.href = `<?= SITE_URL ?>/admin/bookings?user_id=${userId}`;
-        }
-
-        function viewUserOrders(userId) {
-            window.location.href = `<?= SITE_URL ?>/admin/orders?user_id=${userId}`;
-        }
-
-        function sendNotification(userId) {
-            // Implement notification sending
-            alert('Notification feature coming soon!');
-        }
-
-        function toggleUserStatus(userId, status) {
-            if (confirm(`Are you sure you want to ${status} this user?`)) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `<?= SITE_URL ?>/admin/users/${userId}/toggle-status`;
-
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = 'csrf_token';
-                csrfToken.value = '<?= $_SESSION['csrf_token'] ?? '' ?>';
-
-                const statusInput = document.createElement('input');
-                statusInput.type = 'hidden';
-                statusInput.name = 'status';
-                statusInput.value = status;
-
-                form.appendChild(csrfToken);
-                form.appendChild(statusInput);
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-
-        // Initialize tooltips
+    <?php require_once 'views/admin/layouts/footer.php'; ?>    <script>
+        window.SITE_URL = '<?= SITE_URL ?>';
         document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
+            initializeUserEditForm();
+
+            // Set up password toggle
+            document.getElementById('togglePassword')?.addEventListener('click', function() {
+                togglePasswordVisibility('togglePassword', 'password');
             });
         });
     </script>
