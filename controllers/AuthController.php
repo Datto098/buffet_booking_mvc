@@ -5,6 +5,7 @@
 
 require_once 'BaseController.php';
 require_once __DIR__ . '/../models/User.php';
+require_once 'helpers/mail_helper.php';
 
 class AuthController extends BaseController {
     private $userModel;
@@ -165,37 +166,55 @@ class AuthController extends BaseController {
 
     public function forgotPassword() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $this->handleForgotPassword();
+            $email = $_POST['email'];
+            $user = $this->userModel->findByEmail($email);
+            if ($user) {
+                $token = bin2hex(random_bytes(32));
+                // Lưu token vào DB
+                $this->userModel->saveResetToken($email, $token);
+                // Gửi email
+                $resetLink = SITE_URL . "/auth/resetPassword?token=$token";
+                $sent = sendResetMail($email, "Đặt lại mật khẩu", "Nhấn vào link sau để đặt lại mật khẩu: $resetLink");
+                if ($sent) {
+                    $_SESSION['success'] = "Đã gửi liên kết đặt lại mật khẩu tới email của bạn!";
+                } else {
+                    $_SESSION['error'] = "Không gửi được email. Vui lòng thử lại sau!";
+                }
+            } else {
+                $_SESSION['error'] = "Email không tồn tại!";
+            }
+            $this->loadView('customer/auth/forgot_password');
         } else {
-            $data = [
-                'title' => 'Quên Mật Khẩu - ' . SITE_NAME
-            ];
-            $this->loadView('customer/auth/forgot_password', $data);
+            $this->loadView('customer/auth/forgot_password');
         }
     }
 
-    private function handleForgotPassword() {
-        $this->validateCSRF();
+   
 
-        $email = sanitizeInput($_POST['email']);
-
-        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $_SESSION['error'] = 'Email không hợp lệ';
-            $this->forgotPassword();
-            return;
+    public function resetPassword() {
+        $token = $_GET['token'] ?? null;
+        if (!$token) {
+            $_SESSION['error'] = 'Liên kết không hợp lệ!';
+            return $this->loadView('customer/auth/reset_password');
         }
 
-        $user = $this->userModel->findByEmail($email);
-
-        if ($user) {
-            // In a real application, you would send an email with reset link
-            // For now, just show a success message
-            $_SESSION['success'] = 'Liên kết đặt lại mật khẩu đã được gửi đến email của bạn.';
-        } else {
-            $_SESSION['error'] = 'Email không tồn tại trong hệ thống';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $password = $_POST['password'];
+            // Tìm user theo token
+            $user = $this->userModel->findByResetToken($token);
+            if ($user) {
+                // Hash mật khẩu mới
+                $hashed = password_hash($password, PASSWORD_DEFAULT);
+                // Cập nhật mật khẩu và xoá token
+                $this->userModel->updatePasswordAndClearToken($user['id'], $hashed);
+                $_SESSION['success'] = 'Đặt lại mật khẩu thành công!';
+                header('Location: ' . SITE_URL . '/auth/login');
+                exit;
+            } else {
+                $_SESSION['error'] = 'Token không hợp lệ hoặc đã hết hạn!';
+            }
         }
-
-        $this->forgotPassword();
+        $this->loadView('customer/auth/reset_password');
     }
 }
 ?>

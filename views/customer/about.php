@@ -73,7 +73,7 @@
             </div>
             <div class="col-lg-6">
                 <div class="position-relative">
-                    <img src="<?= SITE_URL ?>/assets/images/hero-buffet.svg"
+                    <img src="<?= SITE_URL ?>/assets/images/nha-hang-buffet.jpg"
                          alt="Restaurant Interior"
                          class="img-fluid rounded shadow-luxury">
                     <div class="position-absolute top-0 end-0 m-3">
@@ -290,90 +290,97 @@
             </div>
 
             <!-- Sidebar -->
-            <div class="col-lg-4">
-                <!-- Contact Info -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Thông Tin Liên Hệ</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <h6 class="fw-bold"><i class="fas fa-map-marker-alt text-danger me-2"></i>Địa Chỉ</h6>
-                            <p class="text-muted mb-0"><?= isset($restaurantInfo['address']) ? htmlspecialchars($restaurantInfo['address']) : '123 Đường ABC, Quận XYZ, TP.HCM' ?></p>
-                        </div>
-                        <div class="mb-3">
-                            <h6 class="fw-bold"><i class="fas fa-phone text-success me-2"></i>Điện Thoại</h6>
-                            <a href="tel:<?= isset($restaurantInfo['phone']) ? htmlspecialchars($restaurantInfo['phone']) : '0123456789' ?>" class="text-decoration-none">
-                                <?= isset($restaurantInfo['phone']) ? htmlspecialchars($restaurantInfo['phone']) : '0123-456-789' ?>
-                            </a>
-                        </div>
-                        <div class="mb-3">
-                            <h6 class="fw-bold"><i class="fas fa-envelope text-primary me-2"></i>Email</h6>
-                            <a href="mailto:<?= isset($restaurantInfo['email']) ? htmlspecialchars($restaurantInfo['email']) : ADMIN_EMAIL ?>" class="text-decoration-none">
-                                <?= isset($restaurantInfo['email']) ? htmlspecialchars($restaurantInfo['email']) : ADMIN_EMAIL ?>
-                            </a>
-                        </div>
-                        <div class="mb-3">
-                            <h6 class="fw-bold"><i class="fas fa-clock text-warning me-2"></i>Giờ Mở Cửa</h6>
-                            <p class="text-muted mb-1">Thứ 2 - Thứ 6: 10:00 - 22:00</p>
-                            <p class="text-muted mb-0">Thứ 7 - Chủ Nhật: 09:00 - 23:00</p>
-                        </div>
-                    </div>
-                </div>
+          <div class="row p-4">
+  <div class="col-lg-4">
+    <!-- Contact Info -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Thông Tin Liên Hệ</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <h6 class="fw-bold"><i class="fas fa-map-marker-alt text-danger me-2"></i>Địa Chỉ</h6>
+          <p class="text-muted mb-0"><?= isset($restaurantInfo['address']) ? htmlspecialchars($restaurantInfo['address']) : '123 Đường ABC, Quận XYZ, TP.HCM' ?></p>
+        </div>
+        <div class="mb-3">
+          <h6 class="fw-bold"><i class="fas fa-phone text-success me-2"></i>Điện Thoại</h6>
+          <a href="tel:<?= isset($restaurantInfo['phone']) ? htmlspecialchars($restaurantInfo['phone']) : '0123456789' ?>" class="text-decoration-none">
+            <?= isset($restaurantInfo['phone']) ? htmlspecialchars($restaurantInfo['phone']) : '0123-456-789' ?>
+          </a>
+        </div>
+        <div class="mb-3">
+          <h6 class="fw-bold"><i class="fas fa-envelope text-primary me-2"></i>Email</h6>
+          <a href="mailto:<?= isset($restaurantInfo['email']) ? htmlspecialchars($restaurantInfo['email']) : ADMIN_EMAIL ?>" class="text-decoration-none">
+            <?= isset($restaurantInfo['email']) ? htmlspecialchars($restaurantInfo['email']) : ADMIN_EMAIL ?>
+          </a>
+        </div>
+        <div class="mb-3">
+          <h6 class="fw-bold"><i class="fas fa-clock text-warning me-2"></i>Giờ Mở Cửa</h6>
+          <p class="text-muted mb-1">Thứ 2 - Thứ 6: 10:00 - 22:00</p>
+          <p class="text-muted mb-0">Thứ 7 - Chủ Nhật: 09:00 - 23:00</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                <!-- Quick Stats -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Thống Kê</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-6 mb-3">
-                                <div class="bg-light rounded p-3">
-                                    <h3 class="text-primary fw-bold mb-1">5+</h3>
-                                    <small class="text-muted">Năm Kinh Nghiệm</small>
-                                </div>
-                            </div>
-                            <div class="col-6 mb-3">
-                                <div class="bg-light rounded p-3">
-                                    <h3 class="text-success fw-bold mb-1">100+</h3>
-                                    <small class="text-muted">Món Ăn Đa Dạng</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="bg-light rounded p-3">
-                                    <h3 class="text-warning fw-bold mb-1">10K+</h3>
-                                    <small class="text-muted">Khách Hàng Hài Lòng</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="bg-light rounded p-3">
-                                    <h3 class="text-info fw-bold mb-1">300</h3>
-                                    <small class="text-muted">Chỗ Ngồi</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Follow Us -->
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-dark text-white">
-                        <h5 class="mb-0"><i class="fas fa-share-alt me-2"></i>Theo Dõi Chúng Tôi</h5>
-                    </div>
-                    <div class="card-body text-center">
-                        <a href="#" class="btn btn-primary btn-sm me-2 mb-2">
-                            <i class="fab fa-facebook-f"></i> Facebook
-                        </a>
-                        <a href="#" class="btn btn-info btn-sm me-2 mb-2">
-                            <i class="fab fa-instagram"></i> Instagram
-                        </a>
-                        <a href="#" class="btn btn-danger btn-sm mb-2">
-                            <i class="fab fa-youtube"></i> YouTube
-                        </a>
-                    </div>
-                </div>
+  <div class="col-lg-4">
+    <!-- Quick Stats -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0 text-white"><i class="fas fa-chart-bar me-2"></i>Thống Kê</h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-6 mb-3">
+            <div class="bg-light rounded p-3">
+              <h3 class="text-primary fw-bold mb-1">5+</h3>
+              <small class="text-muted">Năm Kinh Nghiệm</small>
             </div>
+          </div>
+          <div class="col-6 mb-3">
+            <div class="bg-light rounded p-3">
+              <h3 class="text-success fw-bold mb-1">100+</h3>
+              <small class="text-muted">Món Ăn Đa Dạng</small>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="bg-light rounded p-3">
+              <h3 class="text-warning fw-bold mb-1">10K+</h3>
+              <small class="text-muted">Khách Hàng Hài Lòng</small>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="bg-light rounded p-3">
+              <h3 class="text-info fw-bold mb-1">300</h3>
+              <small class="text-muted">Chỗ Ngồi</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Follow Us -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0 text-white"><i class="fas fa-share-alt me-2 text-white"></i>Theo Dõi Chúng Tôi</h5>
+      </div>
+      <div class="card-body text-center">
+        <a href="#" class="btn btn-primary btn-sm me-2 mb-2">
+          <i class="fab fa-facebook-f"></i> Facebook
+        </a>
+        <a href="#" class="btn btn-info btn-sm me-2 mb-2">
+          <i class="fab fa-instagram"></i> Instagram
+        </a>
+        <a href="#" class="btn btn-danger btn-sm mb-2">
+          <i class="fab fa-youtube"></i> YouTube
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
         </div>
     </div>
 </section>

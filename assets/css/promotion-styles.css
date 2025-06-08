@@ -22,11 +22,10 @@
     z-index: 5;
     animation: pulse-discount 2s infinite;
 }
-
 .promotion-food-item .food-badge.hot-deal-badge-small {
     position: absolute;
     top: 15px;
-    left: -10px;
+    left: 17px;
     background: linear-gradient(135deg, #ff6b35, #f7931e);
     color: white;
     padding: 0.4rem 0.7rem;

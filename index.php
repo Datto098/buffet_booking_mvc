@@ -412,8 +412,10 @@ function handleCustomerRoute($page, $action, $param) {    // Customer route mapp
     }    $controller = new $controllerClass();
 
     // Call the appropriate method
-    // For about and promotions pages, call the page method directly
-    if ($page === 'about' && method_exists($controller, 'about')) {
+    if ($action === 'update-profile' || $action === 'updateProfile') {
+        $controller->updateProfile();
+        exit;
+    } elseif ($page === 'about' && method_exists($controller, 'about')) {
         $controller->about();
     } elseif ($page === 'promotions' && method_exists($controller, 'promotions')) {
         $controller->promotions();

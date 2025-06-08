@@ -21,6 +21,9 @@
     <link href="<?php echo SITE_URL; ?>/assets/css/promotion-styles.css" rel="stylesheet">
     <!-- Custom CSS (fallback) -->
     <link href="<?php echo SITE_URL; ?>/assets/css/style.css" rel="stylesheet">
+    <!-- Leaflet CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg fixed-top" id="mainNavbar">
@@ -119,7 +122,7 @@
                                     <?php echo $_SESSION['user_name'] ?? 'Tài Khoản'; ?>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/profile">
+                                <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/user/profile">
                                     <i class="fas fa-user-edit me-2"></i>Hồ Sơ Cá Nhân
                                 </a></li>
                                 <li><a class="dropdown-item" href="<?php echo SITE_URL; ?>/order/history">
