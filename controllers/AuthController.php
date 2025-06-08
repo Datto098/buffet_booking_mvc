@@ -72,7 +72,8 @@ class AuthController extends BaseController {
         $user = $this->userModel->findByEmail($email);        if ($user && $this->userModel->verifyPassword($password, $user['password'])) {
             // Login successful
             $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['full_name'] ?? $user['name'] ?? 'User';
+            $_SESSION['first_name'] = $user['first_name'] ?? '';
+            $_SESSION['last_name'] = $user['last_name'] ?? '';
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_role'] = $user['role'];
             $_SESSION['is_logged_in'] = true;
@@ -80,7 +81,8 @@ class AuthController extends BaseController {
             // Set user array for admin panel compatibility
             $_SESSION['user'] = [
                 'id' => $user['id'],
-                'name' => $user['full_name'] ?? $user['name'] ?? 'User',
+                'first_name' => $user['first_name'] ?? '',
+                'last_name' => $user['last_name'] ?? '',
                 'email' => $user['email'],
                 'role' => $user['role']
             ];
