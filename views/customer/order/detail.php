@@ -72,10 +72,9 @@ $current_page = 'orders';
                                                 <?php endif; ?>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td class="text-center"><?= $item['quantity'] ?></td>
-                                    <td class="text-end">$<?= number_format($item['price'], 2) ?></td>
-                                    <td class="text-end fw-bold">$<?= number_format($item['price'] * $item['quantity'], 2) ?></td>
+                                    </td>                                    <td class="text-center"><?= $item['quantity'] ?></td>
+                                    <td class="text-end">$<?= number_format($item['unit_price'] ?? 0, 2) ?></td>
+                                    <td class="text-end fw-bold">$<?= number_format(($item['unit_price'] ?? 0) * $item['quantity'], 2) ?></td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>

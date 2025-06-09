@@ -235,11 +235,11 @@
                 <th class="text-right">Total</th>
             </tr>
         </thead>
-        <tbody>
-            <?php
+        <tbody>            <?php
             $subtotal = 0;
             foreach ($order['items'] as $item):
-                $itemTotal = $item['price'] * $item['quantity'];
+                $unitPrice = $item['unit_price'] ?? 0;
+                $itemTotal = $unitPrice * $item['quantity'];
                 $subtotal += $itemTotal;
             ?>
             <tr>
@@ -248,9 +248,8 @@
                     <?php if (!empty($item['description'])): ?>
                     <br><small style="color: #666;"><?= htmlspecialchars(substr($item['description'], 0, 60)) ?>...</small>
                     <?php endif; ?>
-                </td>
-                <td class="text-center"><?= $item['quantity'] ?></td>
-                <td class="text-right">$<?= number_format($item['price'], 2) ?></td>
+                </td>                <td class="text-center"><?= $item['quantity'] ?></td>
+                <td class="text-right">$<?= number_format($unitPrice, 2) ?></td>
                 <td class="text-right">$<?= number_format($itemTotal, 2) ?></td>
             </tr>
             <?php endforeach; ?>

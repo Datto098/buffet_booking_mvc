@@ -227,7 +227,8 @@
         <div class="row">
             <?php foreach ($relatedFoods as $relatedFood): ?>
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card h-100 food-card">                        <div class="position-relative">
+                    <div class="card h-100 food-card">
+                        <div class="position-relative">
                             <img src="<?= !empty($relatedFood['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($relatedFood['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
                                  class="card-img-top" alt="<?= htmlspecialchars($relatedFood['name']) ?>"
                                  style="height: 200px; object-fit: cover;">
