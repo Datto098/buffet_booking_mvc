@@ -169,6 +169,97 @@ class NewsController extends BaseController {
     }
 
     /**
+     * Toggle news status (publish/unpublish)
+     */
+    public function toggleStatus() {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('/admin/news');
+        }
+
+        $this->validateCSRF();
+
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        $status = sanitizeInput($_POST['status'] ?? '');
+
+        if ($id <= 0 || !in_array($status, ['published', 'draft', 'archived'])) {
+            $_SESSION['error'] = 'Dữ liệu không hợp lệ';
+            redirect('/admin/news');
+        }
+
+        if ($this->newsModel->updateNewsStatus($id, $status)) {
+            $_SESSION['success'] = 'Cập nhật trạng thái thành công';
+        } else {
+            $_SESSION['error'] = 'Có lỗi xảy ra khi cập nhật trạng thái';
+        }
+
+        redirect('/admin/news');
+    }
+
+    /**
+     * Handle bulk actions on news
+     */
+    public function bulkAction() {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('/admin/news');
+        }
+
+        $this->validateCSRF();
+
+        $action = sanitizeInput($_POST['action'] ?? '');
+        $ids = $_POST['ids'] ?? [];
+
+        if (empty($action) || empty($ids) || !is_array($ids)) {
+            $_SESSION['error'] = 'Dữ liệu không hợp lệ';
+            redirect('/admin/news');
+        }
+
+        // Sanitize IDs
+        $ids = array_map('intval', $ids);
+        $ids = array_filter($ids, function($id) { return $id > 0; });
+
+        if (empty($ids)) {
+            $_SESSION['error'] = 'Không có bài viết nào được chọn';
+            redirect('/admin/news');
+        }
+
+        $success = false;
+        $successMessage = '';
+
+        switch ($action) {
+            case 'publish':
+                $success = $this->newsModel->bulkUpdateStatus($ids, 'published');
+                $successMessage = 'Đã xuất bản ' . count($ids) . ' bài viết';
+                break;
+
+            case 'unpublish':
+                $success = $this->newsModel->bulkUpdateStatus($ids, 'draft');
+                $successMessage = 'Đã hủy xuất bản ' . count($ids) . ' bài viết';
+                break;
+
+            case 'delete':
+                $success = $this->newsModel->bulkDelete($ids);
+                $successMessage = 'Đã xóa ' . count($ids) . ' bài viết';
+                break;
+
+            default:
+                $_SESSION['error'] = 'Hành động không hợp lệ';
+                redirect('/admin/news');
+        }
+
+        if ($success) {
+            $_SESSION['success'] = $successMessage;
+        } else {
+            $_SESSION['error'] = 'Có lỗi xảy ra khi thực hiện hành động';
+        }
+
+        redirect('/admin/news');
+    }
+
+    /**
      * Handle news submission (create/update)
      */
     private function handleNewsSubmission($id = null) {
@@ -245,8 +336,7 @@ class NewsController extends BaseController {
 
             redirect('/admin/news/create');
         }
-    }
-      /**
+    }    /**
      * Upload news image
      */
     private function uploadNewsImage($file) {
@@ -255,6 +345,33 @@ class NewsController extends BaseController {
         // Create directory if not exists
         if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0777, true);
+        }
+
+        // Check for upload errors first
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $errorMessages = [
+                UPLOAD_ERR_INI_SIZE => 'File quá lớn (vượt quá upload_max_filesize).',
+                UPLOAD_ERR_FORM_SIZE => 'File quá lớn (vượt quá MAX_FILE_SIZE).',
+                UPLOAD_ERR_PARTIAL => 'File chỉ được upload một phần.',
+                UPLOAD_ERR_NO_FILE => 'Không có file nào được upload.',
+                UPLOAD_ERR_NO_TMP_DIR => 'Thư mục tạm không tồn tại.',
+                UPLOAD_ERR_CANT_WRITE => 'Không thể ghi file lên đĩa.',
+                UPLOAD_ERR_EXTENSION => 'Upload bị dừng bởi extension.'
+            ];
+
+            $message = $errorMessages[$file['error']] ?? 'Có lỗi không xác định khi upload file.';
+            return [
+                'success' => false,
+                'message' => $message
+            ];
+        }
+
+        // Check if tmp_name is valid
+        if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+            return [
+                'success' => false,
+                'message' => 'File upload không hợp lệ.'
+            ];
         }
 
         $filename = uniqid() . '_' . basename($file['name']);

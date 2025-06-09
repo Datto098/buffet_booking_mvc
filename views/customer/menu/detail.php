@@ -227,9 +227,8 @@
         <div class="row">
             <?php foreach ($relatedFoods as $relatedFood): ?>
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card h-100 food-card">
-                        <div class="position-relative">
-                            <img src="<?= !empty($relatedFood['image']) ? htmlspecialchars($relatedFood['image']) : SITE_URL . '/assets/images/no-image.svg' ?>"
+                    <div class="card h-100 food-card">                        <div class="position-relative">
+                            <img src="<?= !empty($relatedFood['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($relatedFood['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
                                  class="card-img-top" alt="<?= htmlspecialchars($relatedFood['name']) ?>"
                                  style="height: 200px; object-fit: cover;">
 
@@ -399,10 +398,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <?php endif; ?>
 
             <div class="row">
-                <?php foreach ($foods as $item): ?>
-                    <div class="col-lg-4 col-md-6 mb-4">
+                <?php foreach ($foods as $item): ?>                    <div class="col-lg-4 col-md-6 mb-4">
                         <div class="card h-100 food-card">
-                            <img src="<?= !empty($item['image']) ? htmlspecialchars($item['image']) : SITE_URL . '/assets/images/no-image.svg' ?>"
+                            <img src="<?= !empty($item['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($item['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
                                  class="card-img-top" alt="<?= htmlspecialchars($item['name']) ?>"
                                  style="height: 200px; object-fit: cover;">
                             <div class="card-body d-flex flex-column">

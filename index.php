@@ -135,9 +135,15 @@ function handleAdminRoute($segments)
 
     $section = $segments[1] ?? 'dashboard';
     $action = $segments[2] ?? 'index';
-    $param = $segments[3] ?? null;
-
-    switch ($section) {
+    $param = $segments[3] ?? null;    switch ($section) {
+        case 'dashboard':
+            if ($action === 'stats') {
+                // Handle dashboard stats API endpoint
+                $controller->dashboardStats();
+            } else {
+                $controller->dashboard();
+            }
+            break;
         case 'users':
             handleAdminUsersRoute($controller, $action, $param);
             break;
@@ -313,9 +319,7 @@ function handleAdminTablesRoute($controller, $action, $param)
 function handleAdminNewsRoute($action, $param)
 {
     require_once 'controllers/NewsController.php';
-    $controller = new NewsController();
-
-    switch ($action) {
+    $controller = new NewsController();    switch ($action) {
         case 'create':
             $controller->create();
             break;
@@ -324,6 +328,12 @@ function handleAdminNewsRoute($action, $param)
             break;
         case 'delete':
             $controller->delete($param);
+            break;
+        case 'toggle-status':
+            $controller->toggleStatus();
+            break;
+        case 'bulk-action':
+            $controller->bulkAction();
             break;
         default:
             $controller->manage();
