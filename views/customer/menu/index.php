@@ -12,7 +12,7 @@ $SITE_URL = defined('SITE_URL') ? SITE_URL : 'http://localhost/buffet_booking_mv
 <section class="hero-section">
     <div class="container">
         <div class="hero-content text-center">
-            <h1 class="hero-title " style="color: var(--text-primary);">
+            <h1 class="hero-title " style="color: #fff">
                 Thực Đơn Buffet <br>
                 <span class="text-white">Đẳng Cấp Quốc Tế</span>
             </h1>

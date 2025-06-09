@@ -75,6 +75,25 @@ class Food extends BaseModel {
         return $stmt->fetchAll();
     }
 
+    /**
+     * Get featured foods for homepage - those marked as popular, new, or seasonal
+     */
+    public function getFeaturedFoods($limit = 6) {
+        $sql = "SELECT f.*, c.name as category_name, sc.name as subcategory_name
+                FROM {$this->table} f
+                JOIN categories c ON f.category_id = c.id
+                LEFT JOIN sub_categories sc ON f.subcategory_id = sc.id
+                WHERE f.is_available = 1
+                AND (f.is_popular = 1 OR f.is_new = 1 OR f.is_seasonal = 1)
+                ORDER BY f.is_popular DESC, f.is_new DESC, f.is_seasonal DESC, f.created_at DESC
+                LIMIT :limit";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     public function getFoodByCategory($categoryId, $limit = null, $excludeId = null) {
         $sql = "SELECT f.*, c.name as category_name
                 FROM {$this->table} f

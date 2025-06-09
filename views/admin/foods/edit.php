@@ -165,13 +165,60 @@
                                                 </label>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <!-- Description -->
+                                    </div>                                    <!-- Description -->
                                     <div class="mb-3">
                                         <label for="description" class="form-label">Description</label>
                                         <textarea class="form-control" id="description" name="description" rows="4"
                                             placeholder="Describe the food item, ingredients, preparation method, etc..."><?= htmlspecialchars($food['description'] ?? '') ?></textarea>
+                                    </div>
+
+                                    <!-- Featured Food Settings -->
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-star text-warning"></i> Featured Food Settings
+                                        </label>
+                                        <div class="card border-warning">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox" id="is_popular" name="is_popular" value="1"
+                                                                <?= ($food['is_popular'] ?? 0) == 1 ? 'checked' : '' ?>>
+                                                            <label class="form-check-label" for="is_popular">
+                                                                <i class="fas fa-fire text-danger"></i> Popular Dish
+                                                            </label>
+                                                        </div>
+                                                        <small class="text-muted">Show as popular/trending item</small>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox" id="is_new" name="is_new" value="1"
+                                                                <?= ($food['is_new'] ?? 0) == 1 ? 'checked' : '' ?>>
+                                                            <label class="form-check-label" for="is_new">
+                                                                <i class="fas fa-sparkles text-success"></i> New Dish
+                                                            </label>
+                                                        </div>
+                                                        <small class="text-muted">Mark as newly added item</small>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox" id="is_seasonal" name="is_seasonal" value="1"
+                                                                <?= ($food['is_seasonal'] ?? 0) == 1 ? 'checked' : '' ?>>
+                                                            <label class="form-check-label" for="is_seasonal">
+                                                                <i class="fas fa-leaf text-info"></i> Seasonal
+                                                            </label>
+                                                        </div>
+                                                        <small class="text-muted">Limited time seasonal dish</small>
+                                                    </div>
+                                                </div>
+                                                <div class="alert alert-info mt-3 mb-0">
+                                                    <small>
+                                                        <i class="fas fa-info-circle"></i>
+                                                        Foods marked as Popular, New, or Seasonal will appear in the "Featured Foods" section on the homepage.
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- Image Upload -->

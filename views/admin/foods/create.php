@@ -101,6 +101,42 @@ require_once 'views/admin/layouts/header.php';
                                     </div>
                                 </div>
 
+                                <!-- Featured Food Settings -->
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">Featured Food Settings</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="is_popular" name="is_popular" value="1">
+                                                    <label class="form-check-label" for="is_popular">
+                                                        Popular
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="is_new" name="is_new" value="1">
+                                                    <label class="form-check-label" for="is_new">
+                                                        New
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="is_seasonal" name="is_seasonal" value="1">
+                                                    <label class="form-check-label" for="is_seasonal">
+                                                        Seasonal
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">Foods marked as Popular, New, or Seasonal will appear in the "Món Ăn Đặc Sắc" section on the homepage.</small>
+                                    </div>
+                                </div>
+
                                 <div class="mb-3">
                                     <label for="image" class="form-label">Food Image</label>
                                     <input type="file" class="form-control" id="image" name="image" accept="image/*">

@@ -25,16 +25,27 @@ class AdminController extends BaseController
         $this->orderModel = new Order();
         $this->bookingModel = new Booking();
         $this->tableModel = new Table();
-    }
-    public function dashboard()
+    }    public function dashboard()
     {
         $data = [
             'title' => 'Admin Dashboard',
             'stats' => $this->getDashboardStats()
         ];
 
-        $this->loadAdminView('dashboard', $data);
+        $this->loadAdminView('dashboard', $data);    }
+
+    public function dashboardStats()
+    {
+        header('Content-Type: application/json');
+
+        $stats = $this->getDashboardStats();
+
+        echo json_encode([
+            'success' => true,
+            'stats' => $stats
+        ]);
     }
+
     public function users()
     {
         $userModel = new User();
@@ -267,8 +278,11 @@ class AdminController extends BaseController
                 'category_id' => (int)$_POST['category_id'],
                 'subcategory_id' => !empty($_POST['subcategory_id']) ? (int)$_POST['subcategory_id'] : null,
                 'is_available' => isset($_POST['is_available']) ? 1 : 0,
+                'is_popular' => isset($_POST['is_popular']) ? 1 : 0,
+                'is_new' => isset($_POST['is_new']) ? 1 : 0,
+                'is_seasonal' => isset($_POST['is_seasonal']) ? 1 : 0,
                 'created_at' => date('Y-m-d H:i:s')
-            ];            // Handle image upload
+            ];// Handle image upload
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $uploadDir = 'uploads/food_images/';
                 if (!is_dir($uploadDir)) {
@@ -323,6 +337,9 @@ class AdminController extends BaseController
                 'price' => (float)$_POST['price'],
                 'category_id' => (int)$_POST['category_id'],
                 'is_available' => isset($_POST['is_available']) ? 1 : 0,
+                'is_popular' => isset($_POST['is_popular']) ? 1 : 0,
+                'is_new' => isset($_POST['is_new']) ? 1 : 0,
+                'is_seasonal' => isset($_POST['is_seasonal']) ? 1 : 0,
                 'updated_at' => date('Y-m-d H:i:s')
             ];// Handle image upload
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -427,7 +444,8 @@ class AdminController extends BaseController
                 return $order['total_amount'] ?? 0;
             }
             return 0;
-        }, $allOrders));        $data = [
+        }, $allOrders));
+        $data = [
             'title' => 'Order Management',
             'orders' => $orders,
             'currentPage' => $page,
@@ -1457,9 +1475,8 @@ class AdminController extends BaseController
         $confirmedBookings = $bookingModel->count('confirmed');
         $pendingBookings = $bookingModel->count('pending');
         $cancelledBookings = $bookingModel->count('cancelled');
-        $activeBookings = $confirmedBookings + $pendingBookings;
-
-        // Get revenue data
+        $activeBookings = $confirmedBookings + $pendingBookings;        // Get revenue data
+        $orderStats = $orderModel->getDashboardStats();
         $monthlyRevenue = $orderModel->getMonthlyRevenue();
         $monthlyRevenueData = $orderModel->getMonthlyRevenueData();
         // Get recent data
@@ -1476,8 +1493,8 @@ class AdminController extends BaseController
             'pending_bookings' => $pendingBookings,
             'cancelled_bookings' => $cancelledBookings,
             'pending_orders' => $orderModel->count('pending'),
-            'today_orders' => $orderModel->getTodayCount(),
-            'today_revenue' => $orderModel->getTodayRevenue(),
+            'today_orders' => $orderStats['today_orders'],
+            'today_revenue' => $orderStats['today_revenue'],
             'monthly_revenue' => $monthlyRevenue,
             'monthly_revenue_data' => $monthlyRevenueData,
             'recent_orders' => $recentOrders,
@@ -1689,13 +1706,10 @@ class AdminController extends BaseController
             foreach ($updateData as $key => $value) {
                 $setParts[] = "$key = :$key";
                 $params[":$key"] = $value;
-            }
-
-            $sql .= implode(', ', $setParts) . " WHERE id = :id";
+            }            $sql .= implode(', ', $setParts) . " WHERE id = :id";
             $params[':id'] = $id;
 
-            $stmt = $orderModel->db->prepare($sql);
-            $result = $stmt->execute($params);
+            $result = $orderModel->update($id, $updateData);
 
             if ($result) {
                 $this->jsonResponse(['success' => true, 'message' => 'Order updated successfully']);
@@ -1864,20 +1878,8 @@ class AdminController extends BaseController
         if ($order['status'] === 'delivered' || $order['status'] === 'completed') {
             $this->jsonResponse(['success' => false, 'message' => 'Cannot delete completed or delivered orders'], 400);
             return;
-        }
-
-        try {
-            $orderModel->db->beginTransaction();
-
-            // Delete order items first
-            $stmt = $orderModel->db->prepare("DELETE FROM order_items WHERE order_id = :order_id");
-            $stmt->execute([':order_id' => $id]);
-
-            // Delete the order
-            $stmt = $orderModel->db->prepare("DELETE FROM orders WHERE id = :id");
-            $result = $stmt->execute([':id' => $id]);
-
-            $orderModel->db->commit();
+        }        try {
+            $result = $orderModel->deleteOrder($id);
 
             if ($result) {
                 $this->jsonResponse(['success' => true, 'message' => 'Order deleted successfully']);
@@ -1885,7 +1887,6 @@ class AdminController extends BaseController
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to delete order'], 500);
             }
         } catch (Exception $e) {
-            $orderModel->db->rollBack();
             error_log("Order deletion error: " . $e->getMessage());
             $this->jsonResponse(['success' => false, 'message' => 'Failed to delete order'], 500);
         }

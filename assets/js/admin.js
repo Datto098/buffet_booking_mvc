@@ -565,11 +565,19 @@ function downloadFile(content, filename, mimeType) {
 }
 
 // Dashboard stats refresh
+function refreshDashboard() {
+	// Refresh the entire page for now - can be made more sophisticated later
+	window.location.reload();
+}
+
 function refreshDashboardStats() {
-	fetch('/admin/dashboard/stats')
+	const url = (window.SITE_URL || '') + '/admin/dashboard/stats';
+	fetch(url)
 		.then((response) => response.json())
 		.then((data) => {
-			updateDashboardStats(data);
+			if (data.success) {
+				updateDashboardStats(data.stats);
+			}
 		})
 		.catch((error) => {
 			console.error('Error refreshing dashboard stats:', error);
@@ -592,20 +600,20 @@ function initializeNotifications() {
 }
 
 function checkForUpdates() {
-	fetch('/admin/notifications/check')
+	// Use the dashboard stats endpoint instead of notifications
+	fetch(window.SITE_URL + '/admin/dashboard/stats')
 		.then((response) => response.json())
 		.then((data) => {
-			if (data.newOrders > 0) {
-				showNotification('New orders received!', 'info');
-				updateOrderBadge(data.newOrders);
+			if (data && data.pending_orders > 0) {
+				updateOrderBadge(data.pending_orders);
 			}
-			if (data.newBookings > 0) {
-				showNotification('New bookings received!', 'info');
-				updateBookingBadge(data.newBookings);
+			if (data && data.pending_bookings > 0) {
+				updateBookingBadge(data.pending_bookings);
 			}
 		})
 		.catch((error) => {
-			console.error('Error checking for updates:', error);
+			console.log('Stats check failed:', error);
+			// Don't show error to user for background updates
 		});
 }
 
@@ -890,541 +898,177 @@ function deleteNews(newsId) {
 		return;
 	}
 
-	fetch(window.SITE_URL + '/admin/news/delete', {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'X-CSRF-Token': window.adminConfig.csrfToken,
-		},
-		body: JSON.stringify({ id: newsId }),
-	})
-		.then((response) => response.json())
-		.then((data) => {
-			if (data.success) {
-				showNotification('Article deleted successfully', 'success');
-				setTimeout(() => location.reload(), 1000);
-			} else {
-				showNotification(
-					data.message || 'Failed to delete article',
-					'error'
-				);
-			}
-		})
-		.catch((error) => {
-			showNotification('An error occurred', 'error');
-		});
+	// Create a form to submit the delete request properly
+	const form = document.createElement('form');
+	form.method = 'POST';
+	form.action = window.SITE_URL + '/admin/news/delete/' + newsId;
+
+	// Add CSRF token
+	const csrfInput = document.createElement('input');
+	csrfInput.type = 'hidden';
+	csrfInput.name = 'csrf_token';
+	csrfInput.value =
+		window.adminConfig.csrfToken ||
+		document
+			.querySelector('meta[name="csrf-token"]')
+			?.getAttribute('content') ||
+		'';
+	form.appendChild(csrfInput);
+
+	// Add the form to the document and submit it
+	document.body.appendChild(form);
+	form.submit();
 }
 
-// Additional Booking Index Functions
-function viewBookingDetails(bookingId) {
-	const modal = new bootstrap.Modal(
-		document.getElementById('bookingDetailsModal')
+// Export news function
+function exportNews() {
+	const format = prompt(
+		'Choose export format:\n1. CSV\n2. JSON\nEnter 1 or 2:',
+		'1'
 	);
-	const content = document.getElementById('bookingDetailsContent');
 
-	content.innerHTML =
-		'<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
-	modal.show();
+	if (!format || (format !== '1' && format !== '2')) {
+		return;
+	}
 
-	fetch(`${window.SITE_URL}/admin/bookings/details/${bookingId}`)
-		.then((response) => response.json())
-		.then((data) => {
-			if (data.success) {
-				content.innerHTML = data.html;
-			} else {
-				content.innerHTML =
-					'<div class="alert alert-danger">Failed to load booking details.</div>';
-			}
-		})
-		.catch((error) => {
-			content.innerHTML =
-				'<div class="alert alert-danger">Error loading booking details.</div>';
-		});
+	const exportFormat = format === '1' ? 'csv' : 'json';
+
+	// Create download link
+	const link = document.createElement('a');
+	link.href = window.SITE_URL + '/admin/news/export?format=' + exportFormat;
+	link.download = 'news_export.' + exportFormat;
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
 }
 
-// Tables Index Functions
-function quickBooking(tableId) {
-	window.location.href = `${window.SITE_URL}/admin/bookings/create?table_id=${tableId}`;
-}
-
-function deleteTable(tableId) {
+// Toggle news status (publish/unpublish)
+function toggleStatus(newsId, newStatus) {
 	if (
-		!confirm(
-			'Are you sure you want to delete this table? This action cannot be undone.'
-		)
+		!confirm('Are you sure you want to change the status of this article?')
 	) {
 		return;
 	}
 
-	fetch(`${window.SITE_URL}/admin/tables/delete`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'X-CSRF-Token': window.adminConfig.csrfToken,
-		},
-		body: JSON.stringify({ id: tableId }),
-	})
-		.then((response) => response.json())
-		.then((data) => {
-			if (data.success) {
-				showNotification('Table deleted successfully', 'success');
-				location.reload();
-			} else {
-				showNotification(
-					data.message || 'Failed to delete table',
-					'error'
-				);
-			}
-		})
-		.catch((error) => {
-			showNotification('An error occurred', 'error');
-		});
+	const form = document.createElement('form');
+	form.method = 'POST';
+	form.action = window.SITE_URL + '/admin/news/toggle-status';
+
+	// Add CSRF token
+	const csrfInput = document.createElement('input');
+	csrfInput.type = 'hidden';
+	csrfInput.name = 'csrf_token';
+	csrfInput.value =
+		window.adminConfig.csrfToken ||
+		document
+			.querySelector('meta[name="csrf-token"]')
+			?.getAttribute('content') ||
+		'';
+	form.appendChild(csrfInput);
+
+	// Add news ID
+	const idInput = document.createElement('input');
+	idInput.type = 'hidden';
+	idInput.name = 'id';
+	idInput.value = newsId;
+	form.appendChild(idInput);
+
+	// Add new status
+	const statusInput = document.createElement('input');
+	statusInput.type = 'hidden';
+	statusInput.name = 'status';
+	statusInput.value = newStatus;
+	form.appendChild(statusInput);
+
+	document.body.appendChild(form);
+	form.submit();
 }
 
-// Dashboard Chart Functions
-function initializeCharts(chartData) {
-	// Initialize monthly revenue chart
-	const revenueCtx = document.getElementById('monthlyRevenueChart');
-	if (revenueCtx) {
-		new Chart(revenueCtx, {
-			type: 'line',
-			data: {
-				labels: [
-					'Jan',
-					'Feb',
-					'Mar',
-					'Apr',
-					'May',
-					'Jun',
-					'Jul',
-					'Aug',
-					'Sep',
-					'Oct',
-					'Nov',
-					'Dec',
-				],
-				datasets: [
-					{
-						label: 'Revenue',
-						data: chartData.monthly_revenue_data,
-						borderColor: 'rgb(75, 192, 192)',
-						backgroundColor: 'rgba(75, 192, 192, 0.2)',
-						fill: true,
-					},
-				],
-			},
-			options: {
-				responsive: true,
-				plugins: {
-					title: {
-						display: true,
-						text: 'Monthly Revenue',
-					},
-				},
-			},
-		});
-	}
-
-	// Initialize booking status chart
-	const bookingCtx = document.getElementById('bookingStatusChart');
-	if (bookingCtx) {
-		new Chart(bookingCtx, {
-			type: 'doughnut',
-			data: {
-				labels: ['Confirmed', 'Pending', 'Cancelled'],
-				datasets: [
-					{
-						data: [
-							chartData.booking_stats.confirmed,
-							chartData.booking_stats.pending,
-							chartData.booking_stats.cancelled,
-						],
-						backgroundColor: [
-							'rgba(75, 192, 192, 0.8)',
-							'rgba(255, 206, 86, 0.8)',
-							'rgba(255, 99, 132, 0.8)',
-						],
-					},
-				],
-			},
-			options: {
-				responsive: true,
-				plugins: {
-					title: {
-						display: true,
-						text: 'Booking Status Distribution',
-					},
-				},
-			},
-		});
-	}
-}
-
-// User Management Functions
-function viewUserDetails(userId) {
-	fetch(`${window.SITE_URL}/admin/users/${userId}/details`)
-		.then((response) => response.text())
-		.then((html) => {
-			document.getElementById('userDetailsContent').innerHTML = html;
-			new bootstrap.Modal(
-				document.getElementById('userDetailsModal')
-			).show();
-		})
-		.catch((error) => {
-			console.error('Error:', error);
-			showNotification('Error loading user details', 'error');
-		});
-}
-
-function viewUserBookings(userId) {
-	window.location.href = `${window.SITE_URL}/admin/bookings?user_id=${userId}`;
-}
-
-function viewUserOrders(userId) {
-	window.location.href = `${window.SITE_URL}/admin/orders?user_id=${userId}`;
-}
-
-function sendNotification(userId) {
-	showNotification('Notification feature coming soon!', 'info');
-}
-
-function togglePasswordVisibility(toggleId, passwordId) {
-	const toggleButton = document.getElementById(toggleId);
-	const passwordField = document.getElementById(passwordId);
-	const icon = toggleButton.querySelector('i');
-
-	if (passwordField.type === 'password') {
-		passwordField.type = 'text';
-		icon.classList.remove('fa-eye');
-		icon.classList.add('fa-eye-slash');
-	} else {
-		passwordField.type = 'password';
-		icon.classList.remove('fa-eye-slash');
-		icon.classList.add('fa-eye');
-	}
-}
-
-// Category Functions
-function setupIconPreview() {
-	const iconInput = document.getElementById('icon');
-	const iconPreview = document.querySelector('.icon-preview i');
-
-	if (iconInput && iconPreview) {
-		iconInput.addEventListener('input', function () {
-			const iconClass = this.value.trim();
-			iconPreview.className = iconClass || 'fas fa-utensils';
-		});
-	}
-
-	const colorInput = document.getElementById('color');
-	const colorPreview = document.querySelector('.color-preview');
-
-	if (colorInput && colorPreview) {
-		colorInput.addEventListener('input', function () {
-			colorPreview.style.backgroundColor = this.value;
-		});
-	}
-}
-
-// Additional Booking Functions
-function bulkUpdateBookingStatus(status) {
-	const selectedIds = Array.from(
-		document.querySelectorAll('.booking-checkbox:checked')
-	).map((checkbox) => checkbox.value);
-
-	if (selectedIds.length === 0) {
-		showNotification('Please select bookings to update', 'warning');
-		return;
-	}
-
-	if (
-		!confirm(
-			`Are you sure you want to ${status} ${selectedIds.length} booking(s)?`
-		)
-	) {
-		return;
-	}
-
-	fetch(`${window.SITE_URL}/admin/bookings/bulk-update-status`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'X-CSRF-Token': window.adminConfig.csrfToken,
-		},
-		body: JSON.stringify({
-			booking_ids: selectedIds,
-			status: status,
-		}),
-	})
-		.then((response) => response.json())
-		.then((data) => {
-			if (data.success) {
-				showNotification(
-					`${selectedIds.length} booking(s) updated successfully`,
-					'success'
-				);
-				location.reload();
-			} else {
-				showNotification(
-					data.message || 'Failed to update bookings',
-					'error'
-				);
-			}
-		})
-		.catch((error) => {
-			showNotification('Error updating bookings', 'error');
-		});
-}
-
-function sendConfirmationEmail(bookingId) {
-	fetch(`${window.SITE_URL}/admin/bookings/send-confirmation`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'X-CSRF-Token': window.adminConfig.csrfToken,
-		},
-		body: JSON.stringify({ booking_id: bookingId }),
-	})
-		.then((response) => response.json())
-		.then((data) => {
-			if (data.success) {
-				showNotification(
-					'Confirmation email sent successfully',
-					'success'
-				);
-			} else {
-				showNotification(
-					data.message || 'Failed to send email',
-					'error'
-				);
-			}
-		})
-		.catch((error) => {
-			showNotification('Error sending email', 'error');
-		});
-}
-
-function applyFilters() {
-	const form = document.getElementById('filterForm');
-	if (form) {
-		form.submit();
-	}
-}
-
-function exportBookings() {
-	const params = new URLSearchParams(window.location.search);
-	params.set('export', 'csv');
-	window.location.href = `${
-		window.SITE_URL
-	}/admin/bookings?${params.toString()}`;
-}
-
-function refreshBookings() {
-	location.reload();
-}
-
-// Make booking functions globally available
-window.bulkUpdateBookingStatus = bulkUpdateBookingStatus;
-window.sendConfirmationEmail = sendConfirmationEmail;
-window.applyFilters = applyFilters;
-window.exportBookings = exportBookings;
-window.refreshBookings = refreshBookings;
-
-// Make additional functions globally available
-window.viewBookingDetails = viewBookingDetails;
-window.quickBooking = quickBooking;
-window.deleteTable = deleteTable;
-window.initializeCharts = initializeCharts;
-window.viewUserDetails = viewUserDetails;
-window.viewUserBookings = viewUserBookings;
-window.viewUserOrders = viewUserOrders;
-window.sendNotification = sendNotification;
-window.togglePasswordVisibility = togglePasswordVisibility;
-window.setupIconPreview = setupIconPreview;
-
-// Alias for backward compatibility
-window.toggleStatus = window.toggleNewsStatus;
-
-// Table Management Functions
-function showUtilizationReport() {
-	loadUtilizationReport();
-}
-
-function loadUtilizationReport() {
-	fetch(`${window.SITE_URL}/admin/tables/utilization-report`)
-		.then((response) => response.json())
-		.then((data) => {
-			if (data.success) {
-				const modal = new bootstrap.Modal(
-					document.getElementById('utilizationModal')
-				);
-				document.getElementById('utilizationContent').innerHTML =
-					data.html;
-				modal.show();
-			} else {
-				showNotification('Failed to load utilization report', 'error');
-			}
-		})
-		.catch((error) => {
-			showNotification('Error loading utilization report', 'error');
-		});
-}
-
-function executeBulkTableAction() {
+// Execute bulk actions on selected news
+function executeBulkAction() {
 	const action = document.getElementById('bulkAction').value;
-	const selectedIds = Array.from(
-		document.querySelectorAll('.table-checkbox:checked')
-	).map((cb) => cb.value);
+	const checkboxes = document.querySelectorAll('.news-checkbox:checked');
 
 	if (!action) {
-		showNotification('Please select an action', 'warning');
+		alert('Please select an action');
 		return;
 	}
 
-	if (selectedIds.length === 0) {
-		showNotification('Please select at least one table', 'warning');
+	if (checkboxes.length === 0) {
+		alert('Please select at least one article');
 		return;
 	}
+
+	const actionText =
+		action === 'delete'
+			? 'delete'
+			: action === 'publish'
+			? 'publish'
+			: 'unpublish';
 
 	if (
 		!confirm(
-			`Are you sure you want to ${action} ${selectedIds.length} table(s)?`
+			`Are you sure you want to ${actionText} ${checkboxes.length} selected article(s)?`
 		)
 	) {
 		return;
 	}
 
-	fetch(`${window.SITE_URL}/admin/tables/bulk-action`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'X-CSRF-Token': window.adminConfig.csrfToken,
-		},
-		body: JSON.stringify({
-			action: action,
-			table_ids: selectedIds,
-		}),
-	})
-		.then((response) => response.json())
-		.then((data) => {
-			if (data.success) {
-				showNotification(
-					`${selectedIds.length} table(s) ${action} successfully`,
-					'success'
-				);
-				location.reload();
-			} else {
-				showNotification(
-					data.message || `Failed to ${action} tables`,
-					'error'
-				);
-			}
-		})
-		.catch((error) => {
-			showNotification('An error occurred', 'error');
-		});
+	const form = document.createElement('form');
+	form.method = 'POST';
+	form.action = window.SITE_URL + '/admin/news/bulk-action';
+
+	// Add CSRF token
+	const csrfInput = document.createElement('input');
+	csrfInput.type = 'hidden';
+	csrfInput.name = 'csrf_token';
+	csrfInput.value =
+		window.adminConfig.csrfToken ||
+		document
+			.querySelector('meta[name="csrf-token"]')
+			?.getAttribute('content') ||
+		'';
+	form.appendChild(csrfInput);
+
+	// Add action
+	const actionInput = document.createElement('input');
+	actionInput.type = 'hidden';
+	actionInput.name = 'action';
+	actionInput.value = action;
+	form.appendChild(actionInput);
+
+	// Add selected IDs
+	checkboxes.forEach((checkbox) => {
+		const idInput = document.createElement('input');
+		idInput.type = 'hidden';
+		idInput.name = 'ids[]';
+		idInput.value = checkbox.value;
+		form.appendChild(idInput);
+	});
+
+	document.body.appendChild(form);
+	form.submit();
 }
 
-function clearTableFilters() {
-	window.location.href = `${window.SITE_URL}/admin/tables`;
-}
-
-function exportTables() {
-	const params = new URLSearchParams(window.location.search);
-	params.set('export', 'csv');
-	window.location.href = `${
-		window.SITE_URL
-	}/admin/tables?${params.toString()}`;
-}
-
-// Make table functions globally available
-window.showUtilizationReport = showUtilizationReport;
-window.loadUtilizationReport = loadUtilizationReport;
-window.executeBulkTableAction = executeBulkTableAction;
-window.clearTableFilters = clearTableFilters;
-window.exportTables = exportTables;
-
-// Additional User Management Functions
-function toggleBulkActions() {
-	const bulkBar = document.getElementById('bulkActionsBar');
-	if (bulkBar) {
-		bulkBar.style.display =
-			bulkBar.style.display === 'none' ? 'block' : 'none';
-	}
-}
-
-function clearSelection() {
+// Toggle all checkboxes
+function toggleAllCheckboxes() {
 	const selectAll = document.getElementById('selectAll');
-	const checkboxes = document.querySelectorAll('.user-checkbox');
+	const checkboxes = document.querySelectorAll('.news-checkbox');
 
-	if (selectAll) selectAll.checked = false;
-	checkboxes.forEach((cb) => (cb.checked = false));
-
-	updateSelectedCount();
-
-	const bulkBar = document.getElementById('bulkActionsBar');
-	if (bulkBar) bulkBar.style.display = 'none';
-}
-
-function updateSelectedCount() {
-	const count = document.querySelectorAll('.user-checkbox:checked').length;
-	const countElement = document.getElementById('selectedCount');
-	if (countElement) {
-		countElement.textContent = count;
-	}
-}
-
-function initializeUserSelection() {
-	// Select all checkbox functionality
-	const selectAll = document.getElementById('selectAll');
-	if (selectAll) {
-		selectAll.addEventListener('change', function () {
-			const checkboxes = document.querySelectorAll('.user-checkbox');
-			checkboxes.forEach((checkbox) => {
-				checkbox.checked = this.checked;
-			});
-			updateSelectedCount();
-		});
-	}
-
-	// Individual checkbox change
-	document.addEventListener('change', function (e) {
-		if (e.target.classList.contains('user-checkbox')) {
-			updateSelectedCount();
-
-			// Update select all checkbox state
-			const total = document.querySelectorAll('.user-checkbox').length;
-			const checked = document.querySelectorAll(
-				'.user-checkbox:checked'
-			).length;
-			const selectAllElement = document.getElementById('selectAll');
-
-			if (selectAllElement) {
-				selectAllElement.indeterminate = checked > 0 && checked < total;
-				selectAllElement.checked = checked === total;
-			}
-		}
+	checkboxes.forEach((checkbox) => {
+		checkbox.checked = selectAll.checked;
 	});
 }
 
-function initializeUserSearch() {
-	const searchInput = document.getElementById('searchUsers');
-	if (searchInput) {
-		searchInput.addEventListener('input', function () {
-			const searchTerm = this.value.toLowerCase();
-			const rows = document.querySelectorAll('#usersTable tbody tr');
-
-			rows.forEach((row) => {
-				const text = row.textContent.toLowerCase();
-				row.style.display = text.includes(searchTerm) ? '' : 'none';
-			});
-		});
-	}
+// Clear filters
+function clearFilters() {
+	document.getElementById('filterForm').reset();
+	window.location.href = window.SITE_URL + '/admin/news';
 }
 
-// Make additional user functions globally available
-window.toggleBulkActions = toggleBulkActions;
-window.clearSelection = clearSelection;
-window.updateSelectedCount = updateSelectedCount;
-window.initializeUserSelection = initializeUserSelection;
-window.initializeUserSearch = initializeUserSearch;
+// Apply filters
+function applyFilters() {
+	document.getElementById('filterForm').submit();
+}
+
+// ...existing code...

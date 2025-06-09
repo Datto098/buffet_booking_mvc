@@ -48,10 +48,9 @@
                     </div>
 
                     <div class="col-md-4">
-                        <label for="image" class="form-label">Hình Ảnh</label>
-                        <?php if (!empty($news_item['image'])): ?>
+                        <label for="image" class="form-label">Hình Ảnh</label>                        <?php if (!empty($news_item['image_url'])): ?>
                             <div class="mb-2">
-                                <img src="<?php echo SITE_URL; ?>/uploads/news/<?php echo $news_item['image']; ?>"
+                                <img src="<?php echo SITE_URL; ?>/uploads/news_images/<?php echo $news_item['image_url']; ?>"
                                      alt="Current image" class="img-thumbnail" style="max-height: 100px;">
                                 <small class="d-block text-muted">Hình ảnh hiện tại</small>
                             </div>
@@ -65,12 +64,18 @@
                     <label for="excerpt" class="form-label">Tóm Tắt</label>
                     <textarea class="form-control" id="excerpt" name="excerpt" rows="3"><?php echo htmlspecialchars($news_item['excerpt'] ?? ''); ?></textarea>
                     <small class="text-muted">Mô tả ngắn gọn về bài viết, sẽ hiển thị ở trang danh sách tin tức.</small>
-                </div>
-
-                <div class="mb-3">
-                    <label for="content" class="form-label">Nội Dung <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="content" name="content" rows="10" required><?php echo htmlspecialchars($news_item['content'] ?? ''); ?></textarea>
-                </div>                <div class="row mb-3">
+                </div>                <div class="mb-3">
+                    <label for="content" class="form-label">
+                        Nội Dung <span class="text-danger">*</span>
+                        <small class="text-muted">(Sử dụng Rich Text Editor)</small>
+                    </label>
+                    <textarea class="form-control" id="content" name="content" rows="12" required
+                              placeholder="Nhập nội dung chi tiết của bài viết..."><?php echo htmlspecialchars($news_item['content'] ?? ''); ?></textarea>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Bạn có thể sử dụng rich text editor để định dạng văn bản, thêm liên kết, bảng, và nhiều hơn nữa.
+                    </small>
+                </div><div class="row mb-3">
                     <div class="col-md-6">
                         <label for="meta_title" class="form-label">Meta Title</label>
                         <input type="text" class="form-control" id="meta_title" name="meta_title"
@@ -108,7 +113,100 @@
 
     // Initialize news edit form
     document.addEventListener('DOMContentLoaded', function() {
-        initializeNewsEditForm();
+        console.log('Edit page loaded, initializing CKEditor...');
+
+        // Initialize CKEditor for content textarea
+        if (typeof CKEDITOR !== 'undefined') {
+            console.log('CKEditor is available, replacing textarea...');
+
+            CKEDITOR.replace('content', {
+                height: 400,
+                language: 'vi',
+                toolbar: [
+                    ['Bold', 'Italic', 'Underline', 'Strike'],
+                    ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
+                    ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+                    ['Link', 'Unlink'],
+                    ['Table', 'HorizontalRule', 'SpecialChar'],
+                    ['TextColor', 'BGColor'],
+                    ['Styles', 'Format', 'Font', 'FontSize'],
+                    ['Maximize', 'Source']
+                ],
+                fontSize_sizes: '12/12px;14/14px;16/16px;18/18px;20/20px;24/24px;28/28px;32/32px;36/36px',
+                format_tags: 'p;h1;h2;h3;h4;h5;h6;pre;address;div',
+                removeButtons: 'Save,NewPage,Preview,Print,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Flash,Smiley,PageBreak,Iframe',
+                resize_enabled: true,
+                removePlugins: 'elementspath',
+                on: {
+                    'instanceReady': function(evt) {
+                        console.log('CKEditor is ready for news editing!');
+
+                        // Show notification when editor is ready
+                        const notification = document.createElement('div');
+                        notification.className = 'alert alert-success alert-dismissible fade show';
+                        notification.style.position = 'fixed';
+                        notification.style.top = '20px';
+                        notification.style.right = '20px';
+                        notification.style.zIndex = '9999';
+                        notification.innerHTML = `
+                            <i class="fas fa-check-circle me-2"></i>
+                            Rich Text Editor đã sẵn sàng để chỉnh sửa nội dung!
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        document.body.appendChild(notification);
+
+                        // Auto-hide notification after 3 seconds
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.remove();
+                            }
+                        }, 3000);
+                    }
+                }
+            });
+        } else {
+            console.error('CKEditor not loaded - fallback to plain textarea');
+
+            // Show error notification
+            const errorNotification = document.createElement('div');
+            errorNotification.className = 'alert alert-warning alert-dismissible fade show';
+            errorNotification.style.position = 'fixed';
+            errorNotification.style.top = '20px';
+            errorNotification.style.right = '20px';
+            errorNotification.style.zIndex = '9999';
+            errorNotification.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Rich Text Editor không tải được. Đang sử dụng textarea thông thường.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(errorNotification);
+        }
+
+        // Initialize form validation and submission
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Update CKEditor content before submit
+                if (CKEDITOR.instances.content) {
+                    CKEDITOR.instances.content.updateElement();
+
+                    // Validate content is not empty
+                    const content = CKEDITOR.instances.content.getData().trim();
+                    if (!content || content === '<p></p>' || content === '<p>&nbsp;</p>') {
+                        e.preventDefault();
+                        alert('Vui lòng nhập nội dung bài viết!');
+                        return false;
+                    }
+                }
+
+                // Show loading spinner
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang cập nhật...';
+                }
+            });
+        }
     });
 </script>
 

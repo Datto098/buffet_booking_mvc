@@ -717,13 +717,69 @@ class Order extends BaseModel {
      * @param int $userId User ID
      * @return int Order count
      */
-    public function countByUser($userId) {
-        $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE user_id = :user_id";
-        $stmt = $this->db->prepare($sql);
+    public function countByUser($userId) {        $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE user_id = :user_id";        $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':user_id', (int)$userId, PDO::PARAM_INT);
         $stmt->execute();
         $result = $stmt->fetch();
         return $result['count'] ?? 0;
     }
+
+    /**
+     * Delete an order and its items
+     */
+    public function deleteOrder($orderId) {
+        try {
+            $this->db->beginTransaction();
+
+            // Delete order items first
+            $stmt = $this->db->prepare("DELETE FROM order_items WHERE order_id = :order_id");
+            $stmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            // Delete the order
+            $stmt = $this->db->prepare("DELETE FROM orders WHERE id = :id");
+            $stmt->bindValue(':id', $orderId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("Error deleting order: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get dashboard statistics
+     */
+    public function getDashboardStats() {
+        // Get today's stats
+        $sql = "SELECT
+                    COUNT(*) as today_orders,
+                    COALESCE(SUM(total_amount), 0) as today_revenue
+                FROM {$this->table}
+                WHERE DATE(created_at) = CURDATE()";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $todayStats = $stmt->fetch();
+
+        // Get total stats
+        $sql = "SELECT
+                    COUNT(*) as total_orders,
+                    COALESCE(SUM(total_amount), 0) as total_revenue
+                FROM {$this->table}";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $totalStats = $stmt->fetch();
+
+        return [
+            'today_orders' => $todayStats['today_orders'] ?? 0,
+            'today_revenue' => $todayStats['today_revenue'] ?? 0,
+            'total_orders' => $totalStats['total_orders'] ?? 0,
+            'total_revenue' => $totalStats['total_revenue'] ?? 0
+        ];
+    }
 }
-?>
