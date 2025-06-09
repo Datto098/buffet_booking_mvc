@@ -459,17 +459,28 @@ class AdminController extends BaseController
         ];
 
         $this->loadAdminView('orders/index', $data);
-    }
-
-    public function updateOrderStatus($id)
+    }    public function updateOrderStatus($id)
     {
         if (!$this->validateCSRF()) {
             echo json_encode(['success' => false, 'message' => 'Invalid security token.']);
             return;
         }
 
+        // Check if status is provided
+        if (!isset($_POST['status']) || empty($_POST['status'])) {
+            echo json_encode(['success' => false, 'message' => 'Status is required.']);
+            return;
+        }
+
         $orderModel = new Order();
         $status = $this->sanitize($_POST['status']);
+
+        // Validate status
+        $allowedStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'completed', 'cancelled'];
+        if (!in_array($status, $allowedStatuses)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid status provided.']);
+            return;
+        }
 
         $updateData = [
             'status' => $status,
@@ -542,9 +553,7 @@ class AdminController extends BaseController
         ];
 
         $this->loadAdminView('bookings/index', $data);
-    }
-
-    public function updateBookingStatus()
+    }    public function updateBookingStatus($bookingIdFromUrl = null)
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
@@ -555,20 +564,41 @@ class AdminController extends BaseController
         if (!$this->validateCSRF()) {
             echo json_encode(['success' => false, 'message' => 'Invalid security token']);
             return;
+        }        // Handle both JSON and form-encoded input
+        $input = null;
+        $rawInput = file_get_contents('php://input');
+
+        if (!empty($rawInput)) {
+            $input = json_decode($rawInput, true);
         }
 
-        $input = json_decode(file_get_contents('php://input'), true);
-        $bookingId = (int)$input['booking_id'];
+        // If JSON decode failed or input is empty, try POST data
+        if ($input === null) {
+            $input = $_POST;
+        }
+
+        // Get booking ID from URL parameter or request body
+        $bookingId = null;
+        if ($bookingIdFromUrl !== null) {
+            $bookingId = (int)$bookingIdFromUrl;
+        } elseif (isset($input['booking_id'])) {
+            $bookingId = (int)$input['booking_id'];
+        }
+
+        // Validate required fields
+        if (!$bookingId || !isset($input['status'])) {
+            echo json_encode(['success' => false, 'message' => 'Missing required fields (booking ID or status)']);
+            return;
+        }
+
         $status = $this->sanitize($input['status']);
 
         $allowedStatuses = ['pending', 'confirmed', 'cancelled', 'completed', 'no_show'];
         if (!in_array($status, $allowedStatuses)) {
             echo json_encode(['success' => false, 'message' => 'Invalid status']);
             return;
-        }
-
-        $bookingModel = new Booking();
-        if ($bookingModel->updateStatus($bookingId, $status)) {
+        }        $bookingModel = new Booking();
+        if ($bookingModel->updateBookingStatus($bookingId, $status)) {
             echo json_encode(['success' => true, 'message' => 'Booking status updated successfully']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to update booking status']);
@@ -1198,15 +1228,13 @@ class AdminController extends BaseController
                 $this->setFlash('error', 'Invalid security token.');
                 $this->redirect('/admin/tables');
                 return;
-            }
-
-            $tableModel = new Table();
+            }            $tableModel = new Table();
             $tableData = [
                 'table_number' => $this->sanitize($_POST['table_number']),
                 'capacity' => (int)$_POST['capacity'],
                 'location' => $this->sanitize($_POST['location'] ?? ''),
                 'description' => $this->sanitize($_POST['description'] ?? ''),
-                'is_available' => isset($_POST['is_available']) ? 1 : 0
+                'is_available' => (int)($_POST['is_available'] ?? 1)
             ];
 
             // Validate required fields
@@ -1249,9 +1277,7 @@ class AdminController extends BaseController
 
     public function editTable($id)
     {
-        $tableModel = new Table();
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $tableModel = new Table();        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$this->validateCSRF()) {
                 $this->setFlash('error', 'Invalid security token.');
                 $this->redirect('/admin/tables');
@@ -1263,7 +1289,7 @@ class AdminController extends BaseController
                 'capacity' => (int)$_POST['capacity'],
                 'location' => $this->sanitize($_POST['location'] ?? ''),
                 'description' => $this->sanitize($_POST['description'] ?? ''),
-                'is_available' => isset($_POST['is_available']) ? 1 : 0
+                'is_available' => (int)($_POST['is_available'] ?? 1)
             ];
 
             // Validate required fields
@@ -1314,25 +1340,65 @@ class AdminController extends BaseController
         ];
 
         $this->loadAdminView('tables/edit', $data);
-    }
-
-    public function deleteTable($id)
+    }    public function deleteTable($id)
     {
-        if (!$this->validateCSRF()) {
-            $this->setFlash('error', 'Invalid security token.');
-            $this->redirect('/admin/tables');
+        if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid request method'], 405);
             return;
         }
 
-        $tableModel = new Table();
-
-        if ($tableModel->deleteTable($id)) {
-            $this->setFlash('success', 'Table deleted successfully.');
-        } else {
-            $this->setFlash('error', 'Cannot delete table. It may have existing bookings.');
+        if (!$this->validateCSRF()) {
+            // Handle both AJAX and form requests
+            if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+                return;
+            } else {
+                $this->setFlash('error', 'Invalid security token.');
+                $this->redirect('/admin/tables');
+                return;
+            }
         }
 
-        $this->redirect('/admin/tables');
+        $tableModel = new Table();        // Check if table exists
+        $table = $tableModel->findByField('id', $id);
+        if (!$table) {
+            if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                $this->jsonResponse(['success' => false, 'message' => 'Table not found'], 404);
+                return;
+            } else {
+                $this->setFlash('error', 'Table not found.');
+                $this->redirect('/admin/tables');
+                return;
+            }
+        }
+
+        try {
+            $result = $tableModel->deleteTable($id);
+
+            if ($result) {
+                if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                    $this->jsonResponse(['success' => true, 'message' => 'Table deleted successfully']);
+                } else {
+                    $this->setFlash('success', 'Table deleted successfully.');
+                    $this->redirect('/admin/tables');
+                }
+            } else {
+                if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                    $this->jsonResponse(['success' => false, 'message' => 'Cannot delete table. It may have existing bookings.'], 400);
+                } else {
+                    $this->setFlash('error', 'Cannot delete table. It may have existing bookings.');
+                    $this->redirect('/admin/tables');
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Table deletion error: " . $e->getMessage());
+            if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to delete table'], 500);
+            } else {
+                $this->setFlash('error', 'Failed to delete table.');
+                $this->redirect('/admin/tables');
+            }
+        }
     }
 
     public function tableUtilization()
@@ -1396,9 +1462,7 @@ class AdminController extends BaseController
         }
 
         $tableModel = new Table();
-        $isAvailable = $tableModel->isTableAvailable($tableId, $date, $time);
-
-        echo json_encode([
+        $isAvailable = $tableModel->isTableAvailable($tableId, $date, $time);        echo json_encode([
             'success' => true,
             'available' => $isAvailable,
             'table_id' => $tableId,
@@ -1406,6 +1470,61 @@ class AdminController extends BaseController
             'time' => $time,
             'message' => $isAvailable ? 'Table is available' : 'Table is not available at this time'
         ]);
+    }
+
+    public function toggleTableStatus()
+    {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid request method'
+            ]);
+            return;
+        }
+
+        // Get JSON input
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        if (!$input) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid JSON data'
+            ]);
+            return;
+        }
+
+        $tableId = $input['table_id'] ?? null;
+        $isAvailable = $input['is_available'] ?? null;
+
+        if (!$tableId || $isAvailable === null) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Table ID and availability status are required'
+            ]);
+            return;
+        }
+
+        $tableModel = new Table();
+
+        // Update table status
+        $success = $tableModel->updateTable($tableId, [
+            'is_available' => (int)$isAvailable
+        ]);
+
+        if ($success) {
+            $statusText = $isAvailable ? 'available' : 'unavailable';
+            echo json_encode([
+                'success' => true,
+                'message' => "Table status updated to {$statusText} successfully"
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to update table status'
+            ]);
+        }
     }
 
     private function exportBookingsCSV($bookings)
@@ -1759,11 +1878,10 @@ class AdminController extends BaseController
             // Duplicate order items if they exist
             $orderItems = [];
             if (!empty($originalOrder['items'])) {
-                foreach ($originalOrder['items'] as $item) {
-                    $orderItems[] = [
+                foreach ($originalOrder['items'] as $item) {                    $orderItems[] = [
                         'food_item_id' => $item['food_item_id'],
                         'quantity' => $item['quantity'],
-                        'price' => $item['price']
+                        'price' => $item['unit_price'] ?? 0
                     ];
                 }
                 $newOrderData['items'] = $orderItems;
@@ -1817,7 +1935,7 @@ class AdminController extends BaseController
             if (!empty($order['items'])) {
                 $message .= "Order Items:\n";
                 foreach ($order['items'] as $item) {
-                    $message .= "- " . $item['food_name'] . " x" . $item['quantity'] . " = $" . number_format($item['price'] * $item['quantity'], 2) . "\n";
+                    $message .= "- " . $item['food_name'] . " x" . $item['quantity'] . " = $" . number_format(($item['unit_price'] ?? 0) * $item['quantity'], 2) . "\n";
                 }
                 $message .= "\n";
             }
@@ -1885,10 +2003,455 @@ class AdminController extends BaseController
                 $this->jsonResponse(['success' => true, 'message' => 'Order deleted successfully']);
             } else {
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to delete order'], 500);
-            }
-        } catch (Exception $e) {
+            }        } catch (Exception $e) {
             error_log("Order deletion error: " . $e->getMessage());
             $this->jsonResponse(['success' => false, 'message' => 'Failed to delete order'], 500);
         }
+    }
+
+    // Send Booking Confirmation Email
+    public function sendConfirmationEmail()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid request method'], 405);
+            return;
+        }        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        // Handle both JSON and form-encoded data
+        $bookingId = 0;
+
+        if ($_SERVER['CONTENT_TYPE'] === 'application/json' || strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
+            // Handle JSON input
+            $input = json_decode(file_get_contents('php://input'), true);
+            $bookingId = (int)($input['booking_id'] ?? 0);
+        } else {
+            // Handle form-encoded input or URL parameter
+            $bookingId = (int)($_POST['booking_id'] ?? $_GET['booking_id'] ?? 0);
+        }
+
+        if (!$bookingId) {
+            $this->jsonResponse(['success' => false, 'message' => 'Booking ID is required'], 400);
+            return;
+        }
+
+        $bookingModel = new Booking();
+        $booking = $bookingModel->getBookingDetails($bookingId);
+
+        if (!$booking) {
+            $this->jsonResponse(['success' => false, 'message' => 'Booking not found'], 404);
+            return;
+        }
+
+        if (empty($booking['email'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'No email address found for this booking'], 400);
+            return;
+        }
+
+        try {
+            // Prepare email content
+            $subject = "Booking Confirmation #" . str_pad($bookingId, 6, '0', STR_PAD_LEFT) . " - " . SITE_NAME;
+
+            $message = "Dear " . htmlspecialchars($booking['name']) . ",\n\n";
+            $message .= "Thank you for your booking! Here are your booking details:\n\n";
+            $message .= "Booking ID: #" . str_pad($bookingId, 6, '0', STR_PAD_LEFT) . "\n";
+            $message .= "Booking Date: " . date('M j, Y \a\t g:i A', strtotime($booking['reservation_time'])) . "\n";
+            $message .= "Number of Guests: " . $booking['number_of_guests'] . "\n";
+            $message .= "Status: " . ucfirst($booking['status']) . "\n";
+
+            if (!empty($booking['table_number'])) {
+                $message .= "Table Number: " . $booking['table_number'] . "\n";
+            }
+
+            if (!empty($booking['special_requests'])) {
+                $message .= "Special Requests: " . $booking['special_requests'] . "\n";
+            }
+
+            $message .= "\nPhone: " . $booking['phone'] . "\n\n";
+            $message .= "Please arrive on time for your reservation. If you need to cancel or modify your booking, please contact us as soon as possible.\n\n";
+            $message .= "Thank you for choosing " . SITE_NAME . "!\n\n";
+            $message .= "Best regards,\n";
+            $message .= "The " . SITE_NAME . " Team";
+
+            $headers = [
+                'From: ' . SITE_NAME . ' <noreply@' . $_SERVER['HTTP_HOST'] . '>',
+                'Reply-To: noreply@' . $_SERVER['HTTP_HOST'],
+                'Content-Type: text/plain; charset=UTF-8'
+            ];
+
+            // Send email
+            if (mail($booking['email'], $subject, $message, implode("\r\n", $headers))) {
+                $this->jsonResponse(['success' => true, 'message' => 'Confirmation email sent successfully to ' . $booking['email']]);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to send confirmation email'], 500);
+            }
+        } catch (Exception $e) {
+            error_log("Booking email sending error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to send confirmation email'], 500);
+        }
+    }
+
+    // Bulk Update Booking Status
+    public function bulkUpdateStatus()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid request method'], 405);
+            return;
+        }        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        // Handle both JSON and form-encoded data
+        $bookingIds = [];
+        $status = '';
+
+        if ($_SERVER['CONTENT_TYPE'] === 'application/json' || strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
+            // Handle JSON input
+            $input = json_decode(file_get_contents('php://input'), true);
+            $bookingIds = $input['booking_ids'] ?? [];
+            $status = $this->sanitize($input['status'] ?? '');
+        } else {
+            // Handle form-encoded input
+            $bookingIdsString = $_POST['booking_ids'] ?? '';
+            $bookingIds = !empty($bookingIdsString) ? explode(',', $bookingIdsString) : [];
+            $status = $this->sanitize($_POST['status'] ?? '');
+        }
+
+        if (empty($bookingIds) || !is_array($bookingIds)) {
+            $this->jsonResponse(['success' => false, 'message' => 'Booking IDs are required'], 400);
+            return;
+        }
+
+        $allowedStatuses = ['pending', 'confirmed', 'cancelled', 'completed', 'no_show'];
+        if (!in_array($status, $allowedStatuses)) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid status'], 400);
+            return;
+        }
+
+        $bookingModel = new Booking();
+        $successCount = 0;
+        $failedCount = 0;
+        $errors = [];
+
+        foreach ($bookingIds as $bookingId) {
+            $bookingId = (int)$bookingId;
+            if ($bookingId <= 0) {
+                $failedCount++;
+                $errors[] = "Invalid booking ID: $bookingId";
+                continue;
+            }            try {
+                if ($bookingModel->updateBookingStatus($bookingId, $status)) {
+                    $successCount++;
+                } else {
+                    $failedCount++;
+                    $errors[] = "Failed to update booking ID: $bookingId";
+                }
+            } catch (Exception $e) {
+                $failedCount++;
+                $errors[] = "Error updating booking ID $bookingId: " . $e->getMessage();
+                error_log("Bulk update error for booking $bookingId: " . $e->getMessage());
+            }
+        }
+
+        $message = "Bulk update completed: $successCount updated";
+        if ($failedCount > 0) {
+            $message .= ", $failedCount failed";
+        }
+
+        $this->jsonResponse([
+            'success' => $successCount > 0,
+            'message' => $message,
+            'details' => [
+                'total' => count($bookingIds),
+                'success' => $successCount,
+                'failed' => $failedCount,
+                'errors' => $errors
+            ]
+        ]);
+    }
+
+    // =============================================================================
+    // LOGS MANAGEMENT FUNCTIONS
+    // =============================================================================
+
+    public function logs()
+    {
+        $logFiles = $this->getLogFiles();
+        $recentLogs = $this->getRecentLogEntries(100);
+
+        $data = [
+            'title' => 'System Logs',
+            'logFiles' => $logFiles,
+            'recentLogs' => $recentLogs,
+            'csrf_token' => $this->generateCSRF()
+        ];
+
+        $this->loadAdminView('logs/index', $data);
+    }
+
+    public function viewLog($logFile)
+    {
+        $logPath = $this->getLogPath($logFile);
+
+        if (!$logPath || !file_exists($logPath)) {
+            $this->setFlash('error', 'Log file not found.');
+            $this->redirect('/admin/logs');
+            return;
+        }
+
+        $page = (int)($_GET['page'] ?? 1);
+        $linesPerPage = 100;
+        $searchTerm = $_GET['search'] ?? '';
+        $level = $_GET['level'] ?? '';
+
+        $logData = $this->readLogFile($logPath, $page, $linesPerPage, $searchTerm, $level);
+
+        $data = [
+            'title' => 'View Log - ' . basename($logFile),
+            'logFile' => $logFile,
+            'logData' => $logData,
+            'currentPage' => $page,
+            'searchTerm' => $searchTerm,
+            'level' => $level
+        ];
+
+        $this->loadAdminView('logs/view', $data);
+    }
+
+    public function downloadLog($logFile)
+    {
+        $logPath = $this->getLogPath($logFile);
+
+        if (!$logPath || !file_exists($logPath)) {
+            $this->setFlash('error', 'Log file not found.');
+            $this->redirect('/admin/logs');
+            return;
+        }
+
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . basename($logFile) . '"');
+        header('Content-Length: ' . filesize($logPath));
+        readfile($logPath);
+        exit;
+    }
+
+    public function clearLog($logFile)
+    {
+        if (!$this->validateCSRF()) {
+            $this->setFlash('error', 'Invalid security token.');
+            $this->redirect('/admin/logs');
+            return;
+        }
+
+        $logPath = $this->getLogPath($logFile);
+
+        if (!$logPath || !file_exists($logPath)) {
+            $this->setFlash('error', 'Log file not found.');
+            $this->redirect('/admin/logs');
+            return;
+        }
+
+        if (file_put_contents($logPath, '')) {
+            $this->setFlash('success', 'Log file cleared successfully.');
+            error_log("Log file {$logFile} cleared by admin user {$_SESSION['user_id']}");
+        } else {
+            $this->setFlash('error', 'Failed to clear log file.');
+        }
+
+        $this->redirect('/admin/logs');
+    }
+
+    private function getLogFiles()
+    {
+        $logFiles = [];
+        $logDirectory = __DIR__ . '/../';
+
+        // Common log file patterns
+        $patterns = [
+            '*.log',
+            'logs/*.log',
+            'storage/logs/*.log',
+            'var/log/*.log'
+        ];
+
+        foreach ($patterns as $pattern) {
+            $files = glob($logDirectory . $pattern);
+            foreach ($files as $file) {
+                if (is_file($file) && is_readable($file)) {
+                    $relativePath = str_replace($logDirectory, '', $file);
+                    $logFiles[] = [
+                        'name' => basename($file),
+                        'path' => $relativePath,
+                        'size' => filesize($file),
+                        'modified' => filemtime($file),
+                        'readable' => is_readable($file),
+                        'writable' => is_writable($file)
+                    ];
+                }
+            }
+        }
+
+        // Sort by modification date (newest first)
+        usort($logFiles, function($a, $b) {
+            return $b['modified'] - $a['modified'];
+        });
+
+        return $logFiles;
+    }
+
+    private function getLogPath($logFile)
+    {
+        $basePath = __DIR__ . '/../';
+        $sanitizedFile = basename($logFile);
+
+        // Security check - only allow .log files
+        if (!preg_match('/\.log$/', $sanitizedFile)) {
+            return null;
+        }
+
+        $possiblePaths = [
+            $basePath . $sanitizedFile,
+            $basePath . 'logs/' . $sanitizedFile,
+            $basePath . 'storage/logs/' . $sanitizedFile,
+            $basePath . 'var/log/' . $sanitizedFile
+        ];
+
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path) && is_readable($path)) {
+                // Security check - ensure file is within allowed directories
+                $realPath = realpath($path);
+                $realBasePath = realpath($basePath);
+
+                if ($realPath && $realBasePath && strpos($realPath, $realBasePath) === 0) {
+                    return $realPath;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function readLogFile($logPath, $page = 1, $linesPerPage = 100, $searchTerm = '', $level = '')
+    {
+        $lines = file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $totalLines = count($lines);
+
+        // Filter lines if search term or level specified
+        if ($searchTerm || $level) {
+            $filteredLines = [];
+            foreach ($lines as $line) {
+                $matchesSearch = empty($searchTerm) || stripos($line, $searchTerm) !== false;
+                $matchesLevel = empty($level) || $this->logLineMatchesLevel($line, $level);
+
+                if ($matchesSearch && $matchesLevel) {
+                    $filteredLines[] = $line;
+                }
+            }
+            $lines = $filteredLines;
+            $totalLines = count($lines);
+        }
+
+        // Reverse array to show newest entries first
+        $lines = array_reverse($lines);
+
+        $totalPages = ceil($totalLines / $linesPerPage);
+        $offset = ($page - 1) * $linesPerPage;
+        $pageLines = array_slice($lines, $offset, $linesPerPage);
+
+        // Parse log lines for better display
+        $parsedLines = [];
+        foreach ($pageLines as $index => $line) {
+            $parsedLines[] = $this->parseLogLine($line, $offset + $index + 1);
+        }
+
+        return [
+            'lines' => $parsedLines,
+            'totalLines' => $totalLines,
+            'totalPages' => $totalPages,
+            'currentPage' => $page,
+            'linesPerPage' => $linesPerPage
+        ];
+    }
+
+    private function logLineMatchesLevel($line, $level)
+    {
+        $levelPatterns = [
+            'ERROR' => '/\[ERROR\]|\bERROR\b|Fatal error|Parse error/i',
+            'WARNING' => '/\[WARNING\]|\[WARN\]|\bWARNING\b|\bWARN\b/i',
+            'INFO' => '/\[INFO\]|\bINFO\b/i',
+            'DEBUG' => '/\[DEBUG\]|\bDEBUG\b/i'
+        ];
+
+        return isset($levelPatterns[$level]) && preg_match($levelPatterns[$level], $line);
+    }
+
+    private function parseLogLine($line, $lineNumber)
+    {
+        // Try to parse common log formats
+        $parsed = [
+            'number' => $lineNumber,
+            'raw' => $line,
+            'timestamp' => null,
+            'level' => 'INFO',
+            'message' => $line,
+            'context' => null
+        ];
+
+        // Parse timestamp (various formats)
+        if (preg_match('/\[([\d\-\s:]+)\]/', $line, $matches)) {
+            $parsed['timestamp'] = $matches[1];
+        } elseif (preg_match('/^(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/', $line, $matches)) {
+            $parsed['timestamp'] = $matches[1];
+        }
+
+        // Parse log level
+        if (preg_match('/\[(ERROR|WARNING|WARN|INFO|DEBUG)\]/i', $line, $matches)) {
+            $parsed['level'] = strtoupper($matches[1]);
+        } elseif (preg_match('/\b(ERROR|WARNING|WARN|INFO|DEBUG)\b/i', $line, $matches)) {
+            $parsed['level'] = strtoupper($matches[1]);
+        } elseif (strpos($line, 'Fatal error') !== false || strpos($line, 'Parse error') !== false) {
+            $parsed['level'] = 'ERROR';
+        }
+
+        // Extract main message (remove timestamp and level)
+        $message = $line;
+        $message = preg_replace('/^\[[\d\-\s:]+\]\s*/', '', $message);
+        $message = preg_replace('/^\[(ERROR|WARNING|WARN|INFO|DEBUG)\]\s*/i', '', $message);
+        $parsed['message'] = trim($message);
+
+        return $parsed;
+    }
+
+    private function getRecentLogEntries($limit = 50)
+    {
+        $allEntries = [];
+        $logFiles = $this->getLogFiles();
+
+        foreach ($logFiles as $logFile) {
+            $logPath = $this->getLogPath($logFile['path']);
+            if ($logPath && file_exists($logPath)) {
+                $lines = file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                $recentLines = array_slice($lines, -$limit);
+
+                foreach ($recentLines as $line) {
+                    $parsed = $this->parseLogLine($line, 0);
+                    $parsed['file'] = $logFile['name'];
+                    $allEntries[] = $parsed;
+                }
+            }
+        }
+
+        // Sort by timestamp (newest first)
+        usort($allEntries, function($a, $b) {
+            if ($a['timestamp'] && $b['timestamp']) {
+                return strtotime($b['timestamp']) - strtotime($a['timestamp']);
+            }
+            return 0;
+        });
+
+        return array_slice($allEntries, 0, $limit);
     }
 }

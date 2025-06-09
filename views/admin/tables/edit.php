@@ -58,13 +58,12 @@
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0">
                                     <i class="fas fa-chair"></i> Table Information
-                                </h5>
-                                <span class="badge bg-<?= ($data['table']['status'] ?? 'available') == 'available' ? 'success' : (($data['table']['status'] ?? '') == 'occupied' ? 'danger' : 'warning') ?>">
-                                    <?= ucfirst($data['table']['status'] ?? 'available') ?>
+                                </h5>                                <span class="badge bg-<?= ($data['table']['is_available'] ?? 1) ? 'success' : 'danger' ?>">
+                                    <?= ($data['table']['is_available'] ?? 1) ? 'Available' : 'Unavailable' ?>
                                 </span>
                             </div>
                             <div class="card-body">
-                                <form action="<?= SITE_URL ?>/admin/tables/update/<?= $data['table']['id'] ?>" method="POST" id="editTableForm">
+                                <form action="<?= SITE_URL ?>/admin/tables/edit/<?= $data['table']['id'] ?>" method="POST" id="editTableForm">
                                     <input type="hidden" name="csrf_token" value="<?= $data['csrf_token'] ?? $_SESSION['csrf_token'] ?? '' ?>">
 
                                     <div class="row">
@@ -85,16 +84,12 @@
                                                        min="1" max="20" required>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div class="row">
+                                    </div>                                    <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label for="status" class="form-label">Table Status <span class="text-danger">*</span></label>
-                                            <select class="form-select" id="status" name="status" required>
-                                                <option value="available" <?= ($data['table']['status'] ?? '') == 'available' ? 'selected' : '' ?>>Available</option>
-                                                <option value="occupied" <?= ($data['table']['status'] ?? '') == 'occupied' ? 'selected' : '' ?>>Occupied</option>
-                                                <option value="reserved" <?= ($data['table']['status'] ?? '') == 'reserved' ? 'selected' : '' ?>>Reserved</option>
-                                                <option value="maintenance" <?= ($data['table']['status'] ?? '') == 'maintenance' ? 'selected' : '' ?>>Under Maintenance</option>
+                                            <label for="is_available" class="form-label">Table Availability <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="is_available" name="is_available" required>
+                                                <option value="1" <?= ($data['table']['is_available'] ?? 1) == 1 ? 'selected' : '' ?>>Available</option>
+                                                <option value="0" <?= ($data['table']['is_available'] ?? 1) == 0 ? 'selected' : '' ?>>Unavailable</option>
                                             </select>
                                         </div>
                                         <div class="col-md-6 mb-3">
@@ -108,64 +103,10 @@
                                                 <option value="outdoor" <?= ($data['table']['location'] ?? '') == 'outdoor' ? 'selected' : '' ?>>Outdoor</option>
                                             </select>
                                         </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="table_type" class="form-label">Table Type</label>
-                                            <select class="form-select" id="table_type" name="table_type">
-                                                <option value="regular" <?= ($data['table']['table_type'] ?? '') == 'regular' ? 'selected' : '' ?>>Regular</option>
-                                                <option value="booth" <?= ($data['table']['table_type'] ?? '') == 'booth' ? 'selected' : '' ?>>Booth</option>
-                                                <option value="round" <?= ($data['table']['table_type'] ?? '') == 'round' ? 'selected' : '' ?>>Round Table</option>
-                                                <option value="rectangular" <?= ($data['table']['table_type'] ?? '') == 'rectangular' ? 'selected' : '' ?>>Rectangular</option>
-                                                <option value="bar_height" <?= ($data['table']['table_type'] ?? '') == 'bar_height' ? 'selected' : '' ?>>Bar Height</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="price_per_hour" class="form-label">Price per Hour</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                                <input type="number" class="form-control" id="price_per_hour" name="price_per_hour"
-                                                       value="<?= htmlspecialchars($data['table']['price_per_hour'] ?? '') ?>"
-                                                       step="0.01" min="0">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-3">
+                                    </div>                                    <div class="mb-3">
                                         <label for="description" class="form-label">Description</label>
                                         <textarea class="form-control" id="description" name="description" rows="3"
                                                   placeholder="Describe table features, special amenities, etc..."><?= htmlspecialchars($data['table']['description'] ?? '') ?></textarea>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-4 mb-3">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="has_window_view" name="has_window_view" value="1"
-                                                       <?= ($data['table']['has_window_view'] ?? 0) ? 'checked' : '' ?>>
-                                                <label class="form-check-label" for="has_window_view">
-                                                    Window View
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4 mb-3">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="is_accessible" name="is_accessible" value="1"
-                                                       <?= ($data['table']['is_accessible'] ?? 0) ? 'checked' : '' ?>>
-                                                <label class="form-check-label" for="is_accessible">
-                                                    Wheelchair Accessible
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4 mb-3">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="has_power_outlet" name="has_power_outlet" value="1"
-                                                       <?= ($data['table']['has_power_outlet'] ?? 0) ? 'checked' : '' ?>>
-                                                <label class="form-check-label" for="has_power_outlet">
-                                                    Power Outlet Available
-                                                </label>
-                                            </div>
-                                        </div>
                                     </div>
 
                                     <div class="d-flex justify-content-between">
@@ -252,17 +193,16 @@
                                     </button>
                                     <button type="button" class="btn btn-outline-success btn-sm" onclick="createBooking(<?= $data['table']['id'] ?>)">
                                         <i class="fas fa-plus"></i> New Booking
+                                    </button>                                    <button type="button" class="btn btn-outline-warning btn-sm">
+                                        <i class="fas fa-tools"></i> Maintenance Mode
                                     </button>
-                                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="markMaintenance(<?= $data['table']['id'] ?>)">
-                                        <i class="fas fa-tools"></i> Mark for Maintenance
-                                    </button>
-                                    <?php if (($data['table']['status'] ?? '') == 'available'): ?>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="toggleTableStatus(<?= $data['table']['id'] ?>, 'occupied')">
-                                            <i class="fas fa-user-check"></i> Mark Occupied
+                                    <?php if (($data['table']['is_available'] ?? 1) == 1): ?>
+                                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="toggleTableStatus(<?= $data['table']['id'] ?>, 0)">
+                                            <i class="fas fa-times-circle"></i> Mark Unavailable
                                         </button>
                                     <?php else: ?>
-                                        <button type="button" class="btn btn-outline-success btn-sm" onclick="toggleTableStatus(<?= $data['table']['id'] ?>, 'available')">
-                                            <i class="fas fa-check"></i> Mark Available
+                                        <button type="button" class="btn btn-outline-success btn-sm" onclick="toggleTableStatus(<?= $data['table']['id'] ?>, 1)">
+                                            <i class="fas fa-check-circle"></i> Mark Available
                                         </button>
                                     <?php endif; ?>
                                 </div>
@@ -300,7 +240,8 @@
                 </div>
             </div>
         </div>
-    </div>    <?php require_once 'views/admin/layouts/footer.php'; ?>
+    </div>
+    <?php require_once 'views/admin/layouts/footer.php'; ?>
 
     <script>
         window.SITE_URL = '<?= SITE_URL ?>';
@@ -338,186 +279,3 @@
     </style>
 </body>
 </html>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="capacity" class="form-label">Capacity (Guests) <span class="text-danger">*</span></label>
-                                            <input type="number" class="form-control" id="capacity" name="capacity"
-                                                   min="1" max="20" value="<?= $data['table']['capacity'] ?>" required>
-                                            <div class="invalid-feedback">
-                                                Please provide a valid capacity between 1 and 20.
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="location" class="form-label">Location</label>
-                                            <select class="form-select" id="location" name="location">
-                                                <option value="">Select Location</option>
-                                                <option value="Main Dining" <?= $data['table']['location'] === 'Main Dining' ? 'selected' : '' ?>>Main Dining</option>
-                                                <option value="Private Room" <?= $data['table']['location'] === 'Private Room' ? 'selected' : '' ?>>Private Room</option>
-                                                <option value="Terrace" <?= $data['table']['location'] === 'Terrace' ? 'selected' : '' ?>>Terrace</option>
-                                                <option value="Bar Area" <?= $data['table']['location'] === 'Bar Area' ? 'selected' : '' ?>>Bar Area</option>
-                                                <option value="VIP Section" <?= $data['table']['location'] === 'VIP Section' ? 'selected' : '' ?>>VIP Section</option>
-                                                <option value="Outdoor" <?= $data['table']['location'] === 'Outdoor' ? 'selected' : '' ?>>Outdoor</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3 form-check mt-4">
-                                            <input type="checkbox" class="form-check-input" id="is_available" name="is_available"
-                                                   <?= $data['table']['is_available'] ? 'checked' : '' ?>>
-                                            <label class="form-check-label" for="is_available">
-                                                Available for booking
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="description" class="form-label">Description</label>
-                                    <textarea class="form-control" id="description" name="description" rows="3"
-                                              placeholder="Optional description about the table"><?= htmlspecialchars($data['table']['description'] ?? '') ?></textarea>
-                                </div>
-
-                                <div class="d-flex justify-content-between">                                    <a href="<?= SITE_URL ?>/admin/tables" class="btn btn-secondary">
-                                        <i class="fas fa-times"></i> Cancel
-                                    </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save"></i> Update Table
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- Booking History -->
-                    <?php if (!empty($data['bookingHistory'])): ?>
-                    <div class="card shadow">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Recent Booking History</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Time</th>
-                                            <th>Customer</th>
-                                            <th>Guests</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($data['bookingHistory'] as $booking): ?>
-                                        <tr>
-                                            <td><?= date('M j, Y', strtotime($booking['booking_date'])) ?></td>
-                                            <td><?= date('g:i A', strtotime($booking['booking_time'])) ?></td>
-                                            <td><?= htmlspecialchars($booking['customer_name']) ?></td>
-                                            <td><?= $booking['guest_count'] ?></td>
-                                            <td>
-                                                <span class="badge bg-<?= $booking['status'] === 'completed' ? 'success' : ($booking['status'] === 'confirmed' ? 'primary' : 'secondary') ?>">
-                                                    <?= ucfirst($booking['status']) ?>
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                </div>
-
-                <div class="col-lg-4">
-                    <!-- Table Preview -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Table Preview</h6>
-                        </div>
-                        <div class="card-body text-center">
-                            <div class="table-preview">
-                                <div class="table-icon mb-3">
-                                    <i class="fas fa-table fa-4x text-muted"></i>
-                                </div>
-                                <h5 id="preview-number">Table <?= htmlspecialchars($data['table']['table_number']) ?></h5>
-                                <p class="text-muted mb-2">
-                                    <i class="fas fa-users"></i>
-                                    <span id="preview-capacity"><?= $data['table']['capacity'] ?></span> guests
-                                </p>
-                                <p class="text-muted mb-2">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <span id="preview-location"><?= htmlspecialchars($data['table']['location'] ?: 'No location') ?></span>
-                                </p>
-                                <span class="badge <?= $data['table']['is_available'] ? 'bg-success' : 'bg-secondary' ?>" id="preview-status">
-                                    <?= $data['table']['is_available'] ? 'Available' : 'Unavailable' ?>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Table Statistics -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Table Statistics</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row text-center">
-                                <div class="col-6">
-                                    <div class="stat-item">
-                                        <h4 class="stat-number text-primary"><?= count($data['bookingHistory'] ?? []) ?></h4>
-                                        <p class="stat-label">Total Bookings</p>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="stat-item">
-                                        <h4 class="stat-number text-success">
-                                            <?= count(array_filter($data['bookingHistory'] ?? [], fn($b) => $b['status'] === 'completed')) ?>
-                                        </h4>
-                                        <p class="stat-label">Completed</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="small text-muted">
-                                <p><strong>Created:</strong> <?= date('M j, Y g:i A', strtotime($data['table']['created_at'])) ?></p>
-                                <p><strong>Last Updated:</strong> <?= date('M j, Y g:i A', strtotime($data['table']['updated_at'] ?? $data['table']['created_at'])) ?></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="card shadow">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-outline-info btn-sm" onclick="viewFullHistory()">
-                                    <i class="fas fa-history"></i> View Full History
-                                </button>
-                                <button type="button" class="btn btn-outline-success btn-sm" onclick="createBooking()">
-                                    <i class="fas fa-plus"></i> Create Booking
-                                </button>
-                                <button type="button" class="btn btn-outline-warning btn-sm" onclick="toggleAvailability()">
-                                    <i class="fas fa-toggle-on"></i> Toggle Availability
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-</div>
-
-
-
-<?php require_once 'views/admin/layouts/footer.php'; ?>

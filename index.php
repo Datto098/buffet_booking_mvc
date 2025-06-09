@@ -164,6 +164,9 @@ function handleAdminRoute($segments)
         case 'news':
             handleAdminNewsRoute($action, $param);
             break;
+        case 'logs':
+            handleAdminLogsRoute($controller, $action, $param);
+            break;
         default:
             $controller->dashboard();
     }
@@ -274,7 +277,7 @@ function handleAdminBookingsRoute($controller, $action, $param)
             $controller->storeBooking();
             break;
         case 'update-status':
-            $controller->updateBookingStatus();
+            $controller->updateBookingStatus($param);
             break;
         case 'assign-table':
             $controller->assignTable();
@@ -284,6 +287,12 @@ function handleAdminBookingsRoute($controller, $action, $param)
             break;
         case 'available-tables':
             $controller->getAvailableTables();
+            break;
+        case 'send-confirmation':
+            $controller->sendConfirmationEmail();
+            break;
+        case 'bulk-update-status':
+            $controller->bulkUpdateStatus();
             break;
         case 'edit':
             $controller->editBooking($param);
@@ -301,15 +310,20 @@ function handleAdminTablesRoute($controller, $action, $param)
     switch ($action) {
         case 'create':
             $controller->createTable();
-            break;
-        case 'edit':
+            break;        case 'edit':
             $controller->editTable($param);
             break;
         case 'delete':
             $controller->deleteTable($param);
             break;
+        case 'toggle-status':
+            $controller->toggleTableStatus();
+            break;
         case 'utilization':
             $controller->tableUtilization();
+            break;
+        case 'history':
+            $controller->getTableHistory($param);
             break;
         default:
             $controller->tables();
@@ -319,7 +333,9 @@ function handleAdminTablesRoute($controller, $action, $param)
 function handleAdminNewsRoute($action, $param)
 {
     require_once 'controllers/NewsController.php';
-    $controller = new NewsController();    switch ($action) {
+    $controller = new NewsController();
+
+    switch ($action) {
         case 'create':
             $controller->create();
             break;
@@ -337,6 +353,23 @@ function handleAdminNewsRoute($action, $param)
             break;
         default:
             $controller->manage();
+    }
+}
+
+function handleAdminLogsRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'download':
+            $controller->downloadLog($param);
+            break;
+        case 'clear':
+            $controller->clearLog($param);
+            break;
+        case 'view':
+            $controller->viewLog($param);
+            break;
+        default:
+            $controller->logs();
     }
 }
 

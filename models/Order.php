@@ -331,8 +331,11 @@ class Order extends BaseModel {
      * @param int $orderId Order ID
      * @return array Order details with items
      */    public function getOrderWithItems($orderId) {
-        // Get order details
-        $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email
+        // Get order details with all fields including delivery information
+        $sql = "SELECT o.*,
+                       COALESCE(o.customer_name, CONCAT(u.first_name, ' ', u.last_name)) as customer_name,
+                       COALESCE(o.customer_email, u.email) as customer_email,
+                       COALESCE(o.customer_phone, u.phone) as customer_phone
                 FROM {$this->table} o
                 LEFT JOIN users u ON o.user_id = u.id
                 WHERE o.id = :order_id";
@@ -344,7 +347,9 @@ class Order extends BaseModel {
 
         if (!$order) {
             return []; // Return an empty array instead of null
-        }        // Get order items
+        }
+
+        // Get order items with special instructions
         $sql = "SELECT oi.*, f.name as food_name, f.image, f.description
                 FROM order_items oi
                 LEFT JOIN food_items f ON oi.food_item_id = f.id
@@ -357,7 +362,7 @@ class Order extends BaseModel {
         $order['items'] = $stmt->fetchAll();
 
         return $order;
-    }    // Get orders for CSV export with filtering
+    }// Get orders for CSV export with filtering
     public function getOrdersForExport($filters = []) {
         $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email,
                        COUNT(oi.id) as total_items

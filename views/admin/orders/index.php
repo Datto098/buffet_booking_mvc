@@ -215,10 +215,9 @@
                                                         <div class="fw-medium"><?php echo date('M j, Y', strtotime($order['created_at'])); ?></div>
                                                         <small class="text-muted"><?php echo date('g:i A', strtotime($order['created_at'])); ?></small>
                                                     </div>
-                                                </td>
-                                                <td>
+                                                </td>                                                <td>
                                                     <span class="badge bg-light text-dark">
-                                                        <i class="fas fa-utensils"></i> <?php echo htmlspecialchars($order['item_count'] ?? 0); ?> items
+                                                        <i class="fas fa-utensils"></i> <?php echo htmlspecialchars($order['total_items'] ?? 0); ?> items
                                                     </span>
                                                 </td>
                                                 <td>
@@ -451,8 +450,63 @@
             </div>
         </div>
     </div>    <?php require_once 'views/admin/layouts/footer.php'; ?>    <script>
-        // Set global SITE_URL for admin.js functions
+        // Set global SITE_URL and admin config for admin.js functions
         window.SITE_URL = '<?= SITE_URL ?>';
+        window.adminConfig = {
+            csrfToken: '<?= $csrf_token ?? '' ?>'
+        };
+
+        // Initialize order management functionality when document is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize order status updates
+            initializeOrderStatusUpdates();
+
+            // Initialize payment status updates
+            initializePaymentStatusUpdates();
+
+            // Initialize bulk selection functionality
+            initializeBulkSelection();
+
+            // Initialize search functionality
+            const searchInput = document.getElementById('searchOrders');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        // Filter orders based on search input
+                        filterOrdersTable(this.value);
+                    }, 300);
+                });
+            }
+
+            // Initialize status filter
+            const statusFilter = document.getElementById('statusFilter');
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function() {
+                    // Reload page with status filter
+                    const url = new URL(window.location);
+                    if (this.value) {
+                        url.searchParams.set('status', this.value);
+                    } else {
+                        url.searchParams.delete('status');
+                    }
+                    window.location.href = url.toString();
+                });
+            }
+        });
+
+        // Function to filter orders table based on search
+        function filterOrdersTable(searchTerm) {
+            const tableRows = document.querySelectorAll('#ordersTable tbody tr');
+            const lowerSearchTerm = searchTerm.toLowerCase();
+
+            tableRows.forEach(row => {
+                const orderText = row.textContent.toLowerCase();
+                const shouldShow = orderText.includes(lowerSearchTerm);
+                row.style.display = shouldShow ? '' : 'none';
+            });
+        }
     </script>
 </body>
 </html>
