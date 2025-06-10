@@ -436,82 +436,12 @@
         </div>
     </div>
 
-    <?php require_once 'views/admin/layouts/footer.php'; ?>
+    <?php require_once 'views/admin/layouts/footer.php'; ?>    <script>
+        window.SITE_URL = '<?= SITE_URL ?>';
 
-    <script>
-        // View user details
-        function viewUserDetails(userId) {
-            fetch(`<?= SITE_URL ?>/admin/users/${userId}/details`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('userDetailsContent').innerHTML = html;
-                    new bootstrap.Modal(document.getElementById('userDetailsModal')).show();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error loading user details');
-                });
-        }
-
-        // Toggle user status
-        function toggleUserStatus(userId, status) {
-            if (confirm(`Are you sure you want to ${status} this user?`)) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `<?= SITE_URL ?>/admin/users/${userId}/toggle-status`;
-
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = 'csrf_token';
-                csrfToken.value = '<?= $_SESSION['csrf_token'] ?? '' ?>';
-
-                const statusInput = document.createElement('input');
-                statusInput.type = 'hidden';
-                statusInput.name = 'status';
-                statusInput.value = status;
-
-                form.appendChild(csrfToken);
-                form.appendChild(statusInput);
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-
-        // Delete user
-        function deleteUser(userId) {
-            document.getElementById('deleteUserForm').action = `<?= SITE_URL ?>/admin/users/${userId}/delete`;
-            new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
-        }
-
-        // Export users
-        function exportUsers() {
-            window.location.href = '<?= SITE_URL ?>/admin/users/export';
-        }
-
-        // Bulk actions (placeholder)
-        function bulkActions() {
-            const selectedUsers = document.querySelectorAll('.user-checkbox:checked');
-            if (selectedUsers.length === 0) {
-                alert('Please select users for bulk actions');
-                return;
-            }
-            alert('Bulk actions feature coming soon!');
-        }
-
-        // Select all checkbox functionality
-        document.getElementById('selectAll').addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('.user-checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
-        });
-
-        // Initialize tooltips
         document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
+            initializeUserSelection();
+            initializeTooltips();
         });
     </script>
 

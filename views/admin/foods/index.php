@@ -18,7 +18,8 @@
                     <div>
                         <h1 class="h2">Foods Management</h1>
                         <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb">                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/admin/dashboard">Dashboard</a></li>
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/admin/dashboard">Dashboard</a></li>
                                 <li class="breadcrumb-item active">Foods</li>
                             </ol>
                         </nav>
@@ -219,10 +220,9 @@
                                                            value="<?php echo $food['id']; ?>">
                                                 </td>
                                                 <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="avatar-sm me-2">
+                                                    <div class="d-flex align-items-center">                                                        <div class="avatar-sm me-2">
                                                             <?php if (!empty($food['image'])): ?>
-                                                                <img src="<?php echo htmlspecialchars($food['image']); ?>"
+                                                                <img src="<?php echo SITE_URL . '/uploads/food_images/' . htmlspecialchars($food['image']); ?>"
                                                                      alt="<?php echo htmlspecialchars($food['name']); ?>"
                                                                      class="rounded" width="40" height="40" style="object-fit: cover;">
                                                             <?php else: ?>
@@ -383,125 +383,9 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <?php require_once 'views/admin/layouts/footer.php'; ?>
-
-    <script>
-        // Foods Management JavaScript
-        function toggleBulkActions() {
-            const bulkBar = document.getElementById('bulkActionsBar');
-            if (bulkBar) {
-                bulkBar.style.display = bulkBar.style.display === 'none' ? 'block' : 'none';
-            }
-        }
-
-        function refreshFoods() {
-            location.reload();
-        }
-
-        function exportFoods() {
-            window.location.href = '<?= SITE_URL ?>/admin/foods?export=csv';
-        }
-
-        function viewFood(foodId) {
-            window.location.href = '<?= SITE_URL ?>/admin/foods/view/' + foodId;
-        }
-
-        function deleteFood(foodId) {
-            if (confirm('Are you sure you want to delete this food item?')) {
-                fetch('<?= SITE_URL ?>/admin/foods/delete/' + foodId, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-                    }
-                }).then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        alert('Failed to delete food item');
-                    }
-                });
-            }
-        }
-
-        function bulkUpdateStatus(status) {
-            const selected = document.querySelectorAll('.food-checkbox:checked');
-            if (selected.length === 0) {
-                alert('Please select at least one food item');
-                return;
-            }
-
-            const foodIds = Array.from(selected).map(cb => cb.value);
-
-            fetch('<?= SITE_URL ?>/admin/foods/bulk-update-status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({
-                    food_ids: foodIds,
-                    status: status
-                })
-            }).then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    alert('Failed to update food status');
-                }
-            });
-        }
-
-        function clearSelection() {
-            document.querySelectorAll('.food-checkbox').forEach(cb => cb.checked = false);
-            updateSelectedCount();
-            document.getElementById('bulkActionsBar').style.display = 'none';
-        }
-
-        function updateSelectedCount() {
-            const count = document.querySelectorAll('.food-checkbox:checked').length;
-            document.getElementById('selectedCount').textContent = count;
-        }
-
-        function applyFilters() {
-            const form = document.getElementById('filterForm');
-            const formData = new FormData(form);
-            const params = new URLSearchParams(formData);
-            window.location.href = '<?= SITE_URL ?>/admin/foods?' + params.toString();
-        }
-
-        function clearFilters() {
-            window.location.href = '<?= SITE_URL ?>/admin/foods';
-        }
-
-        // Search functionality
-        const searchInput = document.getElementById('searchFoods');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                const rows = document.querySelectorAll('#foodsTable tbody tr');
-
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchTerm) ? '' : 'none';
-                });
-            });
-        }
-
-        // Select all functionality
-        document.getElementById('selectAll')?.addEventListener('change', function() {
-            document.querySelectorAll('.food-checkbox').forEach(cb => {
-                cb.checked = this.checked;
-            });
-            updateSelectedCount();
-        });
-
-        // Individual checkbox functionality
-        document.querySelectorAll('.food-checkbox').forEach(cb => {
-            cb.addEventListener('change', updateSelectedCount);
-        });
+    </div>    <?php require_once 'views/admin/layouts/footer.php'; ?>    <script>
+        // Set global SITE_URL for admin.js functions
+        window.SITE_URL = '<?= SITE_URL ?>';
     </script>
 </body>
 </html>

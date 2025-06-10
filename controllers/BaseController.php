@@ -150,17 +150,21 @@ class BaseController {
         $messages = $_SESSION['flash'] ?? [];
         unset($_SESSION['flash']);
         return $messages;
-    }
-
-    /**
+    }    /**
      * Sanitize input data
      */
     protected function sanitize($input) {
         if (is_array($input)) {
             return array_map([$this, 'sanitize'], $input);
         }
+
+        // Handle null and empty values
+        if ($input === null || $input === '') {
+            return '';
+        }
+
         return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
-    }    protected function hasRole($roles) {
+    }protected function hasRole($roles) {
         // Check for standard session structure
         $userRole = $_SESSION['user_role'] ?? null;
 

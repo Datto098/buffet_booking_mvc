@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<?php require_once 'config/config.php'; ?>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -170,10 +171,9 @@
                             </span>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <?php if (!empty($orders)): ?>
+                    <div class="card-body">                        <?php if (!empty($orders)): ?>
                             <div class="table-responsive">
-                                <table class="table table-hover align-middle" id="ordersTable">
+                                <table class="table table-hover align-middle" id="ordersTable" data-dt-disable="true">
                                     <thead class="table-light">
                                         <tr>
                                             <th width="40">
@@ -215,62 +215,56 @@
                                                         <div class="fw-medium"><?php echo date('M j, Y', strtotime($order['created_at'])); ?></div>
                                                         <small class="text-muted"><?php echo date('g:i A', strtotime($order['created_at'])); ?></small>
                                                     </div>
-                                                </td>
-                                                <td>
+                                                </td>                                                <td>
                                                     <span class="badge bg-light text-dark">
-                                                        <i class="fas fa-utensils"></i> <?php echo htmlspecialchars($order['item_count'] ?? 0); ?> items
+                                                        <i class="fas fa-utensils"></i> <?php echo htmlspecialchars($order['total_items'] ?? 0); ?> items
                                                     </span>
                                                 </td>
                                                 <td>
                                                     <div class="fw-medium text-success">$<?php echo number_format($order['total_amount'] ?? 0, 2); ?></div>
-                                                </td>
+                                                </td>                                                <td>
+                                                    <div class="status-update-container">
+                                                        <select class="form-select form-select-sm status-select"
+                                                                data-order-id="<?php echo $order['id']; ?>"
+                                                                data-current-status="<?php echo $order['status'] ?? 'pending'; ?>">
+                                                            <option value="pending" <?php echo ($order['status'] ?? 'pending') === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                                            <option value="confirmed" <?php echo ($order['status'] ?? 'pending') === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
+                                                            <option value="preparing" <?php echo ($order['status'] ?? 'pending') === 'preparing' ? 'selected' : ''; ?>>Preparing</option>
+                                                            <option value="ready" <?php echo ($order['status'] ?? 'pending') === 'ready' ? 'selected' : ''; ?>>Ready</option>
+                                                            <option value="delivered" <?php echo ($order['status'] ?? 'pending') === 'delivered' ? 'selected' : ''; ?>>Delivered</option>
+                                                            <option value="cancelled" <?php echo ($order['status'] ?? 'pending') === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                                        </select>
+                                                    </div>                                                </td>
                                                 <td>
-                                                    <?php
-                                                    $statusClass = 'secondary';
-                                                    $statusIcon = 'circle';
-                                                    switch($order['status']) {
-                                                        case 'completed':
-                                                            $statusClass = 'success';
-                                                            $statusIcon = 'check-circle';
-                                                            break;
-                                                        case 'pending':
-                                                            $statusClass = 'warning';
-                                                            $statusIcon = 'clock';
-                                                            break;
-                                                        case 'processing':
-                                                            $statusClass = 'info';
-                                                            $statusIcon = 'cog';
-                                                            break;
-                                                        case 'cancelled':
-                                                            $statusClass = 'danger';
-                                                            $statusIcon = 'times-circle';
-                                                            break;
-                                                    }
-                                                    ?>
-                                                    <span class="badge bg-<?php echo $statusClass; ?>">
-                                                        <i class="fas fa-<?php echo $statusIcon; ?>"></i> <?php echo ucfirst(htmlspecialchars($order['status'])); ?>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <?php if (isset($order['payment_status']) && $order['payment_status'] === 'paid'): ?>
-                                                        <span class="badge bg-success">
-                                                            <i class="fas fa-credit-card"></i> Paid
-                                                        </span>
-                                                    <?php else: ?>
-                                                        <span class="badge bg-warning">
-                                                            <i class="fas fa-exclamation-triangle"></i> Unpaid
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td>
-                                                    <div class="btn-group" role="group">                                                        <a href="<?= SITE_URL ?>/admin/orders/edit/<?php echo $order['id']; ?>"
-                                                           class="btn btn-sm btn-outline-primary"
-                                                           title="Edit Order">
+                                                    <div class="payment-status-container">
+                                                        <select class="form-select form-select-sm payment-status-select"
+                                                                data-order-id="<?php echo $order['id']; ?>"
+                                                                data-current-payment-status="<?php echo $order['payment_status'] ?? 'pending'; ?>">
+                                                            <option value="pending" <?php echo ($order['payment_status'] ?? 'pending') === 'pending' ? 'selected' : ''; ?>>
+                                                                <i class="fas fa-clock"></i> Pending
+                                                            </option>
+                                                            <option value="paid" <?php echo ($order['payment_status'] ?? 'pending') === 'paid' ? 'selected' : ''; ?>>
+                                                                <i class="fas fa-check-circle"></i> Paid
+                                                            </option>
+                                                            <option value="failed" <?php echo ($order['payment_status'] ?? 'pending') === 'failed' ? 'selected' : ''; ?>>
+                                                                <i class="fas fa-times-circle"></i> Failed
+                                                            </option>
+                                                            <option value="refunded" <?php echo ($order['payment_status'] ?? 'pending') === 'refunded' ? 'selected' : ''; ?>>
+                                                                <i class="fas fa-undo"></i> Refunded
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                </td><td>
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-primary"
+                                                                onclick="editOrder(<?php echo $order['id']; ?>)"
+                                                                title="Edit Order">
                                                             <i class="fas fa-edit"></i>
-                                                        </a>
+                                                        </button>
                                                         <button type="button"
                                                                 class="btn btn-sm btn-outline-info"
-                                                                onclick="viewOrder(<?php echo $order['id']; ?>)"
+                                                                onclick="viewOrderDetails(<?php echo $order['id']; ?>)"
                                                                 title="View Details">
                                                             <i class="fas fa-eye"></i>
                                                         </button>
@@ -280,6 +274,24 @@
                                                                 title="Print Receipt">
                                                             <i class="fas fa-print"></i>
                                                         </button>
+                                                        <div class="btn-group" role="group">
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                                <i class="fas fa-ellipsis-v"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu">
+                                                                <li><a class="dropdown-item" href="#" onclick="duplicateOrder(<?php echo $order['id']; ?>)">
+                                                                    <i class="fas fa-copy"></i> Duplicate Order
+                                                                </a></li>
+                                                                <li><a class="dropdown-item" href="#" onclick="sendOrderEmail(<?php echo $order['id']; ?>)">
+                                                                    <i class="fas fa-envelope"></i> Send Email
+                                                                </a></li>
+                                                                <li><hr class="dropdown-divider"></li>
+                                                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteOrder(<?php echo $order['id']; ?>)">
+                                                                    <i class="fas fa-trash"></i> Delete Order
+                                                                </a></li>
+                                                            </ul>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -299,50 +311,200 @@
                             </div>
                         <?php endif; ?>
                     </div>
-                </div>
-
-            </main>
+                </div>            </main>
         </div>
     </div>
 
-    <?php require_once 'views/admin/layouts/footer.php'; ?>
+    <!-- Order Details Modal -->
+    <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderDetailsModalLabel">
+                        <i class="fas fa-receipt"></i> Order Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="orderDetailsContent">
+                    <!-- Order details will be loaded here -->
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="printCurrentOrder()">
+                        <i class="fas fa-print"></i> Print Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        // Orders Management JavaScript
-        function toggleBulkActions() {
-            const bulkBar = document.getElementById('bulkActionsBar');
-            if (bulkBar) {
-                bulkBar.style.display = bulkBar.style.display === 'none' ? 'block' : 'none';
-            }
-        }
+    <!-- Edit Order Modal -->
+    <div class="modal fade" id="editOrderModal" tabindex="-1" aria-labelledby="editOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editOrderModalLabel">
+                        <i class="fas fa-edit"></i> Edit Order
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editOrderForm">
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="edit_customer_name" class="form-label">Customer Name</label>
+                                <input type="text" class="form-control" id="edit_customer_name" name="customer_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_customer_email" class="form-label">Customer Email</label>
+                                <input type="email" class="form-control" id="edit_customer_email" name="customer_email" required>
+                            </div>
+                        </div>
 
-        function refreshOrders() {
-            location.reload();
-        }
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="edit_customer_phone" class="form-label">Customer Phone</label>
+                                <input type="tel" class="form-control" id="edit_customer_phone" name="customer_phone">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_status" class="form-label">Order Status</label>
+                                <select class="form-select" id="edit_status" name="status" required>
+                                    <option value="pending">Pending</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="preparing">Preparing</option>
+                                    <option value="ready">Ready</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
 
-        function exportOrders() {
-            window.location.href = '<?= SITE_URL ?>/admin/orders?export=csv';
-        }
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="edit_payment_method" class="form-label">Payment Method</label>
+                                <select class="form-select" id="edit_payment_method" name="payment_method">
+                                    <option value="cash">Cash</option>
+                                    <option value="card">Credit Card</option>
+                                    <option value="transfer">Bank Transfer</option>
+                                    <option value="digital">Digital Wallet</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_total_amount" class="form-label">Total Amount</label>
+                                <input type="number" class="form-control" id="edit_total_amount" name="total_amount" step="0.01" min="0">
+                            </div>
+                        </div>
 
-        function viewOrder(orderId) {
-            window.location.href = '<?= SITE_URL ?>/admin/orders/view/' + orderId;
-        }
+                        <div class="mb-3">
+                            <label for="edit_delivery_address" class="form-label">Delivery Address</label>
+                            <textarea class="form-control" id="edit_delivery_address" name="delivery_address" rows="2"></textarea>
+                        </div>
 
-        function printOrder(orderId) {
-            window.open('<?= SITE_URL ?>/admin/orders/print/' + orderId, '_blank');
-        }
+                        <div class="mb-3">
+                            <label for="edit_order_notes" class="form-label">Order Notes</label>
+                            <textarea class="form-control" id="edit_order_notes" name="order_notes" rows="3"></textarea>
+                        </div>
 
-        // Search functionality
-        const searchInput = document.getElementById('searchOrders');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                const rows = document.querySelectorAll('#ordersTable tbody tr');
+                        <input type="hidden" id="edit_order_id" name="order_id">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+    <!-- Bulk Actions Bar (Hidden by default) -->
+    <div id="bulkActionsBar" class="position-fixed bottom-0 start-50 translate-middle-x mb-3" style="display: none; z-index: 1050;">
+        <div class="card border-0 shadow-lg">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="fw-bold text-primary" id="selectedCount">0 orders selected</span>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="bulkUpdateStatus('confirmed')">
+                            <i class="fas fa-check"></i> Confirm All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="bulkUpdateStatus('delivered')">
+                            <i class="fas fa-truck"></i> Mark Delivered
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="bulkUpdateStatus('cancelled')">
+                            <i class="fas fa-times"></i> Cancel All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info" onclick="bulkPrintOrders()">
+                            <i class="fas fa-print"></i> Print All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    <?php require_once 'views/admin/layouts/footer.php'; ?>    <script>
+        // Set global SITE_URL and admin config for admin.js functions
+        window.SITE_URL = '<?= SITE_URL ?>';
+        window.adminConfig = {
+            csrfToken: '<?= $csrf_token ?? '' ?>'
+        };
+
+        // Initialize order management functionality when document is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize order status updates
+            initializeOrderStatusUpdates();
+
+            // Initialize payment status updates
+            initializePaymentStatusUpdates();
+
+            // Initialize bulk selection functionality
+            initializeBulkSelection();
+
+            // Initialize search functionality
+            const searchInput = document.getElementById('searchOrders');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        // Filter orders based on search input
+                        filterOrdersTable(this.value);
+                    }, 300);
                 });
+            }
+
+            // Initialize status filter
+            const statusFilter = document.getElementById('statusFilter');
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function() {
+                    // Reload page with status filter
+                    const url = new URL(window.location);
+                    if (this.value) {
+                        url.searchParams.set('status', this.value);
+                    } else {
+                        url.searchParams.delete('status');
+                    }
+                    window.location.href = url.toString();
+                });
+            }
+        });
+
+        // Function to filter orders table based on search
+        function filterOrdersTable(searchTerm) {
+            const tableRows = document.querySelectorAll('#ordersTable tbody tr');
+            const lowerSearchTerm = searchTerm.toLowerCase();
+
+            tableRows.forEach(row => {
+                const orderText = row.textContent.toLowerCase();
+                const shouldShow = orderText.includes(lowerSearchTerm);
+                row.style.display = shouldShow ? '' : 'none';
             });
         }
     </script>

@@ -165,75 +165,12 @@ require_once 'views/admin/layouts/header.php';
 </div>
 
 <script>
+// Set up site URL for admin functions
+window.SITE_URL = '<?= SITE_URL ?>';
+
+// Page initialization
 document.addEventListener('DOMContentLoaded', function() {
-    // Form validation
-    const forms = document.querySelectorAll('.needs-validation');
-    Array.prototype.slice.call(forms).forEach(function(form) {
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        }, false);
-    });
-
-    // Real-time preview
-    const tableNumberInput = document.getElementById('table_number');
-    const capacityInput = document.getElementById('capacity');
-    const locationSelect = document.getElementById('location');
-    const availableCheckbox = document.getElementById('is_available');
-
-    function updatePreview() {
-        // Update table number
-        const number = tableNumberInput.value || '#';
-        document.getElementById('preview-number').textContent = `Table ${number}`;
-
-        // Update capacity
-        const capacity = capacityInput.value || '0';
-        document.getElementById('preview-capacity').textContent = capacity;
-
-        // Update location
-        const location = locationSelect.value || 'No location';
-        document.getElementById('preview-location').textContent = location;
-
-        // Update status
-        const statusBadge = document.getElementById('preview-status');
-        if (availableCheckbox.checked) {
-            statusBadge.textContent = 'Available';
-            statusBadge.className = 'badge bg-success';
-        } else {
-            statusBadge.textContent = 'Unavailable';
-            statusBadge.className = 'badge bg-secondary';
-        }
-    }
-
-    // Add event listeners for real-time preview
-    tableNumberInput.addEventListener('input', updatePreview);
-    capacityInput.addEventListener('input', updatePreview);
-    locationSelect.addEventListener('change', updatePreview);
-    availableCheckbox.addEventListener('change', updatePreview);
-
-    // Validate table number uniqueness
-    tableNumberInput.addEventListener('blur', function() {
-        const tableNumber = this.value;
-        if (tableNumber) {
-            // You could add AJAX validation here to check if table number exists
-            // For now, we'll rely on server-side validation
-        }
-    });
-
-    // Capacity validation
-    capacityInput.addEventListener('input', function() {
-        const capacity = parseInt(this.value);
-        if (capacity < 1) {
-            this.setCustomValidity('Capacity must be at least 1');
-        } else if (capacity > 20) {
-            this.setCustomValidity('Capacity cannot exceed 20');
-        } else {
-            this.setCustomValidity('');
-        }
-    });
+    initializeTableCreateForm();
 });
 </script>
 

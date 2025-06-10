@@ -363,10 +363,12 @@ class Order extends BaseModel
      * Get order with items for detailed view
      * @param int $orderId Order ID
      * @return array Order details with items
+
      */    public function getOrderWithItems($orderId)
     {
         // Get order details
         $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email
+
                 FROM {$this->table} o
                 LEFT JOIN users u ON o.user_id = u.id
                 WHERE o.id = :order_id";
@@ -378,7 +380,9 @@ class Order extends BaseModel
 
         if (!$order) {
             return []; // Return an empty array instead of null
-        }        // Get order items
+        }
+
+        // Get order items with special instructions
         $sql = "SELECT oi.*, f.name as food_name, f.image, f.description
                 FROM order_items oi
                 LEFT JOIN food_items f ON oi.food_item_id = f.id
@@ -391,9 +395,11 @@ class Order extends BaseModel
         $order['items'] = $stmt->fetchAll();
 
         return $order;
+
     }    // Get orders for CSV export with filtering
     public function getOrdersForExport($filters = [])
     {
+
         $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email,
                        COUNT(oi.id) as total_items
                 FROM {$this->table} o
@@ -619,6 +625,7 @@ class Order extends BaseModel
      * Count orders by user (alias for countUserOrders)
      * @param int $userId User ID
      * @return int Number of orders
+
      */
     public function countByUser($userId)
     {
@@ -636,6 +643,7 @@ class Order extends BaseModel
     }
 
     /**
+
      * Get comprehensive order statistics for admin dashboard
      * @return array Order statistics
      */
@@ -722,8 +730,126 @@ class Order extends BaseModel
                 LIMIT :limit";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
-        $stmt->execute();
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);        $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Find order by ID
+     * @param int $id Order ID
+     * @return array|false Order data or false if not found
+     */
+    public function findById($id) {
+        $sql = "SELECT * FROM {$this->table} WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    /**
+     * Update order data
+     * @param int $id Order ID
+     * @param array $data Update data
+     * @return bool Success status
+     */
+    public function update($id, $data) {
+        $setParts = [];
+        $params = [':id' => $id];
+
+        foreach ($data as $key => $value) {
+            $setParts[] = "`$key` = :$key";
+            $params[":$key"] = $value;
+        }
+
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $setParts) . " WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute($params);
+    }
+
+    /**
+     * Get total spent by user (for AdminController usage)
+     * @param int $userId User ID
+     * @return float Total amount spent
+     */
+    public function getTotalSpentByUser($userId) {
+        $sql = "SELECT SUM(total_amount) as total FROM {$this->table}
+                WHERE user_id = :user_id AND status IN ('completed', 'delivered')";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':user_id', (int)$userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        return $result['total'] ?? 0;
+    }
+
+    /**
+     * Count orders by user
+     * @param int $userId User ID
+     * @return int Order count
+     */
+    public function countByUser($userId) {        $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE user_id = :user_id";        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':user_id', (int)$userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        return $result['count'] ?? 0;
+    }
+
+    /**
+     * Delete an order and its items
+     */
+    public function deleteOrder($orderId) {
+        try {
+            $this->db->beginTransaction();
+
+            // Delete order items first
+            $stmt = $this->db->prepare("DELETE FROM order_items WHERE order_id = :order_id");
+            $stmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            // Delete the order
+            $stmt = $this->db->prepare("DELETE FROM orders WHERE id = :id");
+            $stmt->bindValue(':id', $orderId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("Error deleting order: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get dashboard statistics
+     */
+    public function getDashboardStats() {
+        // Get today's stats
+        $sql = "SELECT
+                    COUNT(*) as today_orders,
+                    COALESCE(SUM(total_amount), 0) as today_revenue
+                FROM {$this->table}
+                WHERE DATE(created_at) = CURDATE()";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $todayStats = $stmt->fetch();
+
+        // Get total stats
+        $sql = "SELECT
+                    COUNT(*) as total_orders,
+                    COALESCE(SUM(total_amount), 0) as total_revenue
+                FROM {$this->table}";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $totalStats = $stmt->fetch();
+
+        return [
+            'today_orders' => $todayStats['today_orders'] ?? 0,
+            'today_revenue' => $todayStats['today_revenue'] ?? 0,
+            'total_orders' => $totalStats['total_orders'] ?? 0,
+            'total_revenue' => $totalStats['total_revenue'] ?? 0
+        ];
     }
 }

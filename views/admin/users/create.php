@@ -180,100 +180,14 @@
                 </div>
             </main>
         </div>
-    </div>
+    </div>    <script>
+        // Set up site URL for admin functions
+        window.SITE_URL = '<?= SITE_URL ?>';
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const roleSelect = document.getElementById('role');
-        const rolePermissions = document.getElementById('role-permissions');
-        const passwordField = document.getElementById('password');
-        const confirmPasswordField = document.getElementById('password_confirm');
-
-        const permissions = {
-            customer: [
-                'View menu and food items',
-                'Place orders',
-                'Make table reservations',
-                'View order history',
-                'Manage profile'
-            ],
-            manager: [
-                'All customer permissions',
-                'Manage food items',
-                'Manage categories',
-                'View and manage orders',
-                'View and manage bookings',
-                'Access admin dashboard'
-            ],
-            super_admin: [
-                'All manager permissions',
-                'Manage users',
-                'System configuration',
-                'View reports',
-                'Database management',
-                'Full system access'
-            ]
-        };
-
-        roleSelect.addEventListener('change', function() {
-            const selectedRole = this.value;
-            if (selectedRole && permissions[selectedRole]) {
-                let html = '<h6 class="text-primary">Permissions for ' + selectedRole.replace('_', ' ').toUpperCase() + ':</h6><ul class="list-unstyled">';
-                permissions[selectedRole].forEach(function(permission) {
-                    html += '<li><i class="fas fa-check text-success me-2"></i>' + permission + '</li>';
-                });
-                html += '</ul>';
-                rolePermissions.innerHTML = html;
-            } else {
-                rolePermissions.innerHTML = '<p class="text-muted">Select a role to see permissions.</p>';
-            }
+        // Page initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeUserCreateForm();
         });
-
-        // Password confirmation validation
-        function validatePasswords() {
-            if (passwordField.value !== confirmPasswordField.value) {
-                confirmPasswordField.setCustomValidity('Passwords do not match');
-            } else {
-                confirmPasswordField.setCustomValidity('');
-            }
-        }
-
-        passwordField.addEventListener('input', validatePasswords);
-        confirmPasswordField.addEventListener('input', validatePasswords);
-
-        // Form validation
-        document.getElementById('createUserForm').addEventListener('submit', function(e) {
-            const firstName = document.getElementById('first_name').value.trim();
-            const lastName = document.getElementById('last_name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const passwordConfirm = document.getElementById('password_confirm').value;
-
-            if (!firstName || !lastName || !email || !password) {
-                e.preventDefault();
-                alert('Please fill in all required fields.');
-                return false;
-            }
-
-            if (!email.includes('@')) {
-                e.preventDefault();
-                alert('Please enter a valid email address.');
-                return false;
-            }
-
-            if (password.length < 6) {
-                e.preventDefault();
-                alert('Password must be at least 6 characters long.');
-                return false;
-            }
-
-            if (password !== passwordConfirm) {
-                e.preventDefault();
-                alert('Password confirmation does not match.');
-                return false;
-            }
-        });
-    });
     </script>
 
     <?php require_once 'views/admin/layouts/footer.php'; ?>

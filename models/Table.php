@@ -58,27 +58,35 @@ class Table extends BaseModel {
             ':description' => $tableData['description'] ?? '',
             ':is_available' => $tableData['is_available'] ?? 1
         ]);
-    }
+    }    public function updateTable($id, $tableData) {
+        // Build dynamic SQL for partial updates
+        $setParts = [];
+        $params = [':id' => $id];
 
-    public function updateTable($id, $tableData) {
-        $sql = "UPDATE {$this->table} SET
-                table_number = :table_number,
-                capacity = :capacity,
-                location = :location,
-                description = :description,
-                is_available = :is_available,
-                updated_at = CURRENT_TIMESTAMP
-                WHERE id = :id";
+        $allowedFields = ['table_number', 'capacity', 'location', 'description', 'is_available'];
+
+        foreach ($allowedFields as $field) {
+            if (array_key_exists($field, $tableData)) {
+                $setParts[] = "{$field} = :{$field}";
+                if ($field === 'capacity') {
+                    $params[":{$field}"] = (int)$tableData[$field];
+                } else {
+                    $params[":{$field}"] = $tableData[$field];
+                }
+            }
+        }
+
+        // Always update the timestamp
+        $setParts[] = "updated_at = CURRENT_TIMESTAMP";
+
+        if (empty($setParts)) {
+            return false; // No fields to update
+        }
+
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $setParts) . " WHERE id = :id";
 
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            ':table_number' => $tableData['table_number'],
-            ':capacity' => (int)$tableData['capacity'],
-            ':location' => $tableData['location'] ?? '',
-            ':description' => $tableData['description'] ?? '',
-            ':is_available' => $tableData['is_available'] ?? 1,
-            ':id' => $id
-        ]);
+        return $stmt->execute($params);
     }
 
     public function deleteTable($id) {
