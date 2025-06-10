@@ -2,9 +2,10 @@
 $title = "My Profile - " . " " . SITE_NAME;
 $current_page = 'profile';
 $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
+
 ?>
 
-<div class="container my-5" style="padding-top: 100px;">
+<div class="container my-5" >
     <!-- Alert -->
     <div class="row">
         <div class="col-lg-4">
@@ -12,8 +13,8 @@ $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body text-center">
                     <div class="profile-avatar mb-3">
-                        <?php if (!empty($user['avatar'])): ?>
-                        <img src="<?= SITE_URL ?>/assets/images/<?= $user['avatar'] ?>"
+                        <?php if (!empty($data['user']['avatar'])): ?>
+                        <img src="<?= SITE_URL ?>/assets/images/<?= $data['user']['avatar'] ?>"
                              alt="Profile Picture" class="rounded-circle" width="100" height="100">
                         <?php else: ?>
                         <div class="avatar-placeholder rounded-circle mx-auto d-flex align-items-center justify-content-center">
@@ -58,36 +59,36 @@ $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
                     </div>                    <div class="card-body">
                         <form id="profileForm" method="POST" action="<?= SITE_URL ?>/user/update-profile" enctype="multipart/form-data">
                             <?= csrf_token() ?>
-
+                            <div class="row g-3">
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="first_name" class="form-label">First Name</label>
                                     <input type="text" class="form-control" id="first_name" name="first_name"
-                                           value="<?= htmlspecialchars($user['first_name']) ?>" required>
+                                           value="<?= htmlspecialchars($data['user']['first_name']) ?>" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="last_name" class="form-label">Last Name</label>
                                     <input type="text" class="form-control" id="last_name" name="last_name"
-                                           value="<?= htmlspecialchars($user['last_name']) ?>" required>
+                                           value="<?= htmlspecialchars($data['user']['last_name']) ?>" required>
                                 </div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email Address</label>
                                 <input type="email" class="form-control" id="email" name="email"
-                                       value="<?= htmlspecialchars($user['email']) ?>" required>
+                                       value="<?= htmlspecialchars($data['user']['email']) ?>" required>
                             </div>
 
                             <div class="mb-3">
                                 <label for="phone" class="form-label">Phone Number</label>
                                 <input type="tel" class="form-control" id="phone" name="phone"
-                                       value="<?= htmlspecialchars($user['phone'] ?? '') ?>">
+                                       value="<?= htmlspecialchars($data['user']['phone'] ?? '') ?>">
                             </div>
 
                             <div class="mb-3">
                                 <label for="date_of_birth" class="form-label">Date of Birth</label>
                                 <input type="date" class="form-control" id="date_of_birth" name="date_of_birth"
-                                       value="<?= $user['date_of_birth'] ?? '' ?>">
+                                       value="<?= $data['user']['date_of_birth'] ?? '' ?>">
                             </div>
 
                             <div class="mb-3">
@@ -99,7 +100,7 @@ $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
                                         name="address"
                                         class="form-control"
                                         placeholder="Nhập địa chỉ hoặc chọn trên bản đồ..."
-                                        value="<?= htmlspecialchars($user['address'] ?? '') ?>"
+                                        value="<?= htmlspecialchars($data['user']['address'] ?? '') ?>"
                                         autocomplete="off"
                                     />
                                     <button class="btn btn-outline-secondary" type="button" id="search-address">

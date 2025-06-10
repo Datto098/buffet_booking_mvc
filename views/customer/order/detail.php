@@ -4,6 +4,7 @@
  */
 $title = "Order Details - " . SITE_NAME;
 $current_page = 'orders';
+$order_items = isset($order['items']) && is_array($order['items']) ? $order['items'] : [];
 ?>
 
 <div class="container my-5">
@@ -61,20 +62,22 @@ $current_page = 'orders';
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <?php if ($item['image']): ?>
-                                            <img src="<?= ASSETS_URL ?>/images/food/<?= $item['image'] ?>"
-                                                 alt="<?= htmlspecialchars($item['name']) ?>"
+                                            <img src="<?= SITE_URL ?>/assets/images/food/<?= $item['image'] ?? 'food-placeholder.svg' ?>"
+                                                 alt="<?= htmlspecialchars($item['food_name'] ?? $item['name'] ?? 'Món đã xóa') ?>"
                                                  class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
                                             <?php endif; ?>
                                             <div>
-                                                <h6 class="mb-0"><?= htmlspecialchars($item['name']) ?></h6>
+                                                <h6 class="mb-0"><?= htmlspecialchars($item['food_name'] ?? $item['name'] ?? 'Món đã xóa') ?></h6>
                                                 <?php if ($item['description']): ?>
                                                 <small class="text-muted"><?= htmlspecialchars(substr($item['description'], 0, 80)) ?></small>
                                                 <?php endif; ?>
                                             </div>
                                         </div>
-                                    </td>                                    <td class="text-center"><?= $item['quantity'] ?></td>
-                                    <td class="text-end">$<?= number_format($item['unit_price'] ?? 0, 2) ?></td>
-                                    <td class="text-end fw-bold">$<?= number_format(($item['unit_price'] ?? 0) * $item['quantity'], 2) ?></td>
+                                    </td>
+                                    <td class="text-center"><?= $item['quantity'] ?></td>
+                                    <td class="text-end">$<?= number_format($item['price'] ?? $item['unit_price'] ?? 0, 2) ?></td>
+                                    <td class="text-end fw-bold">$<?= number_format(($item['price'] ?? $item['unit_price'] ?? 0) * $item['quantity'], 2) ?></td>
+
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -151,7 +154,7 @@ $current_page = 'orders';
 
             <!-- Action Buttons -->
             <div class="text-center">
-                <a href="<?= BASE_URL ?>/order/history" class="btn btn-outline-primary me-2">
+                <a href="<?= SITE_URL ?>/order/history" class="btn btn-outline-primary me-2">
                     <i class="fas fa-arrow-left me-2"></i>Back to Orders
                 </a>
                 <?php if ($order['status'] === 'pending'): ?>
@@ -230,7 +233,7 @@ $current_page = 'orders';
 <script>
 function cancelOrder(orderId) {
     if (confirm('Are you sure you want to cancel this order?')) {
-        fetch(`<?= BASE_URL ?>/order/cancel/${orderId}`, {
+        fetch(`<?= SITE_NAME ?>/order/cancel/${orderId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -254,7 +257,7 @@ function cancelOrder(orderId) {
 }
 
 function reorderItems(orderId) {
-    fetch(`<?= BASE_URL ?>/order/reorder/${orderId}`, {
+    fetch(`<?= SITE_NAME ?>/order/reorder/${orderId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -265,7 +268,7 @@ function reorderItems(orderId) {
     .then(data => {
         if (data.success) {
             showAlert('Items added to cart successfully', 'success');
-            setTimeout(() => window.location.href = '<?= BASE_URL ?>/cart', 1500);
+            setTimeout(() => window.location.href = '<?= SITE_NAME ?>/cart', 1500);
         } else {
             showAlert(data.message || 'Failed to reorder items', 'error');
         }

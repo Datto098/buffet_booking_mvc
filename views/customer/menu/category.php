@@ -1,5 +1,5 @@
 <!-- Breadcrumb -->
-<section class="breadcrumb-luxury">
+<section class="breadcrumb-luxury" style="margin-top: 58px;">
     <div class="container">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb breadcrumb-luxury mb-0">
@@ -273,6 +273,37 @@
     </div>
 </section>
 <?php endif; ?>
+
+<!-- Đánh giá & bình luận của khách hàng -->
+<section class="mt-5">
+    <div class="container">
+        <h3 class="mb-4"><i class="fas fa-comments text-gold"></i> Đánh giá & Bình luận</h3>
+        <?php if (!empty($comments)): ?>
+            <?php foreach ($comments as $comment): ?>
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-body d-flex">
+                        <img src="<?= !empty($comment['photo']) ? htmlspecialchars($comment['photo']) : SITE_URL . '/assets/images/user-placeholder.png' ?>"
+                             alt="avatar" class="rounded-circle me-3" width="48" height="48">
+                        <div>
+                            <div class="d-flex align-items-center mb-1">
+                                <strong><?= htmlspecialchars($comment['username']) ?></strong>
+                                <span class="ms-3 text-warning">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <i class="fa-star <?= $i <= $comment['rate'] ? 'fas text-gold' : 'far text-muted' ?>"></i>
+                                    <?php endfor; ?>
+                                    <span class="ms-2 small text-muted"><?= number_format($comment['rate'], 1) ?>/5</span>
+                                </span>
+                            </div>
+                            <div class="mb-1"><?= nl2br(htmlspecialchars($comment['content'])) ?></div>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="alert alert-info">Chưa có đánh giá nào cho món ăn này.</div>
+        <?php endif; ?>
+    </div>
+</section>
 
 <!-- Custom CSS for this page -->
 <style>

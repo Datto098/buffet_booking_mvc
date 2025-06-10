@@ -1,5 +1,5 @@
 <!-- Breadcrumb -->
-<section class="breadcrumb-luxury">
+<section class="breadcrumb-luxury" style="margin-top: 35px;">
     <div class="container">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb breadcrumb-luxury mb-0">
@@ -214,6 +214,119 @@
         </div>
     </div>
 </section>
+<!-- Đánh giá & bình luận của khách hàng -->
+<section class="mt-5">
+    <div class="container">
+        <h3 class="mb-4"><i class="fas fa-comments text-gold"></i> Đánh giá & Bình luận</h3>
+
+        <!-- Form gửi bình luận mới -->
+        <?php if (isset($_SESSION['user'])): ?>
+        <form method="POST" action="<?= SITE_URL ?>/food/comment/<?= $food['id'] ?>" enctype="multipart/form-data" class="mb-4 card card-body shadow-sm">
+            <div class="mb-2">
+                <label class="form-label mb-1">Đánh giá của bạn:</label>
+                <div class="star-rating" style="font-size: 1.5rem;">
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <input type="radio" id="star<?= $i ?>" name="rate" value="<?= $i ?>" required style="display:none;">
+                        <label for="star<?= $i ?>" style="cursor:pointer;">
+                            <i class="fa-star far text-warning"></i>
+                        </label>
+                    <?php endfor; ?>
+                </div>
+            </div>
+            <div class="mb-2">
+                <textarea name="content" class="form-control" rows="2" placeholder="Nhận xét của bạn..." required></textarea>
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Ảnh (tùy chọn):</label>
+                 <!-- Vùng hiển thị nhiều ảnh xem trước -->
+                <div id="photo-preview-list" style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;"></div>
+                <!-- Cho phép chọn nhiều ảnh -->
+                <input type="file" name="photo[]" accept="image/*" class="form-control" id="photo-input" multiple>
+               
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> Gửi đánh giá
+            </button>
+        </form>
+        <script>
+        // Đổi màu sao khi chọn
+        document.querySelectorAll('.star-rating input[type=radio]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                let val = parseInt(this.value);
+                document.querySelectorAll('.star-rating label i').forEach((star, idx) => {
+                    if (idx < val) {
+                        star.classList.remove('far');
+                        star.classList.add('fas');
+                    } else {
+                        star.classList.remove('fas');
+                        star.classList.add('far');
+                    }
+                });
+            });
+        });
+
+        // Xem trước ảnh khi chọn file
+        document.getElementById('photo-input').addEventListener('change', function(e) {
+            const previewList = document.getElementById('photo-preview-list');
+            previewList.innerHTML = ''; // Xóa các ảnh cũ
+            const files = this.files;
+            if (files.length > 0) {
+                Array.from(files).forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(ev) {
+                            const img = document.createElement('img');
+                            img.src = ev.target.result;
+                            img.style.maxWidth = '120px';
+                            img.style.marginRight = '8px';
+                            img.style.marginBottom = '8px';
+                            img.style.borderRadius = '8px';
+                            previewList.appendChild(img);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+        </script>
+        <?php else: ?>
+    <div style="font-style:italic; color: #856404; background: none; padding: 8px 0;">
+        <i class="fas fa-info-circle me-1"></i>
+        Vui lòng <a href="<?= SITE_URL ?>/login" style="color: #007bff; text-decoration: underline;">đăng nhập</a> để gửi đánh giá.
+    </div>
+<?php endif; ?>
+
+        <!-- Danh sách bình luận -->
+        <?php if (!empty($comments)): ?>
+            <?php foreach ($comments as $comment): ?>
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-body d-flex">
+                        <!-- Ảnh user -->
+                        <img src="<?= !empty($comment['photo']) ? htmlspecialchars($comment['photo']) : SITE_URL . '/assets/images/user-placeholder.png' ?>"
+                             alt="avatar" class="rounded-circle me-3" width="48" height="48">
+                        <div>
+                            <div class="d-flex align-items-center mb-1">
+                                <strong><?= htmlspecialchars($comment['username']) ?></strong>
+                                <span class="ms-3 text-warning">
+                                    <!-- Hiển thị số sao -->
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <i class="fa-star <?= $i <= $comment['rate'] ? 'fas text-gold' : 'far text-muted' ?>"></i>
+                                    <?php endfor; ?>
+                                    <span class="ms-2 small text-muted"><?= number_format($comment['rate'], 1) ?>/5</span>
+                                </span>
+                            </div>
+                            <div class="mb-1"><?= nl2br(htmlspecialchars($comment['content'])) ?></div>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+      <?php else: ?>
+<div style="font-style:italic; color: #0c5460; background-color: #d1ecf1; border-radius: 4px; padding: 16px; margin-bottom: 50px;">
+    <i class="fas fa-info-circle me-1"></i>Chưa có đánh giá nào cho món ăn này.
+</div>
+<?php endif; ?>
+    </div>
+</section>
 
 <!-- Related Foods Section -->
 <?php if (!empty($relatedFoods)): ?>
@@ -272,6 +385,8 @@
     </div>
 </section>
 <?php endif; ?>
+
+
 
 <!-- Custom CSS for this page -->
 <style>

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Authentication Controller
  */
@@ -7,14 +8,17 @@ require_once 'BaseController.php';
 require_once __DIR__ . '/../models/User.php';
 require_once 'helpers/mail_helper.php';
 
-class AuthController extends BaseController {
+class AuthController extends BaseController
+{
     private $userModel;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->userModel = new User();
     }
 
-    public function login() {
+    public function login()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->handleLogin();
         } else {
@@ -22,16 +26,21 @@ class AuthController extends BaseController {
         }
     }
 
-    public function register() {
+    public function register()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->handleRegister();
         } else {
             $this->showRegisterForm();
         }
-    }    public function logout() {
+    }
+    public function logout()
+    {
         session_destroy();
         redirect('/');
-    }    private function showLoginForm() {
+    }
+    private function showLoginForm()
+    {
         // Redirect if already logged in
         if (isLoggedIn()) {
             redirect('/');
@@ -42,7 +51,9 @@ class AuthController extends BaseController {
         ];
 
         $this->loadView('customer/auth/login', $data);
-    }    private function showRegisterForm() {
+    }
+    private function showRegisterForm()
+    {
         // Redirect if already logged in
         if (isLoggedIn()) {
             redirect('/');
@@ -55,7 +66,8 @@ class AuthController extends BaseController {
         $this->loadView('customer/auth/register', $data);
     }
 
-    private function handleLogin() {
+    private function handleLogin()
+    {
         $this->validateCSRF();
 
         $email = sanitizeInput($_POST['email']);
@@ -69,7 +81,8 @@ class AuthController extends BaseController {
         }
 
         // Find user by email
-        $user = $this->userModel->findByEmail($email);        if ($user && $this->userModel->verifyPassword($password, $user['password'])) {
+        $user = $this->userModel->findByEmail($email);
+        if ($user && $this->userModel->verifyPassword($password, $user['password'])) {
             // Login successful
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['first_name'] = $user['first_name'] ?? '';
@@ -83,10 +96,10 @@ class AuthController extends BaseController {
                 'id' => $user['id'],
                 'first_name' => $user['first_name'] ?? '',
                 'last_name' => $user['last_name'] ?? '',
+                'full_name' => $user['full_name'] ?? (($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')),
                 'email' => $user['email'],
                 'role' => $user['role']
             ];
-
             $_SESSION['success'] = 'Đăng nhập thành công!';
 
             // Redirect based on role
@@ -103,7 +116,8 @@ class AuthController extends BaseController {
         }
     }
 
-    private function handleRegister() {
+    private function handleRegister()
+    {
         $this->validateCSRF();
 
         $fullName = sanitizeInput($_POST['full_name']);
@@ -156,7 +170,7 @@ class AuthController extends BaseController {
         // echo '<pre>';
         // print_r($userData);
         // echo '</pre>';
-        
+
         if ($this->userModel->createUser($userData)) {
             $_SESSION['success'] = 'Đăng ký thành công! Vui lòng đăng nhập.';
             redirect('/auth/login');
@@ -166,7 +180,8 @@ class AuthController extends BaseController {
         }
     }
 
-    public function forgotPassword() {
+    public function forgotPassword()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = $_POST['email'];
             $user = $this->userModel->findByEmail($email);
@@ -191,9 +206,10 @@ class AuthController extends BaseController {
         }
     }
 
-   
 
-    public function resetPassword() {
+
+    public function resetPassword()
+    {
         $token = $_GET['token'] ?? null;
         if (!$token) {
             $_SESSION['error'] = 'Liên kết không hợp lệ!';
@@ -219,4 +235,3 @@ class AuthController extends BaseController {
         $this->loadView('customer/auth/reset_password');
     }
 }
-?>
