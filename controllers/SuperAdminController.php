@@ -724,13 +724,11 @@ class SuperAdminController extends BaseController
                     'facebook' => $this->sanitize($_POST['facebook'] ?? ''),
                     'instagram' => $this->sanitize($_POST['instagram'] ?? ''),
                     'twitter' => $this->sanitize($_POST['twitter'] ?? '')
-                ];
-
-                // Handle logo upload
+                ];                // Handle logo upload
                 if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
                     $logoPath = $this->handleRestaurantImageUpload($_FILES['logo'], 'logo');
                     if ($logoPath) {
-                        $restaurantData['logo'] = $logoPath;
+                        $restaurantData['logo_url'] = $logoPath; // Sửa tên field khớp với database
                     }
                 }
 
@@ -796,9 +794,7 @@ class SuperAdminController extends BaseController
 
         $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
         $stmt->execute();
-        $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$restaurantInfo) {
+        $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);        if (!$restaurantInfo) {
             $restaurantInfo = [
                 'restaurant_name' => 'Buffet Restaurant',
                 'phone' => '',
@@ -808,14 +804,14 @@ class SuperAdminController extends BaseController
                 'description' => '',
                 'opening_hours' => '09:00 - 22:00',
                 'capacity' => 100,
-                'logo' => '',
+                'logo_url' => '', // Sửa tên field khớp với database
                 'cover_image' => '',
                 'facebook' => '',
                 'instagram' => '',
                 'twitter' => '',
                 'updated_at' => date('Y-m-d H:i:s')
             ];
-        }        // Get statistics for restaurant info page
+        }// Get statistics for restaurant info page
         $stats = [
             'total_orders' => $this->orderModel->count(),
             'total_customers' => $this->userModel->count('role', 'customer'),

@@ -46,9 +46,14 @@
         window.SITE_URL = '<?= SITE_URL ?>';
 
         // Initialize Super Admin features
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add loading states to forms
+        document.addEventListener('DOMContentLoaded', function() {            // Add loading states to forms (but skip forms with custom handlers)
             document.querySelectorAll('form').forEach(form => {
+                // Skip forms that have custom handlers to prevent conflicts
+                if (form.hasAttribute('data-custom-handler') || form.hasAttribute('data-restaurant-protected')) {
+                    console.log('⚠️ Skipping form with custom handler:', form.id || 'unnamed form');
+                    return;
+                }
+
                 form.addEventListener('submit', function() {
                     const submitBtn = form.querySelector('button[type="submit"]');
                     if (submitBtn) {
