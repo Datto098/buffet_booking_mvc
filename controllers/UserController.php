@@ -7,16 +7,19 @@ require_once 'BaseController.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Booking.php';
+require_once __DIR__ . '/../models/CommentModel.php';
 
 class UserController extends BaseController {
     private $userModel;
     private $orderModel;
     private $bookingModel;
+    private $commentModel;
 
     public function __construct() {
         $this->userModel = new User();
         $this->orderModel = new Order();
         $this->bookingModel = new Booking();
+        $this->commentModel = new CommentModel();
     }
 
     public function index() {
@@ -34,6 +37,8 @@ class UserController extends BaseController {
             'user' => $user,
             'active_tab' => $active_tab
         ];
+       
+
         $this->loadView('customer/user/profile', $data);
     }
 
@@ -320,9 +325,12 @@ class UserController extends BaseController {
             'avatar' => $avatar
         ]);
 
+        // Sau khi update thành công
         if ($result) {
+            // Lấy lại thông tin mới nhất từ DB
+            $_SESSION['user'] = $this->userModel->findById($userId);
             $_SESSION['success'] = 'Cập nhật thông tin thành công';
-             redirect('/index.php');
+            redirect('/index.php?page=user&action=profile');
         } else {
             $_SESSION['error'] = 'Cập nhật thất bại';
             redirect('/index.php?page=user&action=profile');
@@ -430,6 +438,66 @@ class UserController extends BaseController {
             $_SESSION['error'] = 'Đổi mật khẩu thất bại';
             redirect('/index.php?page=user&action=profile&tab=security');
         }
+    }
+
+    public function addComment() {
+        $this->requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['error' => 'Method not allowed'], 405);
+        }
+
+        $foodId = intval($_GET['food_id'] ?? 0);
+        if ($foodId <= 0) {
+            $this->jsonResponse(['error' => 'Món ăn không hợp lệ'], 400);
+        }
+
+        $rate = intval($_POST['rate'] ?? 0);
+        $content = trim($_POST['content'] ?? '');
+        $userId = $_SESSION['user_id'];
+        $username = $_SESSION['user']['username'] ?? '';
+        $photos = [];
+
+        // Validate
+        $errors = [];
+        if ($rate < 1 || $rate > 5) $errors[] = 'Vui lòng chọn số sao hợp lệ';
+        if (empty($content)) $errors[] = 'Vui lòng nhập nội dung bình luận';
+
+        // Xử lý upload nhiều ảnh
+        if (!empty($_FILES['photo']['name'][0])) {
+            $uploadDir = 'uploads/comment_photos/';
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+            foreach ($_FILES['photo']['tmp_name'] as $idx => $tmpName) {
+                if ($_FILES['photo']['error'][$idx] === UPLOAD_ERR_OK) {
+                    $ext = pathinfo($_FILES['photo']['name'][$idx], PATHINFO_EXTENSION);
+                    $filename = uniqid('cmt_') . '.' . $ext;
+                    $target = $uploadDir . $filename;
+                    if (move_uploaded_file($tmpName, $target)) {
+                        $photos[] = $target;
+                    }
+                }
+            }
+        }
+
+        if ($errors) {
+            $_SESSION['error'] = implode('<br>', $errors);
+            redirect('/food/detail/' . $foodId);
+        }
+
+        // Lưu comment vào DB (giả sử có CommentModel)
+        $commentModel = new CommentModel();
+        $commentModel->add([
+            'food_items_id' => $foodId,
+            'account_id' => $userId,
+            'username' => $username,
+            'photo' => !empty($photos) ? json_encode($photos) : null,
+            'rate' => $rate,
+            'content' => $content,
+        ]);
+
+        $_SESSION['success'] = 'Đã gửi đánh giá thành công!';
+        redirect('/food/detail/' . $foodId);
     }
 }
 ?>

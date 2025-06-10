@@ -1,14 +1,17 @@
 <?php
+
 /**
  * Order Model
  */
 
 require_once 'BaseModel.php';
 
-class Order extends BaseModel {
+class Order extends BaseModel
+{
     protected $table = 'orders';
 
-    public function createOrder($orderData, $orderItems = null) {
+    public function createOrder($orderData, $orderItems = null)
+    {
         try {
             $this->db->beginTransaction();
 
@@ -18,61 +21,68 @@ class Order extends BaseModel {
             }
 
             // Create main order
-            $sql = "INSERT INTO {$this->table} (user_id, address_id, total_amount, status, payment_method, notes, customer_name, customer_email, customer_phone, delivery_address, order_notes, subtotal, delivery_fee, service_fee, order_type)
-                    VALUES (:user_id, :address_id, :total_amount, :status, :payment_method, :notes, :customer_name, :customer_email, :customer_phone, :delivery_address, :order_notes, :subtotal, :delivery_fee, :service_fee, :order_type)";
+            $sql = "INSERT INTO {$this->table} (
+                user_id, booking_id, order_number, customer_name, customer_email, customer_phone, order_type, subtotal, tax_amount, total_amount, payment_method, payment_status, status, special_instructions, delivery_address, order_notes, estimated_ready_time, completed_at, created_at, updated_at
+            ) VALUES (
+                :user_id, :booking_id, :order_number, :customer_name, :customer_email, :customer_phone, :order_type, :subtotal, :tax_amount, :total_amount, :payment_method, :payment_status, :status, :special_instructions, :delivery_address, :order_notes, :estimated_ready_time, :completed_at, :created_at, :updated_at
+            )";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
                 ':user_id' => $orderData['user_id'] ?? null,
-                ':address_id' => $orderData['address_id'] ?? null,
-                ':total_amount' => $orderData['total_amount'],
+                ':booking_id' => $orderData['booking_id'] ?? null,
+                ':order_number' => $orderData['order_number'] ?? uniqid('ORD'),
+                ':customer_name' => $orderData['customer_name'] ?? '',
+                ':customer_email' => $orderData['customer_email'] ?? '',
+                ':customer_phone' => $orderData['customer_phone'] ?? '',
+                ':order_type' => $orderData['order_type'] ?? 'delivery',
+                ':subtotal' => $orderData['subtotal'] ?? 0,
+                ':tax_amount' => $orderData['tax_amount'] ?? 0,
+                ':total_amount' => $orderData['total_amount'] ?? 0,
+                ':payment_method' => $orderData['payment_method'] ?? 'cash',
+                ':payment_status' => $orderData['payment_status'] ?? 'pending',
                 ':status' => $orderData['status'] ?? 'pending',
-                ':payment_method' => $orderData['payment_method'],
-                ':notes' => $orderData['notes'] ?? null,
-                ':customer_name' => $orderData['customer_name'] ?? null,
-                ':customer_email' => $orderData['customer_email'] ?? null,
-                ':customer_phone' => $orderData['customer_phone'] ?? null,
+                ':special_instructions' => $orderData['special_instructions'] ?? null,
                 ':delivery_address' => $orderData['delivery_address'] ?? null,
                 ':order_notes' => $orderData['order_notes'] ?? null,
-                ':subtotal' => $orderData['subtotal'] ?? $orderData['total_amount'],
-                ':delivery_fee' => $orderData['delivery_fee'] ?? 0,
-                ':service_fee' => $orderData['service_fee'] ?? 0,
-                ':order_type' => $orderData['order_type'] ?? 'delivery'
+                ':estimated_ready_time' => $orderData['estimated_ready_time'] ?? null,
+                ':completed_at' => $orderData['completed_at'] ?? null,
+                ':created_at' => date('Y-m-d H:i:s'),
+                ':updated_at' => date('Y-m-d H:i:s')
             ]);
 
             $orderId = $this->db->lastInsertId();
 
             // Create order items
             if (!empty($orderData['items'])) {
-                $sql = "INSERT INTO order_items (order_id, food_item_id, quantity, price)
-                        VALUES (:order_id, :food_item_id, :quantity, :price)";
+                $sql = "INSERT INTO order_items (order_id, food_item_id, quantity, unit_price, total_price, special_instructions, created_at)
+                        VALUES (:order_id, :food_item_id, :quantity, :unit_price, :total_price, :special_instructions, :created_at)";
                 $stmt = $this->db->prepare($sql);
 
                 foreach ($orderData['items'] as $item) {
                     $stmt->execute([
                         ':order_id' => $orderId,
-                        ':food_item_id' => $item['food_item_id'],
+                        ':food_item_id' => $item['food_id'], // đổi từ food_item_id thành food_id
                         ':quantity' => $item['quantity'],
-                        ':price' => $item['price']
+                        ':unit_price' => $item['price'],     // đổi từ unit_price thành price
+                        ':total_price' => $item['total'],    // đổi từ total_price thành total
+                        ':special_instructions' => $item['special_instructions'] ?? null,
+                        ':created_at' => date('Y-m-d H:i:s')
                     ]);
                 }
             }
 
             $this->db->commit();
             return $orderId;
-
         } catch (Exception $e) {
             $this->db->rollBack();
             throw $e;
         }
     }
 
-    public function getOrdersByUser($userId, $limit = null, $offset = 0) {
-        $sql = "SELECT o.*, ua.address_line
-                FROM {$this->table} o
-                JOIN user_addresses ua ON o.address_id = ua.id
-                WHERE o.user_id = :user_id
-                ORDER BY o.created_at DESC";
+    public function getOrdersByUser($userId, $limit = null, $offset = 0)
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE user_id = :user_id ORDER BY created_at DESC";
 
         if ($limit) {
             $sql .= " LIMIT :limit OFFSET :offset";
@@ -90,7 +100,18 @@ class Order extends BaseModel {
         return $stmt->fetchAll();
     }
 
-    public function getOrderDetails($orderId, $userId = null) {        $sql = "SELECT o.*, ua.address_line, CONCAT(u.first_name, ' ', u.last_name) as full_name, u.phone_number
+    public function countOrdersByUser($userId)
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->table} WHERE user_id = :user_id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
+    }
+
+    public function getOrderDetails($orderId, $userId = null)
+    {
+        $sql = "SELECT o.*, ua.address_line, CONCAT(u.first_name, ' ', u.last_name) as full_name, u.phone_number
                 FROM {$this->table} o
                 JOIN user_addresses ua ON o.address_id = ua.id
                 JOIN users u ON o.user_id = u.id
@@ -109,20 +130,20 @@ class Order extends BaseModel {
 
         $stmt->execute();
         return $stmt->fetch();
-    }    public function getOrderItems($orderId) {
-        $sql = "SELECT oi.*, fi.name, fi.image
-                FROM order_items oi
-                JOIN food_items fi ON oi.food_item_id = fi.id
-                WHERE oi.order_id = :order_id
-                ORDER BY fi.name";
-
+    }
+    public function getOrderItems($orderId)
+    {
+        $sql = "SELECT oi.*, f.name AS food_name, f.image, f.description
+            FROM order_items oi
+            LEFT JOIN food_items f ON oi.food_item_id = f.id
+            WHERE oi.order_id = :order_id";
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll();
+        $stmt->execute([':order_id' => $orderId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function updateOrderStatus($orderId, $status) {
+    public function updateOrderStatus($orderId, $status)
+    {
         $sql = "UPDATE {$this->table} SET status = :status WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':status', $status);
@@ -130,7 +151,8 @@ class Order extends BaseModel {
         return $stmt->execute();
     }
 
-    public function getOrderStatistics($startDate = null, $endDate = null) {
+    public function getOrderStatistics($startDate = null, $endDate = null)
+    {
         $whereClause = "";
         $params = [];
 
@@ -155,7 +177,8 @@ class Order extends BaseModel {
         return $stmt->fetch();
     }
 
-    public function getRecentOrders($limit = 10) {
+    public function getRecentOrders($limit = 10)
+    {
         $sql = "SELECT o.*, u.name as customer_name, u.email as customer_email
                 FROM {$this->table} o
                 LEFT JOIN users u ON o.user_id = u.id
@@ -168,7 +191,8 @@ class Order extends BaseModel {
         return $stmt->fetchAll();
     }
 
-    public function getOrdersByStatus($status, $limit = null) {
+    public function getOrdersByStatus($status, $limit = null)
+    {
         $sql = "SELECT o.*, u.full_name, ua.address_line
                 FROM {$this->table} o
                 JOIN users u ON o.user_id = u.id
@@ -191,7 +215,8 @@ class Order extends BaseModel {
         return $stmt->fetchAll();
     }
 
-    public function getTodayCount() {
+    public function getTodayCount()
+    {
         $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE DATE(created_at) = CURDATE()";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
@@ -199,14 +224,17 @@ class Order extends BaseModel {
         return $result['count'] ?? 0;
     }
 
-    public function getTodayRevenue() {
+    public function getTodayRevenue()
+    {
         $sql = "SELECT SUM(total_amount) as revenue FROM {$this->table}
                 WHERE DATE(created_at) = CURDATE() AND status != 'cancelled'";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         $result = $stmt->fetch();
         return $result['revenue'] ?? 0;
-    }    public function getAllOrders($limit = null, $offset = 0, $status = '') {
+    }
+    public function getAllOrders($limit = null, $offset = 0, $status = '')
+    {
         $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email,
                        COUNT(oi.id) as total_items
                 FROM {$this->table} o
@@ -238,7 +266,8 @@ class Order extends BaseModel {
         return $stmt->fetchAll();
     }
 
-    public function count($status = '') {
+    public function count($status = '')
+    {
         $sql = "SELECT COUNT(*) FROM {$this->table}";
 
         if ($status) {
@@ -260,7 +289,8 @@ class Order extends BaseModel {
      * @param int $userId User ID
      * @return int Number of orders
      */
-    public function countUserOrders($userId) {
+    public function countUserOrders($userId)
+    {
         $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE user_id = :user_id";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
@@ -274,7 +304,8 @@ class Order extends BaseModel {
      * @param int $userId User ID
      * @return float Total spent amount
      */
-    public function getUserTotalSpent($userId) {
+    public function getUserTotalSpent($userId)
+    {
         $sql = "SELECT SUM(total_amount) as total FROM {$this->table}
                 WHERE user_id = :user_id AND status NOT IN ('cancelled')";
         $stmt = $this->db->prepare($sql);
@@ -290,7 +321,8 @@ class Order extends BaseModel {
      * @param string $status Order status
      * @return int Number of orders with specific status
      */
-    public function countUserOrdersByStatus($userId, $status) {
+    public function countUserOrdersByStatus($userId, $status)
+    {
         $sql = "SELECT COUNT(*) as count FROM {$this->table}
                 WHERE user_id = :user_id AND status = :status";
         $stmt = $this->db->prepare($sql);
@@ -307,7 +339,8 @@ class Order extends BaseModel {
      * @param int $months Number of months to get data for
      * @return array Monthly spending data
      */
-    public function getUserMonthlySpending($userId, $months = 6) {
+    public function getUserMonthlySpending($userId, $months = 6)
+    {
         $sql = "SELECT
                     DATE_FORMAT(created_at, '%Y-%m') as month,
                     SUM(total_amount) as total_spent,
@@ -330,7 +363,8 @@ class Order extends BaseModel {
      * Get order with items for detailed view
      * @param int $orderId Order ID
      * @return array Order details with items
-     */    public function getOrderWithItems($orderId) {
+     */    public function getOrderWithItems($orderId)
+    {
         // Get order details
         $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email
                 FROM {$this->table} o
@@ -358,7 +392,8 @@ class Order extends BaseModel {
 
         return $order;
     }    // Get orders for CSV export with filtering
-    public function getOrdersForExport($filters = []) {
+    public function getOrdersForExport($filters = [])
+    {
         $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email,
                        COUNT(oi.id) as total_items
                 FROM {$this->table} o
@@ -397,7 +432,8 @@ class Order extends BaseModel {
     }
 
     // Get filtered orders for enhanced admin interface
-    public function getFilteredOrders($filters = [], $limit = null, $offset = 0) {
+    public function getFilteredOrders($filters = [], $limit = null, $offset = 0)
+    {
         $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email,
                        COUNT(oi.id) as total_items
                 FROM {$this->table} o
@@ -449,7 +485,8 @@ class Order extends BaseModel {
     }
 
     // Count filtered orders
-    public function countFilteredOrders($filters = []) {
+    public function countFilteredOrders($filters = [])
+    {
         $sql = "SELECT COUNT(DISTINCT o.id) as count
                 FROM {$this->table} o
                 LEFT JOIN users u ON o.user_id = u.id
@@ -489,7 +526,8 @@ class Order extends BaseModel {
      * @param int $orderId Order ID
      * @return array Array of status history records
      */
-    public function getOrderHistory($orderId) {
+    public function getOrderHistory($orderId)
+    {
         // For now, return a timeline based on the current order status
         // In a full implementation, this would come from a separate order_history table
         $order = $this->findById($orderId);
@@ -532,7 +570,8 @@ class Order extends BaseModel {
      * @param string $status Status code
      * @return string Human-readable status
      */
-    private function getStatusText($status) {
+    private function getStatusText($status)
+    {
         $statusTexts = [
             'pending' => 'Order Placed',
             'confirmed' => 'Order Confirmed',
@@ -550,7 +589,8 @@ class Order extends BaseModel {
      * @param string $status Status code
      * @return string Status description
      */
-    private function getStatusDescription($status) {
+    private function getStatusDescription($status)
+    {
         $descriptions = [
             'pending' => 'Your order has been received and is awaiting confirmation',
             'confirmed' => 'Your order has been confirmed and is being processed',
@@ -570,7 +610,8 @@ class Order extends BaseModel {
      * @param int $offset Optional offset
      * @return array Array of user orders
      */
-    public function getUserOrders($userId, $limit = null, $offset = 0) {
+    public function getUserOrders($userId, $limit = null, $offset = 0)
+    {
         return $this->getOrdersByUser($userId, $limit, $offset);
     }
 
@@ -579,7 +620,8 @@ class Order extends BaseModel {
      * @param int $userId User ID
      * @return int Number of orders
      */
-    public function countByUser($userId) {
+    public function countByUser($userId)
+    {
         return $this->countUserOrders($userId);
     }
 
@@ -588,7 +630,8 @@ class Order extends BaseModel {
      * @param int $userId User ID
      * @return float Total spent amount
      */
-    public function getTotalSpentByUser($userId) {
+    public function getTotalSpentByUser($userId)
+    {
         return $this->getUserTotalSpent($userId);
     }
 
@@ -596,7 +639,8 @@ class Order extends BaseModel {
      * Get comprehensive order statistics for admin dashboard
      * @return array Order statistics
      */
-    public function getOrderStats() {
+    public function getOrderStats()
+    {
         $sql = "SELECT
                     COUNT(*) as total_orders,
                     SUM(total_amount) as total_revenue,
@@ -611,7 +655,8 @@ class Order extends BaseModel {
                     COALESCE(SUM(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND status != 'cancelled' THEN total_amount END), 0) as week_revenue,
                     COUNT(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 END) as month_orders,
                     COALESCE(SUM(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND status != 'cancelled' THEN total_amount END), 0) as month_revenue
-                FROM {$this->table}";        $stmt = $this->db->prepare($sql);
+                FROM {$this->table}";
+        $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetch();
     }
@@ -619,7 +664,8 @@ class Order extends BaseModel {
     /**
      * Get current month revenue
      */
-    public function getMonthlyRevenue() {
+    public function getMonthlyRevenue()
+    {
         $sql = "SELECT SUM(total_amount) as revenue FROM {$this->table}
                 WHERE MONTH(created_at) = MONTH(CURDATE())
                 AND YEAR(created_at) = YEAR(CURDATE())
@@ -634,7 +680,8 @@ class Order extends BaseModel {
     /**
      * Get monthly revenue data for chart (last 12 months)
      */
-    public function getMonthlyRevenueData() {
+    public function getMonthlyRevenueData()
+    {
         $sql = "SELECT
                     MONTH(created_at) as month,
                     YEAR(created_at) as year,
@@ -665,7 +712,8 @@ class Order extends BaseModel {
     /**
      * Get recent orders with customer information
      */
-    public function getRecentOrdersWithCustomer($limit = 5) {
+    public function getRecentOrdersWithCustomer($limit = 5)
+    {
         $sql = "SELECT o.*,
                        COALESCE(CONCAT(u.first_name, ' ', u.last_name), o.customer_name) as customer_name
                 FROM {$this->table} o
@@ -679,4 +727,3 @@ class Order extends BaseModel {
         return $stmt->fetchAll();
     }
 }
-?>

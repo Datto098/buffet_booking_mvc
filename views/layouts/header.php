@@ -228,4 +228,4 @@
     </div>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" style="padding-top: 50px;">

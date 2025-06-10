@@ -1,25 +1,27 @@
 <?php
+
 /**
  * Checkout View
  */
 ?>
 
-<div class="container py-4">
+<div class="container py-4" style="margin-top: 50px;">
     <div class="row">
         <div class="col-12">
-            <nav aria-label="breadcrumb">
+            <!-- <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="/index.php">Trang chủ</a></li>
                     <li class="breadcrumb-item"><a href="/index.php?page=cart">Giỏ hàng</a></li>
                     <li class="breadcrumb-item active">Thanh toán</li>
                 </ol>
-            </nav>
+            </nav> -->
 
             <h2 class="mb-4">
                 <i class="fas fa-credit-card"></i> Thanh Toán Đơn Hàng
             </h2>
         </div>
-    </div>    <div class="row">
+    </div>
+    <div class="row">
         <!-- Checkout Form -->
         <div class="col-lg-8">
             <form method="POST" action="<?= SITE_URL ?>/order/create" id="checkoutForm">
@@ -40,11 +42,11 @@
                                         Họ và tên <span class="text-danger">*</span>
                                     </label>
                                     <input type="text"
-                                           class="form-control"
-                                           id="customer_name"
-                                           name="customer_name"
-                                           value="<?= htmlspecialchars($_SESSION['form_data']['customer_name'] ?? ($_SESSION['user_name'] ?? '')) ?>"
-                                           required>
+                                        class="form-control"
+                                        id="customer_name"
+                                        name="customer_name"
+                                        value="<?= htmlspecialchars(isset($userInfo) ? trim(($userInfo['first_name'] ?? '') . ' ' . ($userInfo['last_name'] ?? '')) : '') ?>"
+                                        required>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -53,11 +55,11 @@
                                         Email <span class="text-danger">*</span>
                                     </label>
                                     <input type="email"
-                                           class="form-control"
-                                           id="customer_email"
-                                           name="customer_email"
-                                           value="<?= htmlspecialchars($_SESSION['form_data']['customer_email'] ?? ($_SESSION['user_email'] ?? '')) ?>"
-                                           required>
+                                        class="form-control"
+                                        id="customer_email"
+                                        name="customer_email"
+                                        value="<?= htmlspecialchars($userInfo['email'] ?? '') ?>"
+                                        required>
                                 </div>
                             </div>
                         </div>
@@ -69,36 +71,42 @@
                                         Số điện thoại <span class="text-danger">*</span>
                                     </label>
                                     <input type="tel"
-                                           class="form-control"
-                                           id="customer_phone"
-                                           name="customer_phone"
-                                           value="<?= htmlspecialchars($_SESSION['form_data']['customer_phone'] ?? '') ?>"
-                                           required>
+                                        class="form-control"
+                                        id="customer_phone"
+                                        name="customer_phone"
+                                        value="<?= htmlspecialchars($userInfo['phone'] ?? '') ?>"
+                                        required>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="mb-3">
                                     <label for="delivery_address" class="form-label">
                                         Địa chỉ giao hàng <span class="text-danger">*</span>
                                     </label>
-                                    <input type="text"
-                                           class="form-control"
-                                           id="delivery_address"
-                                           name="delivery_address"
-                                           value="<?= htmlspecialchars($_SESSION['form_data']['delivery_address'] ?? '') ?>"
-                                           placeholder="Số nhà, đường, phường, quận, thành phố"
-                                           required>
+                                    <div class="input-group mb-2 mt-2">
+                                        <input type="text"
+                                            class="form-control"
+                                            id="delivery_address"
+                                            name="delivery_address"
+                                            value="<?= htmlspecialchars($userInfo['address'] ?? '') ?>"
+                                            placeholder="Nhập hoặc tìm địa chỉ trên bản đồ..."
+                                            required>
+                                        <button type="button" id="btn_find_on_map" class="btn btn-outline-secondary">Tìm trên bản đồ</button>
+                                    </div>
+                                    <!-- Map -->
+                                    <div id="map" style="height: 300px; border-radius: 8px;"></div>
                                 </div>
+                                
                             </div>
                         </div>
 
                         <div class="mb-0">
                             <label for="order_notes" class="form-label">Ghi chú đơn hàng</label>
                             <textarea class="form-control"
-                                      id="order_notes"
-                                      name="order_notes"
-                                      rows="3"
-                                      placeholder="Ghi chú về thời gian giao hàng, yêu cầu đặc biệt..."><?= htmlspecialchars($_SESSION['form_data']['order_notes'] ?? '') ?></textarea>
+                                id="order_notes"
+                                name="order_notes"
+                                rows="3"
+                                placeholder="Ghi chú về thời gian giao hàng, yêu cầu đặc biệt..."><?= htmlspecialchars($_SESSION['form_data']['order_notes'] ?? '') ?></textarea>
                         </div>
                     </div>
                 </div>
@@ -115,11 +123,11 @@
                             <div class="col-md-4">
                                 <div class="form-check payment-option">
                                     <input class="form-check-input"
-                                           type="radio"
-                                           name="payment_method"
-                                           id="cod"
-                                           value="cod"
-                                           <?= ($_SESSION['form_data']['payment_method'] ?? 'cod') == 'cod' ? 'checked' : '' ?>>
+                                        type="radio"
+                                        name="payment_method"
+                                        id="cod"
+                                        value="cod"
+                                        <?= ($_SESSION['form_data']['payment_method'] ?? 'cod') == 'cod' ? 'checked' : '' ?>>
                                     <label class="form-check-label" for="cod">
                                         <div class="payment-card">
                                             <i class="fas fa-money-bill-wave fa-2x text-success mb-2"></i>
@@ -132,11 +140,11 @@
                             <div class="col-md-4">
                                 <div class="form-check payment-option">
                                     <input class="form-check-input"
-                                           type="radio"
-                                           name="payment_method"
-                                           id="bank_transfer"
-                                           value="bank_transfer"
-                                           <?= ($_SESSION['form_data']['payment_method'] ?? '') == 'bank_transfer' ? 'checked' : '' ?>>
+                                        type="radio"
+                                        name="payment_method"
+                                        id="bank_transfer"
+                                        value="bank_transfer"
+                                        <?= ($_SESSION['form_data']['payment_method'] ?? '') == 'bank_transfer' ? 'checked' : '' ?>>
                                     <label class="form-check-label" for="bank_transfer">
                                         <div class="payment-card">
                                             <i class="fas fa-university fa-2x text-primary mb-2"></i>
@@ -146,14 +154,14 @@
                                     </label>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <!-- <div class="col-md-4">
                                 <div class="form-check payment-option">
                                     <input class="form-check-input"
-                                           type="radio"
-                                           name="payment_method"
-                                           id="credit_card"
-                                           value="credit_card"
-                                           <?= ($_SESSION['form_data']['payment_method'] ?? '') == 'credit_card' ? 'checked' : '' ?>>
+                                        type="radio"
+                                        name="payment_method"
+                                        id="credit_card"
+                                        value="credit_card"
+                                        <?= ($_SESSION['form_data']['payment_method'] ?? '') == 'credit_card' ? 'checked' : '' ?>>
                                     <label class="form-check-label" for="credit_card">
                                         <div class="payment-card">
                                             <i class="fas fa-credit-card fa-2x text-warning mb-2"></i>
@@ -162,7 +170,7 @@
                                         </div>
                                     </label>
                                 </div>
-                            </div>
+                            </div> -->
                         </div>
 
                         <!-- Bank Transfer Details -->
@@ -233,11 +241,11 @@
                 <div class="card-body">
                     <!-- Cart Items -->
                     <div class="order-items mb-3">
-                        <?php foreach ($cartItems as $item): ?>                            <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
+                        <?php foreach ($cartItems as $item): ?> <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
                                 <img src="<?= !empty($item['food']['image']) ? htmlspecialchars($item['food']['image']) : '/assets/images/no-image.jpg' ?>"
-                                     class="rounded me-2"
-                                     style="width: 40px; height: 40px; object-fit: cover;"
-                                     alt="<?= htmlspecialchars($item['food']['name']) ?>">
+                                    class="rounded me-2"
+                                    style="width: 40px; height: 40px; object-fit: cover;"
+                                    alt="<?= htmlspecialchars($item['food']['name']) ?>">
                                 <div class="flex-grow-1">
                                     <div class="small fw-bold"><?= htmlspecialchars($item['food']['name']) ?></div>
                                     <div class="small text-muted">
@@ -288,188 +296,290 @@
                 </div>
             </div>
 
-            <!-- Security Info -->
-            <div class="card mt-3">
-                <div class="card-body text-center">
-                    <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
-                    <h6>Bảo mật thông tin</h6>
-                    <small class="text-muted">
-                        Thông tin của bạn được bảo mật bằng SSL 256-bit
-                    </small>
-                </div>
-            </div>
+          
         </div>
     </div>
 </div>
 
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const checkoutForm = document.getElementById('checkoutForm');
-    const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
-    const bankTransferDetails = document.getElementById('bankTransferDetails');
-    const creditCardDetails = document.getElementById('creditCardDetails');
+    var lat = <?= isset($userInfo['lat']) && $userInfo['lat'] ? $userInfo['lat'] : 10.762622 ?>;
+    var lng = <?= isset($userInfo['lng']) && $userInfo['lng'] ? $userInfo['lng'] : 106.660172 ?>;
+    var map = L.map('map').setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-    // Payment method change handler
-    paymentMethods.forEach(method => {
-        method.addEventListener('change', function() {
-            // Hide all payment details
-            bankTransferDetails.style.display = 'none';
-            creditCardDetails.style.display = 'none';
+    var marker = null;
 
-            // Show relevant details
-            if (this.value === 'bank_transfer') {
-                bankTransferDetails.style.display = 'block';
-            } else if (this.value === 'credit_card') {
-                creditCardDetails.style.display = 'block';
+    function setMarker(lat, lng) {
+        if (marker) {
+            marker.setLatLng([lat, lng]);
+        } else {
+            marker = L.marker([lat, lng], {draggable:true}).addTo(map);
+            marker.on('dragend', function(e) {
+                var position = marker.getLatLng();
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.display_name) {
+                            document.getElementById('delivery_address').value = data.display_name;
+                        }
+                    });
+            });
+        }
+        
+    }
+
+    // Tìm địa chỉ khi nhấn nút hoặc Enter
+    function searchAddress() {
+        var address = document.getElementById('delivery_address').value;
+        if (!address) return;
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    var lat = parseFloat(data[0].lat);
+                    var lon = parseFloat(data[0].lon);
+                    map.setView([lat, lon], 16);
+                    setMarker(lat, lon);
+                    // Lấy lại địa chỉ chuẩn
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                        .then(response => response.json())
+                        .then(data2 => {
+                            if (data2 && data2.display_name) {
+                                document.getElementById('delivery_address').value = data2.display_name;
+                            }
+                        });
+                } else {
+                    alert('Không tìm thấy địa chỉ!');
+                }
+            });
+    }
+
+    document.getElementById('btn_find_on_map').addEventListener('click', searchAddress);
+    document.getElementById('delivery_address').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchAddress();
+        }
+    });
+
+    // Cho phép click lên bản đồ để tạo hoặc di chuyển marker
+    map.on('click', function(e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        setMarker(lat, lng);
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    document.getElementById('delivery_address').value = data.display_name;
+                }
+            });
+    });
+});
+</script>
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkoutForm = document.getElementById('checkoutForm');
+        const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+        const bankTransferDetails = document.getElementById('bankTransferDetails');
+        const creditCardDetails = document.getElementById('creditCardDetails');
+
+        // Payment method change handler
+        paymentMethods.forEach(method => {
+            method.addEventListener('change', function() {
+                // Hide all payment details
+                bankTransferDetails.style.display = 'none';
+                creditCardDetails.style.display = 'none';
+
+                // Show relevant details
+                if (this.value === 'bank_transfer') {
+                    bankTransferDetails.style.display = 'block';
+                } else if (this.value === 'credit_card') {
+                    creditCardDetails.style.display = 'block';
+                }
+            });
+        });
+
+        // Form validation
+        checkoutForm.addEventListener('submit', function(e) {
+            if (!validateCheckoutForm()) {
+                e.preventDefault();
+            } else {
+                // Show loading state
+                const submitBtn = document.getElementById('submitOrder');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
             }
+        });
+
+        // Phone number formatting
+        document.getElementById('customer_phone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 10) {
+                value = value.slice(0, 10);
+            }
+            e.target.value = value;
+        });
+
+        // Initialize payment method display
+        const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
+        if (selectedPayment) {
+            selectedPayment.dispatchEvent(new Event('change'));
+        }
+
+        document.getElementById('btn_find_on_map').addEventListener('click', function() {
+            var address = document.getElementById('search_address').value;
+            if (!address) return;
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        var lat = parseFloat(data[0].lat);
+                        var lon = parseFloat(data[0].lon);
+                        map.setView([lat, lon], 16);
+                        marker.setLatLng([lat, lon]);
+                        document.getElementById('lat').value = lat;
+                        document.getElementById('lng').value = lon;
+                        // Lấy lại địa chỉ chuẩn
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                            .then(response => response.json())
+                            .then(data2 => {
+                                if (data2 && data2.display_name) {
+                                    document.getElementById('delivery_address').value = data2.display_name;
+                                }
+                            });
+                    } else {
+                        alert('Không tìm thấy địa chỉ!');
+                    }
+                });
         });
     });
 
-    // Form validation
-    checkoutForm.addEventListener('submit', function(e) {
-        if (!validateCheckoutForm()) {
-            e.preventDefault();
-        } else {
-            // Show loading state
-            const submitBtn = document.getElementById('submitOrder');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
-        }
-    });
+    function validateCheckoutForm() {
+        const requiredFields = document.querySelectorAll('#checkoutForm [required]');
+        let isValid = true;
 
-    // Phone number formatting
-    document.getElementById('customer_phone').addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 10) {
-            value = value.slice(0, 10);
-        }
-        e.target.value = value;
-    });
+        requiredFields.forEach(field => {
+            if (!field.value.trim() && field.type !== 'checkbox') {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else if (field.type === 'checkbox' && !field.checked) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
 
-    // Initialize payment method display
-    const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
-    if (selectedPayment) {
-        selectedPayment.dispatchEvent(new Event('change'));
-    }
-});
-
-function validateCheckoutForm() {
-    const requiredFields = document.querySelectorAll('#checkoutForm [required]');
-    let isValid = true;
-
-    requiredFields.forEach(field => {
-        if (!field.value.trim() && field.type !== 'checkbox') {
-            field.classList.add('is-invalid');
+        // Validate email format
+        const emailField = document.getElementById('customer_email');
+        if (emailField.value && !isValidEmail(emailField.value)) {
+            emailField.classList.add('is-invalid');
             isValid = false;
-        } else if (field.type === 'checkbox' && !field.checked) {
-            field.classList.add('is-invalid');
-            isValid = false;
-        } else {
-            field.classList.remove('is-invalid');
         }
-    });
 
-    // Validate email format
-    const emailField = document.getElementById('customer_email');
-    if (emailField.value && !isValidEmail(emailField.value)) {
-        emailField.classList.add('is-invalid');
-        isValid = false;
+        // Validate phone number
+        const phoneField = document.getElementById('customer_phone');
+        if (phoneField.value && !isValidPhone(phoneField.value)) {
+            phoneField.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            showToast('Vui lòng điền đầy đủ và chính xác thông tin', 'error');
+        }
+
+        return isValid;
     }
 
-    // Validate phone number
-    const phoneField = document.getElementById('customer_phone');
-    if (phoneField.value && !isValidPhone(phoneField.value)) {
-        phoneField.classList.add('is-invalid');
-        isValid = false;
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
     }
 
-    if (!isValid) {
-        showToast('Vui lòng điền đầy đủ và chính xác thông tin', 'error');
+    function isValidPhone(phone) {
+        const phoneRegex = /^[0-9]{10}$/;
+        return phoneRegex.test(phone);
     }
 
-    return isValid;
-}
-
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-function isValidPhone(phone) {
-    const phoneRegex = /^[0-9]{10}$/;
-    return phoneRegex.test(phone);
-}
-
-function showToast(message, type = 'info') {
-    if (typeof window.showToast === 'function') {
-        window.showToast(message, type);
-    } else {
-        alert(message);
+    function showToast(message, type = 'info') {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type);
+        } else {
+            alert(message);
+        }
     }
-}
 </script>
 
 <style>
-.payment-option {
-    height: 100%;
-}
+    .payment-option {
+        height: 100%;
+    }
 
-.payment-option .form-check-label {
-    cursor: pointer;
-    width: 100%;
-}
+    .payment-option .form-check-label {
+        cursor: pointer;
+        width: 100%;
+    }
 
-.payment-card {
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    transition: all 0.3s ease;
-    height: 120px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.payment-option input:checked + label .payment-card {
-    border-color: #007bff;
-    background-color: #f8f9ff;
-}
-
-.payment-card:hover {
-    border-color: #007bff;
-    transform: translateY(-2px);
-}
-
-.order-items {
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.is-invalid {
-    border-color: #dc3545;
-}
-
-.form-check-input.is-invalid {
-    border-color: #dc3545;
-}
-
-.sticky-top {
-    position: sticky;
-    top: 20px;
-    z-index: 1020;
-}
-
-@media (max-width: 768px) {
     .payment-card {
-        height: auto;
-        padding: 15px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .payment-option input:checked+label .payment-card {
+        border-color: #007bff;
+        background-color: #f8f9ff;
+    }
+
+    .payment-card:hover {
+        border-color: #007bff;
+        transform: translateY(-2px);
+    }
+
+    .order-items {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .is-invalid {
+        border-color: #dc3545;
+    }
+
+    .form-check-input.is-invalid {
+        border-color: #dc3545;
     }
 
     .sticky-top {
-        position: static;
+        position: sticky;
+        top: 20px;
+        z-index: 1020;
     }
-}
+
+    @media (max-width: 768px) {
+        .payment-card {
+            height: auto;
+            padding: 15px;
+        }
+
+        .sticky-top {
+            position: static;
+        }
+    }
 </style>
 
 <?php
