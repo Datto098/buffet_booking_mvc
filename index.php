@@ -43,15 +43,23 @@ function routeRequest($segments)
     if (count($segments) === 1 && $segments[0] === 'index.php') {
         $page = $_GET['page'] ?? 'home';
         $action = $_GET['action'] ?? 'index';
-        $param = $_GET['param'] ?? null;
-
-        // Handle admin routes
+        $param = $_GET['param'] ?? null;        // Handle admin routes
         if ($page === 'admin') {
             // Create segments array for admin routes
             $adminSegments = ['admin'];
             if (!empty($action)) $adminSegments[] = $action;
             if (!empty($param)) $adminSegments[] = $param;
             handleAdminRoute($adminSegments);
+            return;
+        }
+
+        // Handle super admin routes
+        if ($page === 'superadmin') {
+            // Create segments array for super admin routes
+            $superAdminSegments = ['superadmin'];
+            if (!empty($action)) $superAdminSegments[] = $action;
+            if (!empty($param)) $superAdminSegments[] = $param;
+            handleSuperAdminRoute($superAdminSegments);
             return;
         }
 
@@ -78,6 +86,14 @@ function routeRequest($segments)
         error_log("Main router handling admin route: " . print_r($segments, true));
         error_log("Session in main router: " . print_r($_SESSION, true));
         handleAdminRoute($segments);
+        return;
+    }
+
+    // Handle super admin routes
+    if ($page === 'superadmin') {
+        error_log("Main router handling superadmin route: " . print_r($segments, true));
+        error_log("Session in main router: " . print_r($_SESSION, true));
+        handleSuperAdminRoute($segments);
         return;
     }
 
@@ -168,7 +184,185 @@ function handleAdminRoute($segments)
             handleAdminLogsRoute($controller, $action, $param);
             break;
         default:
+            $controller->dashboard();    }
+}
+
+function handleSuperAdminRoute($segments)
+{
+    // Require super admin authentication
+    $isAuthenticated = false;
+    $userRole = null;
+
+    // Check standard session structure
+    if (isset($_SESSION['user_id']) && isset($_SESSION['user_role'])) {
+        $userRole = $_SESSION['user_role'];
+        $isAuthenticated = ($userRole === 'super_admin');
+    }
+
+    // Also check user array structure (fallback)
+    if (!$isAuthenticated && isset($_SESSION['user']['id']) && isset($_SESSION['user']['role'])) {
+        $userRole = $_SESSION['user']['role'];
+        $isAuthenticated = ($userRole === 'super_admin');
+    }
+
+    if (!$isAuthenticated) {
+        error_log("Super Admin authentication failed - user role: " . ($userRole ?? 'none'));
+        header('Location: ' . SITE_URL . '/auth/login');
+        exit;
+    }
+
+    require_once 'controllers/SuperAdminController.php';
+    $controller = new SuperAdminController();
+
+    if (count($segments) === 1) {
+        // /superadmin -> dashboard
+        $controller->dashboard();
+        return;
+    }
+
+    $section = $segments[1] ?? 'dashboard';
+    $action = $segments[2] ?? 'index';
+    $param = $segments[3] ?? null;
+
+    switch ($section) {
+        case 'dashboard':
+            if ($action === 'stats') {
+                $controller->dashboardStats();
+            } else {
+                $controller->dashboard();
+            }
+            break;
+        case 'users':
+            handleSuperAdminUsersRoute($controller, $action, $param);
+            break;
+        case 'orders':
+            handleSuperAdminOrdersRoute($controller, $action, $param);
+            break;
+        case 'bookings':
+            handleSuperAdminBookingsRoute($controller, $action, $param);
+            break;
+        case 'tables':
+            handleSuperAdminTablesRoute($controller, $action, $param);
+            break;
+        case 'restaurant':
+            handleSuperAdminRestaurantRoute($controller, $action, $param);
+            break;
+        case 'promotions':
+            handleSuperAdminPromotionsRoute($controller, $action, $param);
+            break;
+        case 'statistics':
+            $controller->statistics();
+            break;
+        default:
             $controller->dashboard();
+    }
+}
+
+function handleSuperAdminUsersRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'create':
+            $controller->createUser();
+            break;
+        case 'edit':
+            $controller->editUser($param);
+            break;
+        case 'delete':
+            $controller->deleteUser($param);
+            break;
+        default:
+            $controller->users();
+    }
+}
+
+function handleSuperAdminOrdersRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'details':
+            $controller->orderDetails($param);
+            break;
+        case 'updateStatus':
+            $controller->updateOrderStatus($param);
+            break;
+        default:
+            $controller->orders();
+    }
+}
+
+function handleSuperAdminBookingsRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'details':
+            $controller->bookingDetails($param);
+            break;
+        case 'updateStatus':
+            $controller->updateBookingStatus($param);
+            break;
+        case 'assignTable':
+            $controller->assignTable($param);
+            break;
+        default:
+            $controller->bookings();
+    }
+}
+
+function handleSuperAdminTablesRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'create':
+            $controller->createTable();
+            break;
+        case 'update':
+            $controller->updateTable($param);
+            break;
+        case 'delete':
+            $controller->deleteTable($param);
+            break;
+        case 'get':
+            $controller->getTable($param);
+            break;
+        case 'updateStatus':
+            $controller->updateTableStatus($param);
+            break;
+        case 'available':
+            $controller->getAvailableTables($param);
+            break;
+        case 'bookings':
+            $controller->getTableBookings($param);
+            break;
+        default:
+            $controller->tables();
+    }
+}
+
+function handleSuperAdminRestaurantRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'update':
+            $controller->updateRestaurantInfo();
+            break;
+        default:
+            $controller->restaurantInfo();
+    }
+}
+
+function handleSuperAdminPromotionsRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'create':
+            $controller->createPromotion();
+            break;
+        case 'edit':
+            $controller->editPromotion($param);
+            break;
+        case 'delete':
+            $controller->deletePromotion($param);
+            break;
+        case 'toggle':
+            $controller->togglePromotionStatus($param);
+            break;
+        default:
+            $controller->promotions();
     }
 }
 
