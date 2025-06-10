@@ -24,16 +24,16 @@ class OrderController extends BaseController {
     }
 
     public function checkout() {
-        // Check if cart is not empty
+        // Lấy dữ liệu giỏ hàng từ session
         $cart = $_SESSION['cart'] ?? [];
-        if (empty($cart)) {
-            $_SESSION['error'] = 'Giỏ hàng trống';
-            redirect('/index.php?page=cart');
-        }
-
-        // Calculate cart totals
         $cartItems = [];
-        $subtotal = 0;        foreach ($cart as $foodId => $quantity) {
+        $subtotal = 0;
+        $serviceFee = 0;
+        $deliveryFee = 0;
+        $total = 0;
+
+        // Lấy thông tin món ăn và tính toán
+        foreach ($cart as $foodId => $quantity) {
             $food = $this->foodModel->getFoodDetails($foodId);
             if ($food && $food['is_available']) {
                 $itemTotal = $food['price'] * $quantity;
@@ -45,30 +45,30 @@ class OrderController extends BaseController {
                 $subtotal += $itemTotal;
             }
         }
+        $serviceFee = $subtotal * 0.05;
+        $deliveryFee = 0;
+        $total = $subtotal + $serviceFee + $deliveryFee;
 
-        if (empty($cartItems)) {
-            $_SESSION['error'] = 'Không có món ăn hợp lệ trong giỏ hàng';
-            redirect('/index.php?page=cart');
+        // Lấy thông tin user từ DB
+        $userInfo = null;
+        if (isset($_SESSION['user_id'])) {
+            $userInfo = $this->userModel->findById($_SESSION['user_id']);
         }
 
-        // Calculate fees and total
-        $deliveryFee = 30000; // 30k delivery fee
-        $serviceFee = $subtotal * 0.05; // 5% service fee
-        $total = $subtotal + $deliveryFee + $serviceFee;
-
         $data = [
-            'title' => 'Thanh Toán - ' . SITE_NAME,
             'cartItems' => $cartItems,
             'subtotal' => $subtotal,
-            'deliveryFee' => $deliveryFee,
             'serviceFee' => $serviceFee,
-            'total' => $total
+            'deliveryFee' => $deliveryFee,
+            'total' => $total,
+            'userInfo' => $userInfo
         ];
-
         $this->loadView('customer/order/checkout', $data);
     }
 
     public function create() {
+      
+        $this->requireLogin();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('/index.php?page=order&action=checkout');
         }
@@ -89,6 +89,8 @@ class OrderController extends BaseController {
         $deliveryAddress = sanitizeInput($_POST['delivery_address'] ?? '');
         $orderNotes = sanitizeInput($_POST['order_notes'] ?? '');
         $paymentMethod = $_POST['payment_method'] ?? 'cod';
+
+   
 
         // Validation
         $errors = [];
@@ -121,7 +123,8 @@ class OrderController extends BaseController {
 
         // Prepare cart items and calculate totals
         $orderItems = [];
-        $subtotal = 0;        foreach ($cart as $foodId => $quantity) {
+        $subtotal = 0;       
+         foreach ($cart as $foodId => $quantity) {
             $food = $this->foodModel->getFoodDetails($foodId);
             if ($food && $food['is_available']) {
                 $itemTotal = $food['price'] * $quantity;
@@ -187,16 +190,33 @@ class OrderController extends BaseController {
 
     public function myOrders() {
         $this->requireLogin();
-
         $userId = $_SESSION['user_id'];
-        $orders = $this->orderModel->getUserOrders($userId);
+
+        // Lấy trang hiện tại
+        $current_page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+        $per_page = 10;
+        $offset = ($current_page - 1) * $per_page;
+
+        // Lấy tổng số đơn
+        $total_orders = $this->orderModel->countOrdersByUser($userId);
+        $total_pages = ceil($total_orders / $per_page);
+
+        // Lấy đơn hàng cho trang hiện tại
+        $orders = $this->orderModel->getOrdersByUser($userId, $per_page, $offset);
+
+        foreach ($orders as &$order) {
+            $order['order_items'] = $this->orderModel->getOrderItems($order['id']);
+        }
 
         $data = [
             'title' => 'Đơn Hàng Của Tôi - ' . SITE_NAME,
-            'orders' => $orders
+            'orders' => $orders,
+            'total_pages' => $total_pages,
+            'current_page' => $current_page,
+            'filter_params' => '' // hoặc build lại nếu có filter
         ];
 
-        $this->loadView('customer/order/my_orders', $data);
+        $this->loadView('customer/order/history', $data);
     }
 
     public function detail() {
@@ -226,10 +246,12 @@ class OrderController extends BaseController {
             }
         }
 
+  
         $data = [
             'title' => 'Chi Tiết Đơn Hàng #' . $orderId . ' - ' . SITE_NAME,
             'order' => $order
         ];
+
 
         $this->loadView('customer/order/detail', $data);
     }
@@ -277,39 +299,41 @@ class OrderController extends BaseController {
         redirect('/index.php?page=order&action=myOrders');
     }
 
-    public function track() {
-        $orderId = intval($_GET['id'] ?? 0);
+    // public function history() {
+    //     $orderId = intval($_GET['id'] ?? 0);
 
-        if ($orderId <= 0) {
-            redirect('/index.php');
-        }
+    //     // if ($orderId <= 0) {
+    //     //     redirect('/index.php');
+    //     // }
 
-        $order = $this->orderModel->findById($orderId);
+    //     $order = $this->orderModel->findById($orderId);
 
-        if (!$order) {
-            $_SESSION['error'] = 'Không tìm thấy đơn hàng';
-            redirect('/index.php');
-        }
+    //     // if (!$order) {
+    //     //     $_SESSION['error'] = 'Không tìm thấy đơn hàng';
+    //     //     redirect('/index.php');
+    //     // }
 
-        // Check permission
-        if (isLoggedIn()) {
-            if ($order['user_id'] != $_SESSION['user_id'] && !isAdmin() && !isManager()) {
-                $_SESSION['error'] = 'Bạn không có quyền xem đơn hàng này';
-                redirect('/index.php');
-            }
-        }
+    //     // Check permission
+    //     // if (isLoggedIn()) {
+    //     //     if ($order['user_id'] != $_SESSION['user_id'] && !isAdmin() && !isManager()) {
+    //     //         $_SESSION['error'] = 'Bạn không có quyền xem đơn hàng này';
+    //     //         redirect('/index.php');
+    //     //     }
+    //     // }
 
-        // Get order timeline/history
-        $orderHistory = $this->orderModel->getOrderHistory($orderId);
+    //     // Get order timeline/history
+    //     $orderHistory = $this->orderModel->getOrderHistory($orderId);
 
-        $data = [
-            'title' => 'Theo Dõi Đơn Hàng #' . $orderId . ' - ' . SITE_NAME,
-            'order' => $order,
-            'orderHistory' => $orderHistory
-        ];
+    //     $data = [
+    //         'title' => 'Theo Dõi Đơn Hàng #' . $orderId . ' - ' . SITE_NAME,
+    //         'order' => $order,
+    //         'orderHistory' => $orderHistory
+    //     ];
+        
 
-        $this->loadView('customer/order/track', $data);
-    }
+    //     //  $this->loadView('/index.php?page=order&action=history', $data);
+    //     $this->loadView('/customer/order/history', $data);
+    // }
 
     // AJAX endpoint for order status
     public function getStatus() {
@@ -345,5 +369,24 @@ class OrderController extends BaseController {
 
         return $statusTexts[$status] ?? 'Không xác định';
     }
+
+    // public function history() {
+    //     $this->requireLogin();
+    //     $userId = $_SESSION['user_id'];
+    //     $orders = $this->orderModel->getOrdersByUser($userId);
+
+    //     // Lấy thêm các món ăn cho từng đơn
+    //     foreach ($orders as &$order) {
+    //         $order['order_items'] = $this->orderModel->getOrderItems($order['id']);
+    //     }
+
+    //     $data = [
+    //         'title' => 'Lịch Sử Đơn Hàng - ' . SITE_NAME,
+    //         'orders' => $orders
+    //     ];
+    //     print_r($data);
+    //     echo '</pre>';
+    //     // $this->loadView('/index.php?page=order&action=history', $data);
+    // }
 }
 ?>

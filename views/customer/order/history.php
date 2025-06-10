@@ -2,8 +2,12 @@
 /**
  * Order History View
  */
-$title = "Order History - " . APP_NAME;
+$title = "Order History - " . SITE_NAME;
 $current_page = 'orders';
+$orders = $data['orders'] ?? [];
+// print_r($orders);
+// echo '</pre>';
+
 ?>
 
 <div class="container my-5">
@@ -38,7 +42,7 @@ $current_page = 'orders';
                 </div>
                 <h4 class="text-muted mb-3">No Orders Found</h4>
                 <p class="text-muted mb-4">You haven't placed any orders yet. Start exploring our delicious menu!</p>
-                <a href="<?= BASE_URL ?>/menu" class="btn btn-primary">
+                <a href="<?= SITE_NAME ?>/menu" class="btn btn-primary">
                     <i class="fas fa-utensils me-2"></i>Browse Menu
                 </a>
             </div>
@@ -66,7 +70,7 @@ $current_page = 'orders';
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-1">
                                     <span class="text-muted">Items:</span>
-                                    <span><?= $order['total_items'] ?></span>
+                                    <span><?= isset($order['total_items']) ? $order['total_items'] : count($order['order_items'] ?? []) ?></span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-1">
                                     <span class="text-muted">Type:</span>
@@ -88,7 +92,7 @@ $current_page = 'orders';
                                     ?>
                                     <?php foreach ($displayed_items as $item): ?>
                                     <span class="badge bg-light text-dark me-1 mb-1">
-                                        <?= htmlspecialchars($item['name']) ?> (<?= $item['quantity'] ?>)
+                                        <?= htmlspecialchars($item['food_name'] ?? $item['name'] ?? 'Món đã xóa') ?> (<?= $item['quantity'] ?>)
                                     </span>
                                     <?php endforeach; ?>
                                     <?php if ($remaining_count > 0): ?>
@@ -99,7 +103,7 @@ $current_page = 'orders';
                             <?php endif; ?>
 
                             <div class="d-flex gap-2 mt-auto">
-                                <a href="<?= BASE_URL ?>/order/detail/<?= $order['id'] ?>"
+                                <a href="<?= SITE_URL ?>/index.php?page=order&action=detail&id=<?= $order['id'] ?>"
                                    class="btn btn-outline-primary btn-sm flex-fill">
                                     <i class="fas fa-eye me-1"></i>View Details
                                 </a>
@@ -261,7 +265,7 @@ function filterOrders() {
 
 function cancelOrder(orderId) {
     if (confirm('Are you sure you want to cancel this order?')) {
-        fetch(`<?= BASE_URL ?>/order/cancel/${orderId}`, {
+        fetch(`<?= SITE_NAME ?>/order/cancel/${orderId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -285,7 +289,7 @@ function cancelOrder(orderId) {
 }
 
 function reorderItems(orderId) {
-    fetch(`<?= BASE_URL ?>/order/reorder/${orderId}`, {
+    fetch(`<?= SITE_NAME ?>/order/reorder/${orderId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
