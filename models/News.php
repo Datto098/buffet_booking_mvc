@@ -252,5 +252,106 @@ class News extends BaseModel {
         $stmt->execute();
         return $stmt->fetchAll();
     }
+
+    /**
+     * Transform news data from database format to view format
+     * Maps is_published (1/0) to status ('published'/'draft')
+     */
+    public function transformNewsData($news) {
+        // Transform is_published to status
+        $status = ($news['is_published'] == 1) ? 'published' : 'draft';
+
+        // Return news data with additional transformed fields
+        return array_merge($news, [
+            'status' => $status
+        ]);
+    }    /**
+     * Get all news articles with transformed data format for admin view
+     */
+    public function getAllForAdmin($limit = null, $offset = 0) {
+        $sql = "SELECT n.*,
+                CONCAT(u.first_name, ' ', u.last_name) as author
+                FROM {$this->table} n
+                LEFT JOIN users u ON n.author_id = u.id
+                ORDER BY n.created_at DESC";
+
+        if ($limit) {
+            $sql .= " LIMIT :limit OFFSET :offset";
+        }
+
+        $stmt = $this->db->prepare($sql);
+
+        if ($limit) {
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        $news = $stmt->fetchAll();
+
+        // Transform each news item
+        return array_map(function($newsItem) {
+            return $this->transformNewsData($newsItem);
+        }, $news);
+    }
+
+    /**
+     * Update news status
+     */
+    public function updateNewsStatus($id, $status) {
+        $sql = "UPDATE {$this->table} SET status = :status, updated_at = NOW() WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+
+        try {
+            return $stmt->execute([
+                ':id' => $id,
+                ':status' => $status
+            ]);
+        } catch (Exception $e) {
+            error_log("Error updating news status: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Bulk update news status
+     */
+    public function bulkUpdateStatus($ids, $status) {
+        if (empty($ids)) {
+            return false;
+        }
+
+        $placeholders = str_repeat('?,', count($ids) - 1) . '?';
+        $sql = "UPDATE {$this->table} SET status = ?, updated_at = NOW() WHERE id IN ($placeholders)";
+        $stmt = $this->db->prepare($sql);
+
+        try {
+            $params = array_merge([$status], $ids);
+            return $stmt->execute($params);
+        } catch (Exception $e) {
+            error_log("Error bulk updating news status: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Bulk delete news
+     */
+    public function bulkDelete($ids) {
+        if (empty($ids)) {
+            return false;
+        }
+
+        $placeholders = str_repeat('?,', count($ids) - 1) . '?';
+        $sql = "DELETE FROM {$this->table} WHERE id IN ($placeholders)";
+        $stmt = $this->db->prepare($sql);
+
+        try {
+            return $stmt->execute($ids);
+        } catch (Exception $e) {
+            error_log("Error bulk deleting news: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>

@@ -1,17 +1,20 @@
 <?php
-$title = "My Profile - " . APP_NAME;
+$title = "My Profile - " . " " . SITE_NAME;
 $current_page = 'profile';
+$active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
+
 ?>
 
-<div class="container my-5">
+<div class="container my-5" >
+    <!-- Alert -->
     <div class="row">
         <div class="col-lg-4">
             <!-- Profile Sidebar -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body text-center">
                     <div class="profile-avatar mb-3">
-                        <?php if (!empty($user['avatar'])): ?>
-                        <img src="<?= ASSETS_URL ?>/images/avatars/<?= $user['avatar'] ?>"
+                        <?php if (!empty($data['user']['avatar'])): ?>
+                        <img src="<?= SITE_URL ?>/assets/images/<?= $data['user']['avatar'] ?>"
                              alt="Profile Picture" class="rounded-circle" width="100" height="100">
                         <?php else: ?>
                         <div class="avatar-placeholder rounded-circle mx-auto d-flex align-items-center justify-content-center">
@@ -28,19 +31,19 @@ $current_page = 'profile';
             <!-- Profile Menu -->
             <div class="card border-0 shadow-sm">
                 <div class="list-group list-group-flush">
-                    <a href="#profile-info" class="list-group-item list-group-item-action active" data-tab="profile-info">
+                    <a href="#profile-info" data-tab="profile-info" class="list-group-item list-group-item-action<?= $active_tab == 'profile-info' ? ' active' : '' ?>">
                         <i class="fas fa-user me-2"></i>Profile Information
                     </a>
-                    <a href="#security" class="list-group-item list-group-item-action" data-tab="security">
+                    <a href="#security" data-tab="security" class="list-group-item list-group-item-action<?= $active_tab == 'security' ? ' active' : '' ?>">
                         <i class="fas fa-lock me-2"></i>Security & Password
                     </a>
-                    <a href="#preferences" class="list-group-item list-group-item-action" data-tab="preferences">
+                    <a href="#preferences" data-tab="preferences" class="list-group-item list-group-item-action <?= $active_tab == 'preferences' ? 'active' : '' ?>">
                         <i class="fas fa-cog me-2"></i>Preferences
                     </a>
-                    <a href="#order-history" class="list-group-item list-group-item-action" data-tab="order-history">
+                    <a href="#order-history" data-tab="order-history" class="list-group-item list-group-item-action <?= $active_tab == 'order-history' ? 'active' : '' ?>">
                         <i class="fas fa-shopping-bag me-2"></i>Order History
                     </a>
-                    <a href="#booking-history" class="list-group-item list-group-item-action" data-tab="booking-history">
+                    <a href="#booking-history" data-tab="booking-history" class="list-group-item list-group-item-action <?= $active_tab == 'booking-history' ? 'active' : '' ?>">
                         <i class="fas fa-calendar me-2"></i>Booking History
                     </a>
                 </div>
@@ -49,48 +52,62 @@ $current_page = 'profile';
 
         <div class="col-lg-8">
             <!-- Profile Information Tab -->
-            <div id="profile-info" class="tab-content active">
+            <div id="profile-info" class="tab-content<?= $active_tab == 'profile-info' ? ' active' : '' ?>">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white">
                         <h5 class="mb-0">Profile Information</h5>
                     </div>                    <div class="card-body">
                         <form id="profileForm" method="POST" action="<?= SITE_URL ?>/user/update-profile" enctype="multipart/form-data">
                             <?= csrf_token() ?>
-
+                            <div class="row g-3">
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="first_name" class="form-label">First Name</label>
                                     <input type="text" class="form-control" id="first_name" name="first_name"
-                                           value="<?= htmlspecialchars($user['first_name']) ?>" required>
+                                           value="<?= htmlspecialchars($data['user']['first_name']) ?>" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="last_name" class="form-label">Last Name</label>
                                     <input type="text" class="form-control" id="last_name" name="last_name"
-                                           value="<?= htmlspecialchars($user['last_name']) ?>" required>
+                                           value="<?= htmlspecialchars($data['user']['last_name']) ?>" required>
                                 </div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email Address</label>
                                 <input type="email" class="form-control" id="email" name="email"
-                                       value="<?= htmlspecialchars($user['email']) ?>" required>
+                                       value="<?= htmlspecialchars($data['user']['email']) ?>" required>
                             </div>
 
                             <div class="mb-3">
                                 <label for="phone" class="form-label">Phone Number</label>
                                 <input type="tel" class="form-control" id="phone" name="phone"
-                                       value="<?= htmlspecialchars($user['phone'] ?? '') ?>">
+                                       value="<?= htmlspecialchars($data['user']['phone'] ?? '') ?>">
                             </div>
 
                             <div class="mb-3">
                                 <label for="date_of_birth" class="form-label">Date of Birth</label>
                                 <input type="date" class="form-control" id="date_of_birth" name="date_of_birth"
-                                       value="<?= $user['date_of_birth'] ?? '' ?>">
+                                       value="<?= $data['user']['date_of_birth'] ?? '' ?>">
                             </div>
 
                             <div class="mb-3">
-                                <label for="address" class="form-label">Address</label>
-                                <textarea class="form-control" id="address" name="address" rows="3"><?= htmlspecialchars($user['address'] ?? '') ?></textarea>
+                                <label for="address">Address</label>
+                                <div class="input-group">
+                                    <input
+                                        type="text"
+                                        id="address"
+                                        name="address"
+                                        class="form-control"
+                                        placeholder="Nhập địa chỉ hoặc chọn trên bản đồ..."
+                                        value="<?= htmlspecialchars($data['user']['address'] ?? '') ?>"
+                                        autocomplete="off"
+                                    />
+                                    <button class="btn btn-outline-secondary" type="button" id="search-address">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <div id="map" style="width: 100%; height: 300px; margin-top: 10px;"></div>
                             </div>
 
                             <div class="mb-3">
@@ -108,12 +125,13 @@ $current_page = 'profile';
             </div>
 
             <!-- Security Tab -->
-            <div id="security" class="tab-content">
+            <div id="security" class="tab-content<?= $active_tab == 'security' ? ' active' : '' ?>">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white">
                         <h5 class="mb-0">Security & Password</h5>
-                    </div>                    <div class="card-body">
-                        <form id="passwordForm" method="POST" action="<?= SITE_URL ?>/user/change-password">
+                    </div>
+                    <div class="card-body">
+                        <form action="<?= SITE_URL ?>/index.php?page=user&action=changePassword" method="post">
                             <?= csrf_token() ?>
 
                             <div class="mb-3">
@@ -124,7 +142,7 @@ $current_page = 'profile';
                             <div class="mb-3">
                                 <label for="new_password" class="form-label">New Password</label>
                                 <input type="password" class="form-control" id="new_password" name="new_password" required>
-                                <div class="form-text">Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.</div>
+                                <div class="form-text">Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, and one number.</div>
                             </div>
 
                             <div class="mb-3">
@@ -139,28 +157,19 @@ $current_page = 'profile';
 
                         <hr class="my-4">
 
-                        <h6 class="mb-3">Two-Factor Authentication</h6>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <p class="mb-1">Add an extra layer of security to your account</p>
-                                <small class="text-muted">Protect your account with SMS or app-based authentication</small>
-                            </div>
-                            <button class="btn btn-outline-primary btn-sm" onclick="enable2FA()">
-                                <i class="fas fa-shield-alt me-2"></i>Enable 2FA
-                            </button>
-                        </div>
-                    </div>
+                       
                 </div>
+            </div>
             </div>
 
             <!-- Preferences Tab -->
-            <div id="preferences" class="tab-content">
-                <div class="card border-0 shadow-sm">
+            <div id="preferences" class="tab-content <?= $active_tab == 'preferences' ? 'active' : '' ?>">
+                <!-- <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white">
                         <h5 class="mb-0">Preferences</h5>
                     </div>
                     <div class="card-body">
-                        <form id="preferencesForm" method="POST" action="<?= BASE_URL ?>/user/update-preferences">
+                        <form id="preferencesForm" method="POST" action="<?= SITE_URL ?>/user/update-preferences">
                             <?= csrf_token() ?>
 
                             <h6 class="mb-3">Email Notifications</h6>
@@ -240,25 +249,30 @@ $current_page = 'profile';
                             </button>
                         </form>
                     </div>
+                </div> -->
+                <div>
+                    <div class="text-center">
+                        Tính năng này đang được phát triển.
+                    </div>
                 </div>
             </div>
 
             <!-- Order History Tab -->
-            <div id="order-history" class="tab-content">
+            <div id="order-history" class="tab-content <?= $active_tab == 'order-history' ? 'active' : '' ?>">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Recent Orders</h5>
-                        <a href="<?= BASE_URL ?>/order/history" class="btn btn-outline-primary btn-sm">
+                        <a href="<?= SITE_URL ?>/order/history" class="btn btn-outline-primary btn-sm">
                             View All Orders
                         </a>
                     </div>
                     <div class="card-body">
                         <?php if (empty($recent_orders)): ?>
-                        <div class="text-center py-4">
-                            <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No orders found</p>
-                        </div>
-                        <?php else: ?>
+    <div class="text-center py-4">
+        <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+        <p class="text-muted">No orders found</p>
+    </div>
+<?php else: ?>
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead class="table-light">
@@ -284,7 +298,7 @@ $current_page = 'profile';
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="<?= BASE_URL ?>/order/detail/<?= $order['id'] ?>"
+                                            <a href="<?= SITE_URL ?>/order/detail/<?= $order['id'] ?>"
                                                class="btn btn-outline-primary btn-sm">
                                                 View
                                             </a>
@@ -300,11 +314,11 @@ $current_page = 'profile';
             </div>
 
             <!-- Booking History Tab -->
-            <div id="booking-history" class="tab-content">
+            <div id="booking-history" class="tab-content <?= $active_tab == 'booking-history' ? 'active' : '' ?>">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Recent Bookings</h5>
-                        <a href="<?= BASE_URL ?>/booking/history" class="btn btn-outline-primary btn-sm">
+                        <a href="<?= SITE_URL ?>/booking/history" class="btn btn-outline-primary btn-sm">
                             View All Bookings
                         </a>
                     </div>
@@ -343,7 +357,7 @@ $current_page = 'profile';
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="<?= BASE_URL ?>/booking/detail/<?= $booking['id'] ?>"
+                                            <a href="<?= SITE_URL ?>/booking/detail/<?= $booking['id'] ?>"
                                                class="btn btn-outline-primary btn-sm">
                                                 View
                                             </a>
@@ -361,6 +375,15 @@ $current_page = 'profile';
     </div>
 </div>
 
+<?php if (!empty($_SESSION['success'])): ?>
+    <div class="alert alert-success"><?= $_SESSION['success']; unset($_SESSION['success']); ?></div>
+    <div>Test ổn</div>
+<?php endif; ?>
+<?php if (!empty($_SESSION['error'])): ?>
+    <div class="alert alert-danger"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
+     <div>Test ổn</div>
+<?php endif; ?>
+
 <style>
 .avatar-placeholder {
     width: 100px;
@@ -375,13 +398,8 @@ $current_page = 'profile';
     color: white;
 }
 
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
-}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
 .badge-pending { background-color: #ffc107; color: #000; }
 .badge-confirmed { background-color: #17a2b8; color: #fff; }
@@ -391,114 +409,89 @@ $current_page = 'profile';
 .badge-cancelled { background-color: #dc3545; color: #fff; }
 </style>
 
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
 <script>
-// Tab switching functionality
-document.querySelectorAll('[data-tab]').forEach(tab => {
-    tab.addEventListener('click', function(e) {
-        e.preventDefault();
+let map, marker;
 
-        // Remove active class from all tabs and content
-        document.querySelectorAll('[data-tab]').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+// Hàm khởi tạo map
+function initMap() {
+    if (map) return; // Đã khởi tạo rồi thì thôi
+    map = L.map('map').setView([10.762622, 106.660172], 13); // Tọa độ mặc định: Sài Gòn
 
-        // Add active class to clicked tab and corresponding content
-        this.classList.add('active');
-        document.getElementById(this.dataset.tab).classList.add('active');
-    });
-});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-// Profile form submission
-document.getElementById('profileForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const formData = new FormData(this);
-
-    fetch(this.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-Token': formData.get('csrf_token')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('Profile updated successfully', 'success');
-        } else {
-            showAlert(data.message || 'Failed to update profile', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('An error occurred while updating profile', 'error');
-    });
-});
-
-// Password form submission
-document.getElementById('passwordForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const newPassword = document.getElementById('new_password').value;
-    const confirmPassword = document.getElementById('confirm_password').value;
-
-    if (newPassword !== confirmPassword) {
-        showAlert('Passwords do not match', 'error');
-        return;
+    // Nếu có địa chỉ cũ, geocode và đặt marker
+    const address = document.getElementById('address').value;
+    if (address) {
+        fetch(`<?= SITE_URL ?>/controllers/GeoController.php?q=${encodeURIComponent(address)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data[0]) {
+                    const lat = data[0].lat, lon = data[0].lon;
+                    map.setView([lat, lon], 16);
+                    marker = L.marker([lat, lon]).addTo(map);
+                }
+            });
     }
 
-    const formData = new FormData(this);
-
-    fetch(this.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-Token': formData.get('csrf_token')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('Password changed successfully', 'success');
-            this.reset();
-        } else {
-            showAlert(data.message || 'Failed to change password', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('An error occurred while changing password', 'error');
+    // Click trên bản đồ để chọn vị trí
+    map.on('click', function(e) {
+        if (marker) map.removeLayer(marker);
+        marker = L.marker(e.latlng).addTo(map);
+        // Reverse geocode
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    document.getElementById('address').value = data.display_name;
+                }
+            });
     });
-});
 
-// Preferences form submission
-document.getElementById('preferencesForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const formData = new FormData(this);
-
-    fetch(this.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-Token': formData.get('csrf_token')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('Preferences saved successfully', 'success');
-        } else {
-            showAlert(data.message || 'Failed to save preferences', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('An error occurred while saving preferences', 'error');
-    });
-});
-
-function enable2FA() {
-    // This would typically open a modal or redirect to 2FA setup
-    showAlert('Two-factor authentication setup coming soon!', 'info');
+    // Tìm địa chỉ
+    document.getElementById('search-address').onclick = function() {
+        const addr = document.getElementById('address').value;
+        if (!addr) return;
+        fetch(`<?= SITE_URL ?>/controllers/GeoController.php?q=${encodeURIComponent(addr)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data[0]) {
+                    const lat = data[0].lat, lon = data[0].lon;
+                    map.setView([lat, lon], 16);
+                    if (marker) map.removeLayer(marker);
+                    marker = L.marker([lat, lon]).addTo(map);
+                }
+            });
+    };
 }
+
+// Khởi tạo map khi tab profile-info active
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('profile-info').classList.contains('active')) {
+        setTimeout(initMap, 200);
+    }
+    document.querySelectorAll('[data-tab]').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('[data-tab]').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            const tabId = this.getAttribute('data-tab');
+            const tabContent = document.getElementById(tabId);
+            if (tabContent) tabContent.classList.add('active');
+            // Đổi URL để giữ tab khi reload
+            if (history.pushState) {
+                const url = new URL(window.location);
+                url.searchParams.set('tab', tabId);
+                history.replaceState(null, '', url);
+            }
+        });
+    });
+});
 </script>
+
+

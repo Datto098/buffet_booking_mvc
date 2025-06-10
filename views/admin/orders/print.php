@@ -235,11 +235,11 @@
                 <th class="text-right">Total</th>
             </tr>
         </thead>
-        <tbody>
-            <?php
+        <tbody>            <?php
             $subtotal = 0;
             foreach ($order['items'] as $item):
-                $itemTotal = $item['price'] * $item['quantity'];
+                $unitPrice = $item['unit_price'] ?? 0;
+                $itemTotal = $unitPrice * $item['quantity'];
                 $subtotal += $itemTotal;
             ?>
             <tr>
@@ -248,9 +248,8 @@
                     <?php if (!empty($item['description'])): ?>
                     <br><small style="color: #666;"><?= htmlspecialchars(substr($item['description'], 0, 60)) ?>...</small>
                     <?php endif; ?>
-                </td>
-                <td class="text-center"><?= $item['quantity'] ?></td>
-                <td class="text-right">$<?= number_format($item['price'], 2) ?></td>
+                </td>                <td class="text-center"><?= $item['quantity'] ?></td>
+                <td class="text-right">$<?= number_format($unitPrice, 2) ?></td>
                 <td class="text-right">$<?= number_format($itemTotal, 2) ?></td>
             </tr>
             <?php endforeach; ?>
@@ -292,17 +291,9 @@
         <p>Thank you for your order!</p>
         <p>For questions about this order, please contact us at (555) 123-4567</p>
         <p>Printed on <?= date('M j, Y \a\t g:i A') ?></p>
-    </div>
-
+    </div>    <script src="<?= SITE_URL ?>/assets/js/admin.js"></script>
     <script>
-        // Auto-print when page loads if opened in new window
-        if (window.location !== window.parent.location) {
-            window.onload = function() {
-                setTimeout(function() {
-                    window.print();
-                }, 500);
-            };
-        }
+        autoPrintOrder();
     </script>
 </body>
 </html>

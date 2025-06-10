@@ -12,15 +12,15 @@ Dựa trên yêu cầu, chúng ta có thể chia giao diện thành 3 khu vực 
     * Hiển thị banner khuyến mãi, các món ăn nổi bật, vé buffet phổ biến.
     * Giới thiệu ngắn về nhà hàng, tin tức mới nhất.
     * Thanh tìm kiếm.
-2.  **Trang Đăng Nhập / Đăng Ký (`login.php`, `register.php`):**
+<!-- 2.  **Trang Đăng Nhập / Đăng Ký (`login.php`, `register.php`):**
     * Form đăng nhập, đăng ký cho khách hàng.
-    * Chức năng "Quên mật khẩu".
-3.  **Trang Hồ Sơ Khách Hàng (`profile.php`):**
+    * Chức năng "Quên mật khẩu". -->
+<!-- 3.  **Trang Hồ Sơ Khách Hàng (`profile.php`):**
     * Xem và chỉnh sửa thông tin cá nhân (tên, email, số điện thoại).
-    * Thay đổi mật khẩu.
-4.  **Trang Quản Lý Địa Chỉ (`addresses.php`):**
+    * Thay đổi mật khẩu. -->
+<!-- 4.  **Trang Quản Lý Địa Chỉ (`addresses.php`):**
     * Thêm, sửa, xóa địa chỉ giao hàng.
-    * Chọn địa chỉ mặc định.
+    * Chọn địa chỉ mặc định. -->
 5.  **Trang Thực Đơn / Món Ăn (`menu.php`):**
     * Hiển thị danh sách các món ăn, vé buffet.
     * Bộ lọc theo danh mục (món khai vị, món chính, buffet, ...).
@@ -44,10 +44,10 @@ Dựa trên yêu cầu, chúng ta có thể chia giao diện thành 3 khu vực 
     * Form điền thông tin đặt bàn (tên, SĐT, số người, ngày giờ).
 12. **Trang Khuyến Mãi (`promotions.php`):**
     * Hiển thị danh sách các chương trình khuyến mãi hiện có.
-13. **Trang Tin Tức (`news.php`, `news_detail.php`):**
-    * Danh sách tin tức và trang chi tiết cho mỗi tin.
-14. **Trang Giới Thiệu (`about.php`):**
-    * Thông tin chi tiết về nhà hàng.
+<!-- 13. **Trang Tin Tức (`news.php`, `news_detail.php`):**
+    * Danh sách tin tức và trang chi tiết cho mỗi tin. -->
+<!-- 14. **Trang Giới Thiệu (`about.php`):**
+    * Thông tin chi tiết về nhà hàng. -->
 15. **Trang Kết Quả Tìm Kiếm (`search.php`):**
     * Hiển thị kết quả tìm kiếm món ăn.
 

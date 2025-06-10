@@ -50,7 +50,7 @@
             </div>
 
             <hr style="border-color: rgba(212, 175, 55, 0.3); margin: 2rem 0 1rem;">
-              <div class="text-center">
+            <div class="text-center">
                 <p class="mb-0">&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. Tất cả quyền được bảo lưu.</p>
             </div>
         </div>
@@ -60,27 +60,34 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo SITE_URL; ?>/assets/js/luxury-effects.js"></script>
     <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>
-</body>
-</html>
-                </div>
-                <div class="col-md-6 text-end">
-                    <a href="#" class="text-light me-3">Chính Sách Bảo Mật</a>
-                    <a href="#" class="text-light">Điều Khoản Dịch Vụ</a>
-                </div>
-            </div>
-        </div>
-    </footer>    <!-- Bootstrap JS -->
+    </body>
+
+    </html>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="#" class="text-light me-3">Chính Sách Bảo Mật</a>
+        <a href="#" class="text-light">Điều Khoản Dịch Vụ</a>
+    </div>
+    </div>
+    </div>
+    </footer> <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Luxury Smooth Scrolling -->
     <script src="<?php echo SITE_URL; ?>/assets/js/luxury-scroll.js"></script>
     <!-- Custom JS -->
-    <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script><!-- CSRF Token for AJAX requests -->
+    <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script> <!-- CSRF Token for AJAX requests -->
     <script>
-        window.csrfToken = '<?php echo $_SESSION['csrf_token'] ?? generateCSRFToken(); ?>';
+        window.csrfToken = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
         window.siteUrl = '<?php echo SITE_URL; ?>';
-        <?php if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = generateCSRFToken(); ?>
+        <?php
+        // Only generate token if none exists and we're not overwriting existing one
+        if (!isset($_SESSION['csrf_token']) || empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = generateCSRFToken();
+        }
+        ?>
     </script>
-</body>
-</html>
+    </body>
+
+    </html>

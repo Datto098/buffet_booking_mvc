@@ -3,9 +3,19 @@
  * Configuration file - General settings
  */
 
+// Path settings (moved up for error logging)
+define('ROOT_PATH', dirname(__DIR__));
+
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+ini_set('error_log', ROOT_PATH . '/debug.log');
+
 // Site settings
 define('SITE_NAME', 'Buffet Booking');
 define('SITE_URL', 'http://localhost/buffet_booking_mvc');
+// define('SITE_URL', 'http://localhost:8000');
 define('ADMIN_EMAIL', 'admin@buffetbooking.com');
 
 // Security settings
@@ -21,16 +31,31 @@ define('ALLOWED_IMAGE_TYPES', ['jpg', 'jpeg', 'png', 'gif']);
 define('ITEMS_PER_PAGE', 12);
 define('ADMIN_ITEMS_PER_PAGE', 20);
 
-// Path settings
-define('ROOT_PATH', dirname(__DIR__));
+// Path settings (already defined above)
 define('UPLOAD_PATH', ROOT_PATH . '/uploads');
 define('ASSETS_PATH', ROOT_PATH . '/assets');
 
 // Include database configuration
 require_once __DIR__ . '/../database/install.php';
 
-// Start session only if not already started and not in CLI mode
+// Configure session settings for better persistence
 if (php_sapi_name() !== 'cli' && session_status() === PHP_SESSION_NONE) {
+    // Configure session for better persistence
+    ini_set('session.save_handler', 'files');
+    ini_set('session.use_only_cookies', 1);
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.cookie_samesite', 'Lax');
+    ini_set('session.gc_probability', 1);
+    ini_set('session.gc_divisor', 100);
+    ini_set('session.gc_maxlifetime', SESSION_TIMEOUT);
+
+    // Ensure session directory exists and is writable
+    $sessionPath = sys_get_temp_dir() . '/php_sessions';
+    if (!is_dir($sessionPath)) {
+        mkdir($sessionPath, 0755, true);
+    }
+    ini_set('session.save_path', $sessionPath);
+
     session_start();
 }
 
@@ -87,7 +112,7 @@ function verifyCSRFToken($token) {
  * @return string HTML input field with CSRF token
  */
 function csrf_token_field() {
-    if (!isset($_SESSION['csrf_token'])) {
+    if (!isset($_SESSION['csrf_token']) || empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = generateCSRFToken();
     }
     return '<input type="hidden" name="csrf_token" value="' . $_SESSION['csrf_token'] . '">';

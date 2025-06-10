@@ -2,7 +2,7 @@
 <section class="hero-section">
     <div class="container">
         <div class="hero-content">
-            <h1 class="hero-title " style="color: var(--text-primary);">
+            <h1 class="hero-title " style="color: #fff">
                 Trải Nghiệm Ẩm Thực <br>
                 <span class="text-white">Đẳng Cấp Quốc Tế</span>
             </h1>
@@ -15,7 +15,7 @@
                 <a href="<?php echo SITE_URL; ?>/menu" class="btn btn-luxury">
                     <i class="fas fa-crown"></i> Khám Phá Thực Đơn
                 </a>
-                <a href="<?php echo SITE_URL; ?>/booking" class="btn btn-outline-luxury" style="color: var(--text-primary);">
+                <a href="<?php echo SITE_URL; ?>/booking" class="btn btn-outline-luxury" style="color: #fff;">
                     <i class="fas fa-concierge-bell"></i> Đặt Bàn VIP
                 </a>
             </div>

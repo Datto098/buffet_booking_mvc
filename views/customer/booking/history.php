@@ -2,7 +2,7 @@
 /**
  * Booking History View
  */
-$title = "Booking History - " . APP_NAME;
+$title = "Booking History - " . SITE_NAME;
 $current_page = 'bookings';
 ?>
 
@@ -29,7 +29,7 @@ $current_page = 'bookings';
                         <option value="month">This Month</option>
                         <option value="past">Past Bookings</option>
                     </select>
-                    <a href="<?= BASE_URL ?>/booking" class="btn btn-primary btn-sm">
+                    <a href="<?= SITE_NAME ?>/booking" class="btn btn-primary btn-sm">
                         <i class="fas fa-plus me-1"></i>New Booking
                     </a>
                 </div>
@@ -42,7 +42,7 @@ $current_page = 'bookings';
                 </div>
                 <h4 class="text-muted mb-3">No Bookings Found</h4>
                 <p class="text-muted mb-4">You haven't made any table reservations yet. Reserve a table to enjoy our buffet!</p>
-                <a href="<?= BASE_URL ?>/booking" class="btn btn-primary">
+                <a href="<?= SITE_NAME ?>/booking" class="btn btn-primary">
                     <i class="fas fa-calendar-plus me-2"></i>Make a Reservation
                 </a>
             </div>
@@ -98,7 +98,7 @@ $current_page = 'bookings';
 
                             <!-- Booking Actions -->
                             <div class="d-flex gap-2 mt-auto">
-                                <a href="<?= BASE_URL ?>/booking/detail/<?= $booking['id'] ?>"
+                                <a href="<?= SITE_NAME ?>/booking/detail/<?= $booking['id'] ?>"
                                    class="btn btn-outline-primary btn-sm flex-fill">
                                     <i class="fas fa-eye me-1"></i>View Details
                                 </a>
@@ -321,7 +321,7 @@ updateCountdowns(); // Initial update
 
 function cancelBooking(bookingId) {
     if (confirm('Are you sure you want to cancel this booking?')) {
-        fetch(`<?= BASE_URL ?>/booking/cancel/${bookingId}`, {
+        fetch(`<?= SITE_NAME ?>/booking/cancel/${bookingId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -345,11 +345,11 @@ function cancelBooking(bookingId) {
 }
 
 function modifyBooking(bookingId) {
-    window.location.href = `<?= BASE_URL ?>/booking/modify/${bookingId}`;
+    window.location.href = `<?= SITE_NAME ?>/booking/modify/${bookingId}`;
 }
 
 function rebookTable(bookingId) {
-    fetch(`<?= BASE_URL ?>/booking/rebook/${bookingId}`, {
+    fetch(`<?= SITE_NAME ?>/booking/rebook/${bookingId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -360,7 +360,7 @@ function rebookTable(bookingId) {
     .then(data => {
         if (data.success) {
             showAlert('Booking details copied. Redirecting to booking form...', 'success');
-            setTimeout(() => window.location.href = '<?= BASE_URL ?>/booking', 1500);
+            setTimeout(() => window.location.href = '<?= SITE_NAME ?>/booking', 1500);
         } else {
             showAlert(data.message || 'Failed to copy booking details', 'error');
         }

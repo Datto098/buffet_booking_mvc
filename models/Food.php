@@ -6,7 +6,53 @@
 require_once 'BaseModel.php';
 
 class Food extends BaseModel {
-    protected $table = 'food_items';    public function getFoodWithCategory($limit = null, $offset = 0) {
+    protected $table = 'food_items';
+
+    /**
+     * Transform food data from database format to view format
+     * Maps is_available (1/0) to status ('available'/'unavailable')
+     */
+    public function transformFoodData($food) {
+        // Transform is_available to status
+        $status = ($food['is_available'] == 1) ? 'available' : 'unavailable';
+
+        // Return food data with additional transformed fields
+        return array_merge($food, [
+            'status' => $status
+        ]);
+    }
+
+    /**
+     * Get all foods with transformed data format for admin view
+     */
+    public function getAllForAdmin($limit = null, $offset = 0) {
+        $sql = "SELECT f.*, c.name as category_name, sc.name as subcategory_name
+                FROM {$this->table} f
+                LEFT JOIN categories c ON f.category_id = c.id
+                LEFT JOIN sub_categories sc ON f.subcategory_id = sc.id
+                ORDER BY f.created_at DESC";
+
+        if ($limit) {
+            $sql .= " LIMIT :limit OFFSET :offset";
+        }
+
+        $stmt = $this->db->prepare($sql);
+
+        if ($limit) {
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        $foods = $stmt->fetchAll();
+
+        // Transform each food item
+        return array_map(function($food) {
+            return $this->transformFoodData($food);
+        }, $foods);
+    }
+
+    public function getFoodWithCategory($limit = null, $offset = 0) {
         $sql = "SELECT f.*, c.name as category_name, sc.name as subcategory_name
                 FROM {$this->table} f
                 JOIN categories c ON f.category_id = c.id
@@ -25,6 +71,25 @@ class Food extends BaseModel {
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         }
 
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get featured foods for homepage - those marked as popular, new, or seasonal
+     */
+    public function getFeaturedFoods($limit = 6) {
+        $sql = "SELECT f.*, c.name as category_name, sc.name as subcategory_name
+                FROM {$this->table} f
+                JOIN categories c ON f.category_id = c.id
+                LEFT JOIN sub_categories sc ON f.subcategory_id = sc.id
+                WHERE f.is_available = 1
+                AND (f.is_popular = 1 OR f.is_new = 1 OR f.is_seasonal = 1)
+                ORDER BY f.is_popular DESC, f.is_new DESC, f.is_seasonal DESC, f.created_at DESC
+                LIMIT :limit";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
     }

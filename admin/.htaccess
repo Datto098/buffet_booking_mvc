@@ -1,0 +1,16 @@
+# Admin directory .htaccess
+# This handles admin routes and redirects to parent index.php for routing
+
+# Enable rewrite engine
+RewriteEngine On
+
+# If requesting just /admin or /admin/, serve the local index.php
+RewriteRule ^$ index.php [L]
+
+# For any other admin routes (like /admin/users), redirect to parent index.php for proper routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)$ ../index.php [L]
+
+# Prevent directory listing
+Options -Indexes

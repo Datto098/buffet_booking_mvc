@@ -7,41 +7,93 @@ require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Booking.php';
 require_once __DIR__ . '/../models/Table.php';
 
-class AdminController extends BaseController {    public function __construct() {
-        $this->requireRole(['manager', 'super_admin']);
-    }
+class AdminController extends BaseController
+{
+    private $categoryModel;
+    private $userModel;
+    private $foodModel;
+    private $orderModel;
+    private $bookingModel;
+    private $tableModel;
 
-    public function dashboard() {
+    public function __construct()
+    {
+        $this->requireRole(['manager', 'super_admin']);
+        $this->categoryModel = new Category();
+        $this->userModel = new User();
+        $this->foodModel = new Food();
+        $this->orderModel = new Order();
+        $this->bookingModel = new Booking();
+        $this->tableModel = new Table();
+    }    public function dashboard()
+    {
         $data = [
             'title' => 'Admin Dashboard',
             'stats' => $this->getDashboardStats()
         ];
 
-        $this->view('admin/dashboard', $data);
+        $this->loadAdminView('dashboard', $data);    }
+
+    public function dashboardStats()
+    {
+        header('Content-Type: application/json');
+
+        $stats = $this->getDashboardStats();
+
+        echo json_encode([
+            'success' => true,
+            'stats' => $stats
+        ]);
     }
 
-    public function users() {
+    public function users()
+    {
         $userModel = new User();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
-        $users = $userModel->findAll($limit, $offset);
-        $totalUsers = $userModel->count();
+        // Use getAllForAdmin() to get properly formatted user data
+        $allUsers = $userModel->getAllForAdmin();
+        $totalUsers = count($allUsers);
         $totalPages = ceil($totalUsers / $limit);
 
+        // Apply pagination to the transformed data
+        $users = array_slice($allUsers, $offset, $limit);
+
+        // Calculate statistics for the dashboard cards
+        $activeUsers = count(array_filter($allUsers, function ($user) {
+            return $user['is_active'] == 1;
+        }));
+
+        $adminUsers = count(array_filter($allUsers, function ($user) {
+            return in_array($user['role'], ['manager', 'super_admin']);
+        }));
+
+        $newToday = count(array_filter($allUsers, function ($user) {
+            return date('Y-m-d', strtotime($user['created_at'])) === date('Y-m-d');
+        }));
         $data = [
             'title' => 'User Management',
             'users' => $users,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'total_items' => $totalUsers,
+                'items_per_page' => $limit
+            ],
             'currentPage' => $page,
             'totalPages' => $totalPages,
-            'totalUsers' => $totalUsers
+            'totalUsers' => $totalUsers,
+            'activeUsers' => $activeUsers,
+            'adminUsers' => $adminUsers,
+            'newToday' => $newToday
         ];
 
-        $this->view('admin/users/index', $data);
+        $this->loadAdminView('users/index', $data);
     }
-
-    public function createUser() {
+    public function createUser()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$this->validateCSRF()) {
                 $this->setFlash('error', 'Invalid security token.');
@@ -51,11 +103,15 @@ class AdminController extends BaseController {    public function __construct() 
 
             $userModel = new User();
             $userData = [
-                'name' => $this->sanitize($_POST['name']),
+                'first_name' => $this->sanitize($_POST['first_name']),
+                'last_name' => $this->sanitize($_POST['last_name']),
                 'email' => $this->sanitize($_POST['email']),
-                'phone' => $this->sanitize($_POST['phone']),
+                'phone' => $this->sanitize($_POST['phone'] ?? ''),
+                'address' => $this->sanitize($_POST['address'] ?? ''),
+                'date_of_birth' => !empty($_POST['date_of_birth']) ? $_POST['date_of_birth'] : null,
                 'role' => $this->sanitize($_POST['role']),
                 'password' => password_hash($_POST['password'], PASSWORD_DEFAULT),
+                'is_active' => 1,
                 'created_at' => date('Y-m-d H:i:s')
             ];
 
@@ -74,10 +130,11 @@ class AdminController extends BaseController {    public function __construct() 
             'csrf_token' => $this->generateCSRF()
         ];
 
-        $this->view('admin/users/create', $data);
+        $this->loadAdminView('users/create', $data);
     }
 
-    public function editUser($id) {
+    public function editUser($id)
+    {
         $userModel = new User();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -86,9 +143,9 @@ class AdminController extends BaseController {    public function __construct() 
                 $this->redirect('/admin/users');
                 return;
             }
-
             $userData = [
-                'name' => $this->sanitize($_POST['name']),
+                'first_name' => $this->sanitize($_POST['first_name']),
+                'last_name' => $this->sanitize($_POST['last_name']),
                 'email' => $this->sanitize($_POST['email']),
                 'phone' => $this->sanitize($_POST['phone'] ?? ''),
                 'address' => $this->sanitize($_POST['address'] ?? ''),
@@ -97,21 +154,13 @@ class AdminController extends BaseController {    public function __construct() 
             ];
 
             // Only super admin can change roles and status for other users
-            if ($this->hasRole(['super_admin']) && $id != $_SESSION['user_id']) {
+            if ($this->hasRole(['super_admin']) && $id != $_SESSION['user']['id']) {
                 $userData['role'] = $_POST['role'] ?? 'customer';
-                $userData['status'] = $_POST['status'] ?? 'active';
-            }
-
-            // Handle password update
+                $userData['is_active'] = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 1;
+            }            // Handle password update
             if (!empty($_POST['password'])) {
                 if (strlen($_POST['password']) < 6) {
                     $this->setFlash('error', 'Password must be at least 6 characters long.');
-                    $this->redirect('/admin/users/edit/' . $id);
-                    return;
-                }
-
-                if ($_POST['password'] !== $_POST['password_confirm']) {
-                    $this->setFlash('error', 'Password confirmation does not match.');
                     $this->redirect('/admin/users/edit/' . $id);
                     return;
                 }
@@ -148,10 +197,11 @@ class AdminController extends BaseController {    public function __construct() 
             'user' => $user
         ];
 
-        $this->view('admin/users/edit', $data);
+        $this->loadAdminView('users/edit', $data);
     }
 
-    public function deleteUser($id) {
+    public function deleteUser($id)
+    {
         if (!$this->validateCSRF()) {
             $this->setFlash('error', 'Invalid security token.');
             $this->redirect('/admin/users');
@@ -168,8 +218,8 @@ class AdminController extends BaseController {    public function __construct() 
 
         $this->redirect('/admin/users');
     }
-
-    public function foods() {
+    public function foods()
+    {
         $foodModel = new Food();
         $categoryModel = new Category();
 
@@ -177,10 +227,24 @@ class AdminController extends BaseController {    public function __construct() 
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
-        $foods = $foodModel->getAllWithCategories($limit, $offset);
+        // Use getAllForAdmin() to get properly formatted food data
+        $foods = $foodModel->getAllForAdmin($limit, $offset);
+        $allFoods = $foodModel->getAllForAdmin(); // Get all foods for statistics
         $categories = $categoryModel->findAll();
         $totalFoods = $foodModel->count();
         $totalPages = ceil($totalFoods / $limit);
+
+        // Calculate statistics for the dashboard cards
+        $availableFoods = count(array_filter($allFoods, function ($food) {
+            return $food['is_available'] == 1;
+        }));
+
+        $totalCategories = count($categories);
+
+        $popularToday = count(array_filter($allFoods, function ($food) {
+            // This is a simplified calculation - you can make it more sophisticated
+            return $food['is_available'] == 1 && ($food['price'] ?? 0) > 10;
+        }));
 
         $data = [
             'title' => 'Food Management',
@@ -188,13 +252,17 @@ class AdminController extends BaseController {    public function __construct() 
             'categories' => $categories,
             'currentPage' => $page,
             'totalPages' => $totalPages,
-            'totalFoods' => $totalFoods
+            'totalFoods' => $totalFoods,
+            'availableFoods' => $availableFoods,
+            'totalCategories' => $totalCategories,
+            'popularToday' => $popularToday
         ];
 
-        $this->view('admin/foods/index', $data);
+        $this->loadAdminView('foods/index', $data);
     }
 
-    public function createFood() {
+    public function createFood()
+    {
         $categoryModel = new Category();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -203,22 +271,20 @@ class AdminController extends BaseController {    public function __construct() 
                 $this->redirect('/admin/foods');
                 return;
             }
-
-            $foodModel = new Food();
-            $foodData = [
+            $foodModel = new Food();            $foodData = [
                 'name' => $this->sanitize($_POST['name']),
-                'description' => $this->sanitize($_POST['description']),
+                'description' => $this->sanitize($_POST['description'] ?? ''),
                 'price' => (float)$_POST['price'],
                 'category_id' => (int)$_POST['category_id'],
                 'subcategory_id' => !empty($_POST['subcategory_id']) ? (int)$_POST['subcategory_id'] : null,
                 'is_available' => isset($_POST['is_available']) ? 1 : 0,
-                'is_featured' => isset($_POST['is_featured']) ? 1 : 0,
+                'is_popular' => isset($_POST['is_popular']) ? 1 : 0,
+                'is_new' => isset($_POST['is_new']) ? 1 : 0,
+                'is_seasonal' => isset($_POST['is_seasonal']) ? 1 : 0,
                 'created_at' => date('Y-m-d H:i:s')
-            ];
-
-            // Handle image upload
+            ];// Handle image upload
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = 'assets/images/foods/';
+                $uploadDir = 'uploads/food_images/';
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0755, true);
                 }
@@ -228,8 +294,14 @@ class AdminController extends BaseController {    public function __construct() 
 
                 if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath)) {
                     $foodData['image'] = $fileName;
+                    error_log("Image uploaded successfully: " . $fileName);
+                } else {
+                    error_log("Failed to move uploaded file from " . $_FILES['image']['tmp_name'] . " to " . $uploadPath);
                 }
-            }
+            } else {
+                error_log("Image upload failed or no image provided. Error: " . ($_FILES['image']['error'] ?? 'No file'));            }
+
+            error_log("Food data to be inserted: " . print_r($foodData, true));
 
             if ($foodModel->create($foodData)) {
                 $this->setFlash('success', 'Food item created successfully.');
@@ -240,17 +312,18 @@ class AdminController extends BaseController {    public function __construct() 
             $this->redirect('/admin/foods');
             return;
         }
-
         $data = [
             'title' => 'Create Food Item',
             'categories' => $categoryModel->getMainCategories(),
             'csrf_token' => $this->generateCSRF()
         ];
 
-        $this->view('admin/foods/create', $data);
+        $this->loadAdminView('foods/create', $data);
     }
 
-    public function editFood($id) {        $foodModel = new Food();
+    public function editFood($id)
+    {
+        $foodModel = new Food();
         $categoryModel = new Category();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -258,26 +331,19 @@ class AdminController extends BaseController {    public function __construct() 
                 $this->setFlash('error', 'Invalid security token.');
                 $this->redirect('/admin/foods');
                 return;
-            }
-
-            $foodData = [
+            }            $foodData = [
                 'name' => $this->sanitize($_POST['name']),
                 'description' => $this->sanitize($_POST['description'] ?? ''),
                 'price' => (float)$_POST['price'],
                 'category_id' => (int)$_POST['category_id'],
-                'availability' => $_POST['availability'] ?? 'available',
-                'ingredients' => $this->sanitize($_POST['ingredients'] ?? ''),
-                'spice_level' => $_POST['spice_level'] ?? 'mild',
-                'prep_time' => !empty($_POST['prep_time']) ? (int)$_POST['prep_time'] : null,
-                'calories' => !empty($_POST['calories']) ? (int)$_POST['calories'] : null,
-                'is_vegetarian' => isset($_POST['is_vegetarian']) ? 1 : 0,
-                'is_featured' => isset($_POST['is_featured']) ? 1 : 0,
+                'is_available' => isset($_POST['is_available']) ? 1 : 0,
+                'is_popular' => isset($_POST['is_popular']) ? 1 : 0,
+                'is_new' => isset($_POST['is_new']) ? 1 : 0,
+                'is_seasonal' => isset($_POST['is_seasonal']) ? 1 : 0,
                 'updated_at' => date('Y-m-d H:i:s')
-            ];
-
-            // Handle image upload
+            ];// Handle image upload
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = 'uploads/foods/';
+                $uploadDir = 'uploads/food_images/';
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0755, true);
                 }
@@ -315,17 +381,17 @@ class AdminController extends BaseController {    public function __construct() 
         }
 
         $categories = $categoryModel->findAll();
-
         $data = [
             'title' => 'Edit Food Item',
             'food' => $food,
             'categories' => $categories
         ];
 
-        $this->view('admin/foods/edit', $data);
+        $this->loadAdminView('foods/edit', $data);
     }
 
-    public function deleteFood($id) {
+    public function deleteFood($id)
+    {
         if (!$this->validateCSRF()) {
             $this->setFlash('error', 'Invalid security token.');
             $this->redirect('/admin/foods');
@@ -334,11 +400,10 @@ class AdminController extends BaseController {    public function __construct() 
 
         $foodModel = new Food();
         $food = $foodModel->findById($id);
-
         if ($food && $foodModel->delete($id)) {
             // Delete image file
-            if ($food['image'] && file_exists('assets/images/foods/' . $food['image'])) {
-                unlink('assets/images/foods/' . $food['image']);
+            if ($food['image'] && file_exists('uploads/food_images/' . $food['image'])) {
+                unlink('uploads/food_images/' . $food['image']);
             }
             $this->setFlash('success', 'Food item deleted successfully.');
         } else {
@@ -347,8 +412,8 @@ class AdminController extends BaseController {    public function __construct() 
 
         $this->redirect('/admin/foods');
     }
-
-    public function orders() {
+    public function orders()
+    {
         $orderModel = new Order();
 
         $page = (int)($_GET['page'] ?? 1);
@@ -360,40 +425,103 @@ class AdminController extends BaseController {    public function __construct() 
         $totalOrders = $orderModel->count($status);
         $totalPages = ceil($totalOrders / $limit);
 
+        // Calculate statistics for the dashboard cards
+        $allOrders = $orderModel->getAllOrders(); // Get all orders for statistics
+
+        $completedOrders = count(array_filter($allOrders, function ($order) {
+            return $order['status'] === 'completed';
+        }));
+
+        $pendingOrders = count(array_filter($allOrders, function ($order) {
+            return $order['status'] === 'pending';
+        }));
+
+        $todayRevenue = array_sum(array_map(function ($order) {
+            if (
+                date('Y-m-d', strtotime($order['created_at'])) === date('Y-m-d')
+                && $order['status'] === 'completed'
+            ) {
+                return $order['total_amount'] ?? 0;
+            }
+            return 0;
+        }, $allOrders));
         $data = [
             'title' => 'Order Management',
             'orders' => $orders,
             'currentPage' => $page,
             'totalPages' => $totalPages,
             'totalOrders' => $totalOrders,
-            'statusFilter' => $status
+            'statusFilter' => $status,
+            'completedOrders' => $completedOrders,
+            'pendingOrders' => $pendingOrders,
+            'todayRevenue' => $todayRevenue,
+            'csrf_token' => $this->generateCSRF()
         ];
 
-        $this->view('admin/orders/index', $data);
-    }
-
-    public function updateOrderStatus($id) {
+        $this->loadAdminView('orders/index', $data);
+    }    public function updateOrderStatus($id)
+    {
         if (!$this->validateCSRF()) {
             echo json_encode(['success' => false, 'message' => 'Invalid security token.']);
+            return;
+        }
+
+        // Check if status is provided
+        if (!isset($_POST['status']) || empty($_POST['status'])) {
+            echo json_encode(['success' => false, 'message' => 'Status is required.']);
             return;
         }
 
         $orderModel = new Order();
         $status = $this->sanitize($_POST['status']);
 
+        // Validate status
+        $allowedStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'completed', 'cancelled'];
+        if (!in_array($status, $allowedStatuses)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid status provided.']);
+            return;
+        }
+
         $updateData = [
             'status' => $status,
             'updated_at' => date('Y-m-d H:i:s')
-        ];
-
-        if ($orderModel->update($id, $updateData)) {
+        ];        if ($orderModel->update($id, $updateData)) {
             echo json_encode(['success' => true, 'message' => 'Order status updated successfully.']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to update order status.']);
         }
     }
 
-    public function bookings() {
+    public function updatePaymentStatus($id) {
+        if (!$this->validateCSRF()) {
+            echo json_encode(['success' => false, 'message' => 'Invalid security token.']);
+            return;
+        }
+
+        $orderModel = new Order();
+        $paymentStatus = $this->sanitize($_POST['payment_status']);
+
+        // Validate payment status
+        $allowedStatuses = ['pending', 'paid', 'failed', 'refunded'];
+        if (!in_array($paymentStatus, $allowedStatuses)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid payment status.']);
+            return;
+        }
+
+        $updateData = [
+            'payment_status' => $paymentStatus,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        if ($orderModel->update($id, $updateData)) {
+            echo json_encode(['success' => true, 'message' => 'Payment status updated successfully.']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to update payment status.']);
+        }
+    }
+
+    public function bookings()
+    {
         $bookingModel = new Booking();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
@@ -401,17 +529,16 @@ class AdminController extends BaseController {    public function __construct() 
         $status = $_GET['status'] ?? null;
         $search = $_GET['search'] ?? null;
 
-        $bookings = $bookingModel->getAllWithCustomers($limit, $offset, $status, $search);
+        $bookings = $bookingModel->getAllForAdmin($limit, $offset, $status, $search);
         $totalBookings = $bookingModel->count($status);
         $totalPages = ceil($totalBookings / $limit);
 
         // Export functionality
         if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-            $allBookings = $bookingModel->getAllWithCustomers(null, 0, $status, $search);
+            $allBookings = $bookingModel->getAllForAdmin(null, 0, $status, $search);
             $this->exportBookingsCSV($allBookings);
             return;
         }
-
         $data = [
             'title' => 'Booking Management',
             'bookings' => $bookings,
@@ -425,10 +552,9 @@ class AdminController extends BaseController {    public function __construct() 
             'csrf_token' => $this->generateCSRF()
         ];
 
-        $this->view('admin/bookings/index', $data);
-    }
-
-    public function updateBookingStatus() {
+        $this->loadAdminView('bookings/index', $data);
+    }    public function updateBookingStatus($bookingIdFromUrl = null)
+    {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
@@ -438,27 +564,49 @@ class AdminController extends BaseController {    public function __construct() 
         if (!$this->validateCSRF()) {
             echo json_encode(['success' => false, 'message' => 'Invalid security token']);
             return;
+        }        // Handle both JSON and form-encoded input
+        $input = null;
+        $rawInput = file_get_contents('php://input');
+
+        if (!empty($rawInput)) {
+            $input = json_decode($rawInput, true);
         }
 
-        $input = json_decode(file_get_contents('php://input'), true);
-        $bookingId = (int)$input['booking_id'];
+        // If JSON decode failed or input is empty, try POST data
+        if ($input === null) {
+            $input = $_POST;
+        }
+
+        // Get booking ID from URL parameter or request body
+        $bookingId = null;
+        if ($bookingIdFromUrl !== null) {
+            $bookingId = (int)$bookingIdFromUrl;
+        } elseif (isset($input['booking_id'])) {
+            $bookingId = (int)$input['booking_id'];
+        }
+
+        // Validate required fields
+        if (!$bookingId || !isset($input['status'])) {
+            echo json_encode(['success' => false, 'message' => 'Missing required fields (booking ID or status)']);
+            return;
+        }
+
         $status = $this->sanitize($input['status']);
 
         $allowedStatuses = ['pending', 'confirmed', 'cancelled', 'completed', 'no_show'];
         if (!in_array($status, $allowedStatuses)) {
             echo json_encode(['success' => false, 'message' => 'Invalid status']);
             return;
-        }
-
-        $bookingModel = new Booking();
-        if ($bookingModel->updateStatus($bookingId, $status)) {
+        }        $bookingModel = new Booking();
+        if ($bookingModel->updateBookingStatus($bookingId, $status)) {
             echo json_encode(['success' => true, 'message' => 'Booking status updated successfully']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to update booking status']);
         }
     }
 
-    public function assignTable() {
+    public function assignTable()
+    {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Method not allowed']);
@@ -482,7 +630,8 @@ class AdminController extends BaseController {    public function __construct() 
         }
     }
 
-    public function getBookingDetails($id) {
+    public function getBookingDetails($id)
+    {
         $bookingModel = new Booking();
         $booking = $bookingModel->getBookingDetails($id);
 
@@ -492,8 +641,23 @@ class AdminController extends BaseController {    public function __construct() 
             echo json_encode(['success' => false, 'message' => 'Booking not found']);
         }
     }
+    public function getCategory($id)
+    {
+        header('Content-Type: application/json');
+        $category = $this->categoryModel->findById((int)$id);
+        if ($category) {
+            // Transform data for frontend compatibility
+            $category['status'] = $category['is_active'] == 1 ? 'active' : 'inactive';
+            echo json_encode(['success' => true, 'category' => $category]);
+        } else {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Category not found']);
+        }
+        exit; // Ensure no further output
+    }
 
-    public function getAvailableTables() {
+    public function getAvailableTables()
+    {
         $reservationTime = $_GET['reservation_time'] ?? '';
         $numberOfGuests = (int)($_GET['number_of_guests'] ?? 1);
 
@@ -508,8 +672,102 @@ class AdminController extends BaseController {    public function __construct() 
         echo json_encode(['success' => true, 'tables' => $availableTables]);
     }
 
+    public function createBooking()
+    {
+        $data = [
+            'title' => 'Create New Booking',
+            'csrf_token' => $this->generateCSRF()
+        ];
+
+        $this->loadAdminView('bookings/create', $data);
+    }
+
+    public function storeBooking()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $_SESSION['error'] = 'Invalid request method';
+            header('Location: /admin/bookings');
+            exit;
+        }
+
+        if (!$this->validateCSRF()) {
+            $_SESSION['error'] = 'Invalid CSRF token';
+            header('Location: /admin/bookings/create');
+            exit;
+        }
+
+        // Validate required fields
+        $requiredFields = ['customer_name', 'phone_number', 'number_of_guests', 'reservation_date', 'reservation_time'];
+        foreach ($requiredFields as $field) {
+            if (empty($_POST[$field])) {
+                $_SESSION['error'] = 'Please fill in all required fields';
+                header('Location: /admin/bookings/create');
+                exit;
+            }
+        }
+
+        // Combine date and time
+        $reservationDateTime = $_POST['reservation_date'] . ' ' . $_POST['reservation_time'];
+
+        // Prepare booking data
+        $bookingData = [
+            'customer_name' => trim($_POST['customer_name']),
+            'phone_number' => trim($_POST['phone_number']),
+            'email' => trim($_POST['customer_email']) ?: null,
+            'number_of_guests' => (int)$_POST['number_of_guests'],
+            'reservation_time' => $reservationDateTime,
+            'special_requests' => trim($_POST['special_requests']) ?: null,
+            'status' => 'pending'
+        ];
+
+        // Validate phone number format
+        if (!preg_match('/^[0-9\-\+\(\)\s]+$/', $bookingData['phone_number'])) {
+            $_SESSION['error'] = 'Invalid phone number format';
+            header('Location: /admin/bookings/create');
+            exit;
+        }
+
+        // Validate email if provided
+        if ($bookingData['email'] && !filter_var($bookingData['email'], FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['error'] = 'Invalid email format';
+            header('Location: /admin/bookings/create');
+            exit;
+        }
+
+        // Validate number of guests
+        if ($bookingData['number_of_guests'] < 1 || $bookingData['number_of_guests'] > 20) {
+            $_SESSION['error'] = 'Number of guests must be between 1 and 20';
+            header('Location: /admin/bookings/create');
+            exit;
+        }
+
+        // Validate reservation time is in the future
+        if (strtotime($reservationDateTime) < time()) {
+            $_SESSION['error'] = 'Reservation time must be in the future';
+            header('Location: /admin/bookings/create');
+            exit;
+        }
+
+        try {
+            $bookingId = $this->bookingModel->createBooking($bookingData);
+            if ($bookingId) {
+                $_SESSION['success'] = 'Booking created successfully';
+                header('Location: /admin/bookings');
+            } else {
+                $_SESSION['error'] = 'Failed to create booking. Please try again.';
+                header('Location: /admin/bookings/create');
+            }
+        } catch (Exception $e) {
+            error_log("Error creating booking: " . $e->getMessage());
+            $_SESSION['error'] = 'An error occurred while creating the booking';
+            header('Location: /admin/bookings/create');
+        }
+        exit;
+    }
+
     // API Endpoints for Dashboard
-    public function apiRecentOrders() {
+    public function apiRecentOrders()
+    {
         header('Content-Type: application/json');
 
         $orderModel = new Order();
@@ -517,8 +775,130 @@ class AdminController extends BaseController {    public function __construct() 
 
         echo json_encode(['success' => true, 'orders' => $recentOrders]);
     }
+    public function editBooking($id)
+    {
+        if (!$id) {
+            $_SESSION['error'] = 'Invalid booking ID';
+            header('Location: /admin/bookings');
+            exit;
+        }
 
-    public function apiUpcomingBookings() {
+        $bookingModel = new Booking();
+        $booking = $bookingModel->getBookingDetails($id);
+
+        if (!$booking) {
+            $_SESSION['error'] = 'Booking not found';
+            header('Location: /admin/bookings');
+            exit;
+        }
+
+        // Ensure booking data is an array (debug step)
+        if (is_object($booking)) {
+            error_log("Warning: getBookingDetails returned object instead of array for booking ID: $id");
+            // Convert object to array if needed
+            $booking = (array) $booking;
+        }
+
+        $data = [
+            'title' => 'Edit Booking',
+            'booking' => $booking,
+            'csrf_token' => $this->generateCSRF()
+        ];
+
+        $this->loadAdminView('bookings/edit', $data);
+    }
+
+    public function updateBooking()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $_SESSION['error'] = 'Invalid request method';
+            header('Location: /admin/bookings');
+            exit;
+        }
+
+        if (!$this->validateCSRF()) {
+            $_SESSION['error'] = 'Invalid CSRF token';
+            header('Location: /admin/bookings');
+            exit;
+        }
+
+        $bookingId = $_POST['booking_id'] ?? null;
+        if (!$bookingId) {
+            $_SESSION['error'] = 'Invalid booking ID';
+            header('Location: /admin/bookings');
+            exit;
+        }
+
+        // Validate required fields
+        $requiredFields = ['customer_name', 'phone_number', 'number_of_guests', 'reservation_date', 'reservation_time'];
+        foreach ($requiredFields as $field) {
+            if (empty($_POST[$field])) {
+                $_SESSION['error'] = 'Please fill in all required fields';
+                header("Location: /admin/bookings/edit/$bookingId");
+                exit;
+            }
+        }
+
+        // Combine date and time
+        $reservationDateTime = $_POST['reservation_date'] . ' ' . $_POST['reservation_time'];
+
+        // Prepare booking data
+        $bookingData = [
+            'customer_name' => trim($_POST['customer_name']),
+            'phone_number' => trim($_POST['phone_number']),
+            'email' => trim($_POST['customer_email']) ?: null,
+            'number_of_guests' => (int)$_POST['number_of_guests'],
+            'reservation_time' => $reservationDateTime,
+            'special_requests' => trim($_POST['special_requests']) ?: null
+        ];
+
+        // Validate phone number format
+        if (!preg_match('/^[0-9\-\+\(\)\s]+$/', $bookingData['phone_number'])) {
+            $_SESSION['error'] = 'Invalid phone number format';
+            header("Location: /admin/bookings/edit/$bookingId");
+            exit;
+        }
+
+        // Validate email if provided
+        if ($bookingData['email'] && !filter_var($bookingData['email'], FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['error'] = 'Invalid email format';
+            header("Location: /admin/bookings/edit/$bookingId");
+            exit;
+        }
+
+        // Validate number of guests
+        if ($bookingData['number_of_guests'] < 1 || $bookingData['number_of_guests'] > 20) {
+            $_SESSION['error'] = 'Number of guests must be between 1 and 20';
+            header("Location: /admin/bookings/edit/$bookingId");
+            exit;
+        }
+
+        // Validate reservation time is in the future (for future bookings only)
+        $currentBooking = $this->bookingModel->getBookingDetails($bookingId);
+        if (strtotime($reservationDateTime) < time() && strtotime($currentBooking['reservation_time']) >= time()) {
+            $_SESSION['error'] = 'Reservation time cannot be in the past';
+            header("Location: /admin/bookings/edit/$bookingId");
+            exit;
+        }
+
+        try {
+            if ($this->bookingModel->updateBooking($bookingId, $bookingData)) {
+                $_SESSION['success'] = 'Booking updated successfully';
+                header('Location: /admin/bookings');
+            } else {
+                $_SESSION['error'] = 'Failed to update booking. Please try again.';
+                header("Location: /admin/bookings/edit/$bookingId");
+            }
+        } catch (Exception $e) {
+            error_log("Error updating booking: " . $e->getMessage());
+            $_SESSION['error'] = 'An error occurred while updating the booking';
+            header("Location: /admin/bookings/edit/$bookingId");
+        }
+        exit;
+    }
+
+    public function apiUpcomingBookings()
+    {
         header('Content-Type: application/json');
 
         $bookingModel = new Booking();
@@ -527,7 +907,8 @@ class AdminController extends BaseController {    public function __construct() 
         echo json_encode(['success' => true, 'bookings' => $upcomingBookings]);
     }
 
-    public function apiOrderStats() {
+    public function apiOrderStats()
+    {
         header('Content-Type: application/json');
 
         $orderModel = new Order();
@@ -536,7 +917,8 @@ class AdminController extends BaseController {    public function __construct() 
         echo json_encode(['success' => true, 'stats' => $orderStats]);
     }
 
-    public function apiBookingStats() {
+    public function apiBookingStats()
+    {
         header('Content-Type: application/json');
 
         $bookingModel = new Booking();
@@ -544,155 +926,278 @@ class AdminController extends BaseController {    public function __construct() 
 
         echo json_encode(['success' => true, 'stats' => $bookingStats]);
     }
-
-    public function categories() {
+    public function categories()
+    {
         $categoryModel = new Category();
-        $categories = $categoryModel->getAllWithStats();
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        // Get all categories for statistics
+        $allCategories = $categoryModel->getAllWithStats();
+        $totalCategories = count($allCategories);
+        $totalPages = ceil($totalCategories / $limit);
+
+        // Apply pagination to the data
+        $categories = array_slice($allCategories, $offset, $limit);
 
         $stats = [
             'active_categories' => $categoryModel->count('active'),
-            'total_foods' => $this->getTotalFoodsInCategories($categories),
-            'empty_categories' => $this->getEmptyCategories($categories)
+            'total_foods' => $this->getTotalFoodsInCategories($allCategories),
+            'empty_categories' => $this->getEmptyCategories($allCategories)
         ];
 
         $popularCategories = $categoryModel->getPopularCategories(5);
+
+        // Calculate statistics for the dashboard cards (based on all categories)
+        $activeCategories = count(array_filter($allCategories, function ($category) {
+            return $category['is_active'] == 1;
+        }));
+
+        $foodItems = $this->foodModel->count();
+        $popularToday = count(array_filter($allCategories, function ($category) {
+            // This is a simplified calculation - you can make it more sophisticated
+            return isset($category['food_count']) && $category['food_count'] > 0;
+        }));        // Ensure CSRF token exists
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
 
         $data = [
             'title' => 'Category Management',
             'categories' => $categories,
             'stats' => $stats,
-            'popularCategories' => $popularCategories
+            'popularCategories' => $popularCategories,
+            'totalCategories' => $totalCategories,
+            'activeCategories' => $activeCategories,
+            'foodItems' => $foodItems,
+            'popularToday' => $popularToday,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'csrf_token' => $_SESSION['csrf_token']
         ];
 
-        $this->view('admin/categories/index', $data);
+        $this->loadAdminView('categories/index', $data);
     }
-
-    public function createCategory() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-            return;
-        }
-
-        if (!$this->validateCSRF()) {
-            echo json_encode(['success' => false, 'message' => 'Invalid security token']);
-            return;
-        }
-
-        $categoryModel = new Category();
-        $categoryData = [
-            'name' => $this->sanitize($_POST['name']),
-            'description' => $this->sanitize($_POST['description'] ?? ''),
-            'icon' => $this->sanitize($_POST['icon'] ?? ''),
-            'status' => $_POST['status'] ?? 'active',
-            'sort_order' => (int)($_POST['sort_order'] ?? 0),
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-
-        // Validate required fields
-        $errors = [];
-        if (empty($categoryData['name'])) {
-            $errors['name'] = ['Category name is required'];
-        }
-
-        if (!empty($errors)) {
-            echo json_encode(['success' => false, 'errors' => $errors]);
-            return;
-        }
-
-        if ($categoryModel->create($categoryData)) {
-            echo json_encode(['success' => true, 'message' => 'Category created successfully']);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to create category']);
-        }
-    }
-
-    public function getCategory($id) {
-        $categoryModel = new Category();
-        $category = $categoryModel->findById($id);
-
-        if ($category) {
-            echo json_encode(['success' => true, 'category' => $category]);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Category not found']);
-        }
-    }
-
-    public function updateCategory() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-            return;
-        }
-
-        if (!$this->validateCSRF()) {
-            echo json_encode(['success' => false, 'message' => 'Invalid security token']);
-            return;
-        }
-
-        $categoryId = (int)$_POST['category_id'];
-        $categoryModel = new Category();
-
-        $categoryData = [
-            'name' => $this->sanitize($_POST['name']),
-            'description' => $this->sanitize($_POST['description'] ?? ''),
-            'icon' => $this->sanitize($_POST['icon'] ?? ''),
-            'status' => $_POST['status'] ?? 'active',
-            'sort_order' => (int)($_POST['sort_order'] ?? 0),
+    protected function transformCategoryData($data)
+    {
+        return [
+            'name' => htmlspecialchars(trim($data['name'] ?? '')),
+            'description' => htmlspecialchars(trim($data['description'] ?? '')),
+            // Removed 'icon' field - column doesn't exist in database
+            'is_active' => ($data['status'] ?? 'inactive') === 'active' ? 1 : 0,
+            'sort_order' => isset($data['sort_order']) && is_numeric($data['sort_order']) ? (int)$data['sort_order'] : 0,
+            // 'parent_id' => isset($data['parent_id']) && is_numeric($data['parent_id']) ? (int)$data['parent_id'] : null,
+            'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
         ];
+    }
 
-        // Validate required fields
-        $errors = [];
-        if (empty($categoryData['name'])) {
-            $errors['name'] = ['Category name is required'];
-        }
+    public function createCategory()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!$this->validateCSRF()) {
+                $this->setFlash('error', 'Invalid security token.');
+                $this->redirect('/admin/categories');
+                return;
+            }
 
-        if (!empty($errors)) {
-            echo json_encode(['success' => false, 'errors' => $errors]);
+            $categoryModel = new Category();
+            $categoryData = $this->transformCategoryData($_POST);
+
+            if (empty($categoryData['name'])) {
+                $this->setFlash('error', 'Category name is required.');
+                $this->redirect('/admin/categories');
+                return;
+            }
+
+            if ($categoryModel->create($categoryData)) {
+                $this->setFlash('success', 'Category created successfully.');
+            } else {
+                $this->setFlash('error', 'Failed to create category.');
+            }
+
+            $this->redirect('/admin/categories');
             return;
         }
 
-        if ($categoryModel->update($categoryId, $categoryData)) {
-            echo json_encode(['success' => true, 'message' => 'Category updated successfully']);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to update category']);
+        // If GET request, redirect to categories page
+        $this->redirect('/admin/categories');
+    }
+    public function updateCategory($id = null)
+    {
+        try {
+            error_log("=== updateCategory() method started ===");
+            error_log("Request method: " . ($_SERVER['REQUEST_METHOD'] ?? 'unknown'));
+            error_log("POST data: " . print_r($_POST, true));
+            error_log("URL parameter ID: " . ($id ?? 'null'));
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new Exception('Method not allowed');
+            }
+
+            if (!$this->validateCSRF()) {
+                throw new Exception('Invalid security token');
+            }
+
+            // Get category ID from URL parameter, fallback to POST data
+            $categoryId = (int)($id ?? $_POST['category_id'] ?? 0);
+            error_log("Category ID: " . $categoryId);
+
+            if ($categoryId <= 0) {
+                throw new Exception('Invalid category ID');
+            }
+
+            $categoryModel = new Category();
+
+            // Check if category exists before updating
+            $existingCategory = $categoryModel->findById($categoryId);
+            if (!$existingCategory) {
+                error_log("Category not found with ID: " . $categoryId);
+                throw new Exception('Category not found');
+            }
+            error_log("Existing category: " . print_r($existingCategory, true));
+
+            $categoryData = $this->transformCategoryData($_POST);
+            error_log("Transformed category data: " . print_r($categoryData, true));
+
+            // Do not update created_at field
+            unset($categoryData['created_at']);
+            error_log("Final category data for update: " . print_r($categoryData, true));
+
+            if (empty($categoryData['name'])) {
+                throw new Exception('Category name is required');
+            }
+            $updateResult = $categoryModel->update($categoryId, $categoryData);
+            error_log("Update result: " . ($updateResult ? 'true' : 'false'));
+            if ($updateResult) {
+                // Verify the update by fetching the updated record
+                $updatedCategory = $categoryModel->findById($categoryId);
+                error_log("Updated category after save: " . print_r($updatedCategory, true));
+
+                $this->setFlash('success', 'Category updated successfully.');
+                $this->redirect('/admin/categories');
+                return;
+            }
+
+            throw new Exception('Failed to update category - Database operation returned false');
+        } catch (Exception $e) {
+            error_log("Exception in updateCategory: " . $e->getMessage());
+            error_log("Exception trace: " . $e->getTraceAsString());
+
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect('/admin/categories/edit/' . $categoryId);
+            return;
         }
     }
 
-    public function deleteCategory() {
+    public function editCategory($id)
+    {
+        $categoryModel = new Category();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!$this->validateCSRF()) {
+                $this->setFlash('error', 'Invalid security token.');
+                $this->redirect('/admin/categories');
+                return;
+            }
+
+            $categoryData = [
+                'name' => $this->sanitize($_POST['name']),
+                'description' => $this->sanitize($_POST['description'] ?? ''),
+                'is_active' => isset($_POST['is_active']) ? 1 : 0,
+                'sort_order' => !empty($_POST['sort_order']) ? (int)$_POST['sort_order'] : 0,
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+
+            if (empty($categoryData['name'])) {
+                $this->setFlash('error', 'Category name is required.');
+                $this->redirect('/admin/categories/edit/' . $id);
+                return;
+            }
+
+            if ($categoryModel->update($id, $categoryData)) {
+                $this->setFlash('success', 'Category updated successfully.');
+            } else {
+                $this->setFlash('error', 'Failed to update category.');
+            }
+
+            $this->redirect('/admin/categories');
+            return;
+        }
+
+        $category = $categoryModel->findById($id);
+        if (!$category) {
+            $this->setFlash('error', 'Category not found.');
+            $this->redirect('/admin/categories');
+            return;
+        }
+
+        // Get category statistics
+        $foodModel = new Food();
+        $category['food_count'] = $foodModel->countByCategory($id);
+
+        $data = [
+            'title' => 'Edit Category',
+            'category' => $category,
+            'csrf_token' => $this->generateCSRF()
+        ];
+
+        $this->loadAdminView('categories/edit', $data);
+    }
+    public function deleteCategory($id = null)
+    {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            $this->setFlash('error', 'Method not allowed.');
+            $this->redirect('/admin/categories');
             return;
         }
 
         if (!$this->validateCSRF()) {
-            echo json_encode(['success' => false, 'message' => 'Invalid security token']);
+            $this->setFlash('error', 'Invalid security token.');
+            $this->redirect('/admin/categories');
             return;
         }
 
-        $input = json_decode(file_get_contents('php://input'), true);
-        $categoryId = (int)$input['category_id'];
+        // Get category ID from URL parameter or form data
+        $categoryId = (int)($id ?? $_POST['category_id'] ?? 0);
+
+        if ($categoryId <= 0) {
+            $this->setFlash('error', 'Invalid category ID.');
+            $this->redirect('/admin/categories');
+            return;
+        }
 
         $categoryModel = new Category();
         $foodModel = new Food();
 
+        // Check if category exists
+        $category = $categoryModel->findById($categoryId);
+        if (!$category) {
+            $this->setFlash('error', 'Category not found.');
+            $this->redirect('/admin/categories');
+            return;
+        }
+
         // Check if category has foods
         $foodCount = $foodModel->countByCategory($categoryId);
         if ($foodCount > 0) {
-            echo json_encode(['success' => false, 'message' => 'Cannot delete category that contains food items']);
+            $this->setFlash('error', 'Cannot delete category that contains food items.');
+            $this->redirect('/admin/categories');
             return;
         }
 
         if ($categoryModel->delete($categoryId)) {
-            echo json_encode(['success' => true, 'message' => 'Category deleted successfully']);
+            $this->setFlash('success', 'Category deleted successfully.');
         } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to delete category']);
+            $this->setFlash('error', 'Failed to delete category.');
         }
+
+        $this->redirect('/admin/categories');
     }
 
-    public function tables() {
+    public function tables()
+    {
         $tableModel = new Table();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
@@ -703,7 +1208,6 @@ class AdminController extends BaseController {    public function __construct() 
         $totalPages = ceil($totalTables / $limit);
         $stats = $tableModel->getTableStats();
         $locationStats = $tableModel->getTablesByLocation();
-
         $data = [
             'title' => 'Table Management',
             'tables' => $tables,
@@ -714,24 +1218,23 @@ class AdminController extends BaseController {    public function __construct() 
             'totalTables' => $totalTables
         ];
 
-        $this->view('admin/tables/index', $data);
+        $this->loadAdminView('tables/index', $data);
     }
 
-    public function createTable() {
+    public function createTable()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$this->validateCSRF()) {
                 $this->setFlash('error', 'Invalid security token.');
                 $this->redirect('/admin/tables');
                 return;
-            }
-
-            $tableModel = new Table();
+            }            $tableModel = new Table();
             $tableData = [
                 'table_number' => $this->sanitize($_POST['table_number']),
                 'capacity' => (int)$_POST['capacity'],
                 'location' => $this->sanitize($_POST['location'] ?? ''),
                 'description' => $this->sanitize($_POST['description'] ?? ''),
-                'is_available' => isset($_POST['is_available']) ? 1 : 0
+                'is_available' => (int)($_POST['is_available'] ?? 1)
             ];
 
             // Validate required fields
@@ -764,19 +1267,17 @@ class AdminController extends BaseController {    public function __construct() 
             $this->redirect('/admin/tables');
             return;
         }
-
         $data = [
             'title' => 'Create Table',
             'csrf_token' => $this->generateCSRF()
         ];
 
-        $this->view('admin/tables/create', $data);
+        $this->loadAdminView('tables/create', $data);
     }
 
-    public function editTable($id) {
-        $tableModel = new Table();
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    public function editTable($id)
+    {
+        $tableModel = new Table();        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$this->validateCSRF()) {
                 $this->setFlash('error', 'Invalid security token.');
                 $this->redirect('/admin/tables');
@@ -788,7 +1289,7 @@ class AdminController extends BaseController {    public function __construct() 
                 'capacity' => (int)$_POST['capacity'],
                 'location' => $this->sanitize($_POST['location'] ?? ''),
                 'description' => $this->sanitize($_POST['description'] ?? ''),
-                'is_available' => isset($_POST['is_available']) ? 1 : 0
+                'is_available' => (int)($_POST['is_available'] ?? 1)
             ];
 
             // Validate required fields
@@ -831,7 +1332,6 @@ class AdminController extends BaseController {    public function __construct() 
 
         // Get table booking history
         $bookingHistory = $tableModel->getTableBookingHistory($id, 10);
-
         $data = [
             'title' => 'Edit Table',
             'table' => $table,
@@ -839,28 +1339,70 @@ class AdminController extends BaseController {    public function __construct() 
             'csrf_token' => $this->generateCSRF()
         ];
 
-        $this->view('admin/tables/edit', $data);
-    }
-
-    public function deleteTable($id) {
-        if (!$this->validateCSRF()) {
-            $this->setFlash('error', 'Invalid security token.');
-            $this->redirect('/admin/tables');
+        $this->loadAdminView('tables/edit', $data);
+    }    public function deleteTable($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid request method'], 405);
             return;
         }
 
-        $tableModel = new Table();
-
-        if ($tableModel->deleteTable($id)) {
-            $this->setFlash('success', 'Table deleted successfully.');
-        } else {
-            $this->setFlash('error', 'Cannot delete table. It may have existing bookings.');
+        if (!$this->validateCSRF()) {
+            // Handle both AJAX and form requests
+            if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+                return;
+            } else {
+                $this->setFlash('error', 'Invalid security token.');
+                $this->redirect('/admin/tables');
+                return;
+            }
         }
 
-        $this->redirect('/admin/tables');
+        $tableModel = new Table();        // Check if table exists
+        $table = $tableModel->findByField('id', $id);
+        if (!$table) {
+            if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                $this->jsonResponse(['success' => false, 'message' => 'Table not found'], 404);
+                return;
+            } else {
+                $this->setFlash('error', 'Table not found.');
+                $this->redirect('/admin/tables');
+                return;
+            }
+        }
+
+        try {
+            $result = $tableModel->deleteTable($id);
+
+            if ($result) {
+                if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                    $this->jsonResponse(['success' => true, 'message' => 'Table deleted successfully']);
+                } else {
+                    $this->setFlash('success', 'Table deleted successfully.');
+                    $this->redirect('/admin/tables');
+                }
+            } else {
+                if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                    $this->jsonResponse(['success' => false, 'message' => 'Cannot delete table. It may have existing bookings.'], 400);
+                } else {
+                    $this->setFlash('error', 'Cannot delete table. It may have existing bookings.');
+                    $this->redirect('/admin/tables');
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Table deletion error: " . $e->getMessage());
+            if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to delete table'], 500);
+            } else {
+                $this->setFlash('error', 'Failed to delete table.');
+                $this->redirect('/admin/tables');
+            }
+        }
     }
 
-    public function tableUtilization() {
+    public function tableUtilization()
+    {
         $tableModel = new Table();
         $days = (int)($_GET['days'] ?? 30);
 
@@ -874,7 +1416,8 @@ class AdminController extends BaseController {    public function __construct() 
         ]);
     }
 
-    public function getTableHistory($tableId) {
+    public function getTableHistory($tableId)
+    {
         header('Content-Type: application/json');
 
         $tableModel = new Table();
@@ -882,7 +1425,7 @@ class AdminController extends BaseController {    public function __construct() 
         $history = $tableModel->getTableBookingHistory($tableId, $limit);
 
         // Format the history data for display
-        $formattedHistory = array_map(function($booking) {
+        $formattedHistory = array_map(function ($booking) {
             return [
                 'id' => $booking['id'],
                 'booking_date' => $booking['booking_date'],
@@ -903,7 +1446,8 @@ class AdminController extends BaseController {    public function __construct() 
         ]);
     }
 
-    public function checkTableAvailability($tableId) {
+    public function checkTableAvailability($tableId)
+    {
         header('Content-Type: application/json');
 
         $date = $_GET['date'] ?? '';
@@ -918,9 +1462,7 @@ class AdminController extends BaseController {    public function __construct() 
         }
 
         $tableModel = new Table();
-        $isAvailable = $tableModel->isTableAvailable($tableId, $date, $time);
-
-        echo json_encode([
+        $isAvailable = $tableModel->isTableAvailable($tableId, $date, $time);        echo json_encode([
             'success' => true,
             'available' => $isAvailable,
             'table_id' => $tableId,
@@ -930,7 +1472,63 @@ class AdminController extends BaseController {    public function __construct() 
         ]);
     }
 
-    private function exportBookingsCSV($bookings) {
+    public function toggleTableStatus()
+    {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid request method'
+            ]);
+            return;
+        }
+
+        // Get JSON input
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        if (!$input) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid JSON data'
+            ]);
+            return;
+        }
+
+        $tableId = $input['table_id'] ?? null;
+        $isAvailable = $input['is_available'] ?? null;
+
+        if (!$tableId || $isAvailable === null) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Table ID and availability status are required'
+            ]);
+            return;
+        }
+
+        $tableModel = new Table();
+
+        // Update table status
+        $success = $tableModel->updateTable($tableId, [
+            'is_available' => (int)$isAvailable
+        ]);
+
+        if ($success) {
+            $statusText = $isAvailable ? 'available' : 'unavailable';
+            echo json_encode([
+                'success' => true,
+                'message' => "Table status updated to {$statusText} successfully"
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to update table status'
+            ]);
+        }
+    }
+
+    private function exportBookingsCSV($bookings)
+    {
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="bookings_' . date('Y-m-d') . '.csv"');
 
@@ -969,35 +1567,62 @@ class AdminController extends BaseController {    public function __construct() 
         fclose($output);
     }
 
-    private function getTotalFoodsInCategories($categories) {
+    private function getTotalFoodsInCategories($categories)
+    {
         return array_sum(array_column($categories, 'food_count'));
     }
 
-    private function getEmptyCategories($categories) {
-        return count(array_filter($categories, function($cat) {
+    private function getEmptyCategories($categories)
+    {
+        return count(array_filter($categories, function ($cat) {
             return ($cat['food_count'] ?? 0) == 0;
         }));
     }
-
-    private function getDashboardStats() {
+    private function getDashboardStats()
+    {
         $userModel = new User();
         $foodModel = new Food();
         $orderModel = new Order();
         $bookingModel = new Booking();
 
+        // Get basic counts
+        $totalOrders = $orderModel->count();
+        $totalUsers = $userModel->count();
+        $totalBookings = $bookingModel->count();
+
+        // Get booking status counts
+        $confirmedBookings = $bookingModel->count('confirmed');
+        $pendingBookings = $bookingModel->count('pending');
+        $cancelledBookings = $bookingModel->count('cancelled');
+        $activeBookings = $confirmedBookings + $pendingBookings;        // Get revenue data
+        $orderStats = $orderModel->getDashboardStats();
+        $monthlyRevenue = $orderModel->getMonthlyRevenue();
+        $monthlyRevenueData = $orderModel->getMonthlyRevenueData();
+        // Get recent data
+        $recentOrders = $orderModel->getRecentOrdersWithCustomer(5);
+        $recentBookings = $bookingModel->getRecentBookingsWithCustomer(5);
+
         return [
-            'total_users' => $userModel->count(),
+            'total_users' => $totalUsers,
             'total_foods' => $foodModel->count(),
-            'total_orders' => $orderModel->count(),
-            'total_bookings' => $bookingModel->count(),
+            'total_orders' => $totalOrders,
+            'total_bookings' => $totalBookings,
+            'active_bookings' => $activeBookings,
+            'confirmed_bookings' => $confirmedBookings,
+            'pending_bookings' => $pendingBookings,
+            'cancelled_bookings' => $cancelledBookings,
             'pending_orders' => $orderModel->count('pending'),
-            'confirmed_bookings' => $bookingModel->count('confirmed'),
-            'today_orders' => $orderModel->getTodayCount(),
-            'today_revenue' => $orderModel->getTodayRevenue()
+            'today_orders' => $orderStats['today_orders'],
+            'today_revenue' => $orderStats['today_revenue'],
+            'monthly_revenue' => $monthlyRevenue,
+            'monthly_revenue_data' => $monthlyRevenueData,
+            'recent_orders' => $recentOrders,
+            'recent_bookings' => $recentBookings
         ];
     }
 
-    public function getSubcategories($categoryId) {
+    public function getSubcategories($categoryId)
+    {
         $categoryModel = new Category();
         $subcategories = $categoryModel->getSubcategories($categoryId);
 
@@ -1006,7 +1631,8 @@ class AdminController extends BaseController {    public function __construct() 
     }
 
     // Order Details for Modal
-    public function orderDetails($id) {
+    public function orderDetails($id)
+    {
         $orderModel = new Order();
         $order = $orderModel->getOrderWithItems($id);
 
@@ -1021,7 +1647,8 @@ class AdminController extends BaseController {    public function __construct() 
     }
 
     // Print Order
-    public function printOrder($id) {
+    public function printOrder($id)
+    {
         $orderModel = new Order();
         $order = $orderModel->getOrderWithItems($id);
 
@@ -1036,7 +1663,8 @@ class AdminController extends BaseController {    public function __construct() 
     }
 
     // Export Orders to CSV
-    public function exportOrdersCSV() {
+    public function exportOrdersCSV()
+    {
         $orderModel = new Order();
 
         // Get filter parameters
@@ -1097,7 +1725,8 @@ class AdminController extends BaseController {    public function __construct() 
     }
 
     // Enhanced Order Filtering
-    public function ordersFiltered() {
+    public function ordersFiltered()
+    {
         $orderModel = new Order();
 
         $page = (int)($_GET['page'] ?? 1);
@@ -1118,7 +1747,6 @@ class AdminController extends BaseController {    public function __construct() 
         $orders = $orderModel->getFilteredOrders($filters, $limit, $offset);
         $totalOrders = $orderModel->countFilteredOrders($filters);
         $totalPages = ceil($totalOrders / $limit);
-
         $data = [
             'title' => 'Order Management',
             'orders' => $orders,
@@ -1126,8 +1754,704 @@ class AdminController extends BaseController {    public function __construct() 
             'totalPages' => $totalPages,
             'totalOrders' => $totalOrders,
             'filters' => $filters
+        ];        $this->loadAdminView('orders/index', $data);
+    }
+
+    // Get Order for Editing
+    public function getOrder($id)
+    {
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        $orderModel = new Order();
+        $order = $orderModel->getOrderWithItems($id);
+
+        if (!$order) {
+            $this->jsonResponse(['success' => false, 'message' => 'Order not found'], 404);
+            return;
+        }
+
+        $this->jsonResponse(['success' => true, 'order' => $order]);
+    }
+
+    // Update Order
+    public function updateOrder($id)
+    {
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        $orderModel = new Order();
+
+        // Build update data from POST
+        $updateData = [];
+
+        if (isset($_POST['customer_name'])) {
+            $updateData['customer_name'] = $this->sanitize($_POST['customer_name']);
+        }
+        if (isset($_POST['customer_email'])) {
+            $updateData['customer_email'] = $this->sanitize($_POST['customer_email']);
+        }
+        if (isset($_POST['customer_phone'])) {
+            $updateData['customer_phone'] = $this->sanitize($_POST['customer_phone']);
+        }
+        if (isset($_POST['status'])) {
+            $updateData['status'] = $this->sanitize($_POST['status']);
+        }
+        if (isset($_POST['payment_method'])) {
+            $updateData['payment_method'] = $this->sanitize($_POST['payment_method']);
+        }
+        if (isset($_POST['total_amount'])) {
+            $updateData['total_amount'] = floatval($_POST['total_amount']);
+        }
+        if (isset($_POST['delivery_address'])) {
+            $updateData['delivery_address'] = $this->sanitize($_POST['delivery_address']);
+        }
+        if (isset($_POST['order_notes'])) {
+            $updateData['order_notes'] = $this->sanitize($_POST['order_notes']);
+        }
+
+        $updateData['updated_at'] = date('Y-m-d H:i:s');
+
+        try {
+            // Update order in database
+            $sql = "UPDATE orders SET ";
+            $setParts = [];
+            $params = [];
+
+            foreach ($updateData as $key => $value) {
+                $setParts[] = "$key = :$key";
+                $params[":$key"] = $value;
+            }            $sql .= implode(', ', $setParts) . " WHERE id = :id";
+            $params[':id'] = $id;
+
+            $result = $orderModel->update($id, $updateData);
+
+            if ($result) {
+                $this->jsonResponse(['success' => true, 'message' => 'Order updated successfully']);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to update order'], 500);
+            }
+        } catch (Exception $e) {
+            error_log("Order update error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Database error occurred'], 500);
+        }
+    }
+
+    // Duplicate Order
+    public function duplicateOrder($id)
+    {
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        $orderModel = new Order();
+        $originalOrder = $orderModel->getOrderWithItems($id);
+
+        if (!$originalOrder) {
+            $this->jsonResponse(['success' => false, 'message' => 'Original order not found'], 404);
+            return;
+        }
+
+        try {
+            // Create new order data based on original
+            $newOrderData = [
+                'user_id' => $originalOrder['user_id'],
+                'customer_name' => $originalOrder['customer_name'],
+                'customer_email' => $originalOrder['customer_email'],
+                'customer_phone' => $originalOrder['customer_phone'],
+                'total_amount' => $originalOrder['total_amount'],
+                'status' => 'pending', // Reset status for new order
+                'payment_method' => $originalOrder['payment_method'],
+                'delivery_address' => $originalOrder['delivery_address'],
+                'order_notes' => 'Duplicate of Order #' . $id . ($originalOrder['order_notes'] ? "\n\n" . $originalOrder['order_notes'] : ''),
+                'subtotal' => $originalOrder['subtotal'],
+                'delivery_fee' => $originalOrder['delivery_fee'],
+                'service_fee' => $originalOrder['service_fee'],
+                'order_type' => $originalOrder['order_type'] ?? 'delivery'
+            ];
+
+            // Duplicate order items if they exist
+            $orderItems = [];
+            if (!empty($originalOrder['items'])) {
+                foreach ($originalOrder['items'] as $item) {                    $orderItems[] = [
+                        'food_item_id' => $item['food_item_id'],
+                        'quantity' => $item['quantity'],
+                        'price' => $item['unit_price'] ?? 0
+                    ];
+                }
+                $newOrderData['items'] = $orderItems;
+            }
+
+            $newOrderId = $orderModel->createOrder($newOrderData);
+
+            if ($newOrderId) {
+                $this->jsonResponse(['success' => true, 'message' => 'Order duplicated successfully', 'new_order_id' => $newOrderId]);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to duplicate order'], 500);
+            }
+        } catch (Exception $e) {
+            error_log("Order duplication error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to duplicate order'], 500);
+        }
+    }
+
+    // Send Order Email
+    public function sendOrderEmail($id)
+    {
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        $orderModel = new Order();
+        $order = $orderModel->getOrderWithItems($id);
+
+        if (!$order) {
+            $this->jsonResponse(['success' => false, 'message' => 'Order not found'], 404);
+            return;
+        }
+
+        if (empty($order['customer_email'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'No email address found for this order'], 400);
+            return;
+        }
+
+        try {
+            // Prepare email content
+            $subject = "Order Confirmation #" . str_pad($id, 6, '0', STR_PAD_LEFT) . " - " . SITE_NAME;
+
+            $message = "Dear " . htmlspecialchars($order['customer_name']) . ",\n\n";
+            $message .= "Thank you for your order! Here are your order details:\n\n";
+            $message .= "Order ID: #" . str_pad($id, 6, '0', STR_PAD_LEFT) . "\n";
+            $message .= "Order Date: " . date('M j, Y \a\t g:i A', strtotime($order['created_at'])) . "\n";
+            $message .= "Status: " . ucfirst($order['status']) . "\n";
+            $message .= "Total Amount: $" . number_format($order['total_amount'], 2) . "\n\n";
+
+            if (!empty($order['items'])) {
+                $message .= "Order Items:\n";
+                foreach ($order['items'] as $item) {
+                    $message .= "- " . $item['food_name'] . " x" . $item['quantity'] . " = $" . number_format(($item['unit_price'] ?? 0) * $item['quantity'], 2) . "\n";
+                }
+                $message .= "\n";
+            }
+
+            if (!empty($order['delivery_address'])) {
+                $message .= "Delivery Address: " . $order['delivery_address'] . "\n\n";
+            }
+
+            if (!empty($order['order_notes'])) {
+                $message .= "Order Notes: " . $order['order_notes'] . "\n\n";
+            }
+
+            $message .= "Thank you for choosing " . SITE_NAME . "!\n\n";
+            $message .= "Best regards,\n";
+            $message .= "The " . SITE_NAME . " Team";
+
+            $headers = [
+                'From: ' . SITE_NAME . ' <noreply@' . $_SERVER['HTTP_HOST'] . '>',
+                'Reply-To: noreply@' . $_SERVER['HTTP_HOST'],
+                'Content-Type: text/plain; charset=UTF-8'
+            ];
+
+            // Send email
+            if (mail($order['customer_email'], $subject, $message, implode("\r\n", $headers))) {
+                $this->jsonResponse(['success' => true, 'message' => 'Email sent successfully to ' . $order['customer_email']]);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to send email'], 500);
+            }
+        } catch (Exception $e) {
+            error_log("Email sending error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to send email'], 500);
+        }
+    }
+
+    // Delete Order
+    public function deleteOrder($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid request method'], 405);
+            return;
+        }
+
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        $orderModel = new Order();
+
+        // Check if order exists
+        $order = $orderModel->findById($id);
+        if (!$order) {
+            $this->jsonResponse(['success' => false, 'message' => 'Order not found'], 404);
+            return;
+        }
+
+        // Check if order can be deleted (only pending or cancelled orders)
+        if ($order['status'] === 'delivered' || $order['status'] === 'completed') {
+            $this->jsonResponse(['success' => false, 'message' => 'Cannot delete completed or delivered orders'], 400);
+            return;
+        }        try {
+            $result = $orderModel->deleteOrder($id);
+
+            if ($result) {
+                $this->jsonResponse(['success' => true, 'message' => 'Order deleted successfully']);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to delete order'], 500);
+            }        } catch (Exception $e) {
+            error_log("Order deletion error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to delete order'], 500);
+        }
+    }
+
+    // Send Booking Confirmation Email
+    public function sendConfirmationEmail()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid request method'], 405);
+            return;
+        }        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        // Handle both JSON and form-encoded data
+        $bookingId = 0;
+
+        if ($_SERVER['CONTENT_TYPE'] === 'application/json' || strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
+            // Handle JSON input
+            $input = json_decode(file_get_contents('php://input'), true);
+            $bookingId = (int)($input['booking_id'] ?? 0);
+        } else {
+            // Handle form-encoded input or URL parameter
+            $bookingId = (int)($_POST['booking_id'] ?? $_GET['booking_id'] ?? 0);
+        }
+
+        if (!$bookingId) {
+            $this->jsonResponse(['success' => false, 'message' => 'Booking ID is required'], 400);
+            return;
+        }
+
+        $bookingModel = new Booking();
+        $booking = $bookingModel->getBookingDetails($bookingId);
+
+        if (!$booking) {
+            $this->jsonResponse(['success' => false, 'message' => 'Booking not found'], 404);
+            return;
+        }
+
+        if (empty($booking['email'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'No email address found for this booking'], 400);
+            return;
+        }
+
+        try {
+            // Prepare email content
+            $subject = "Booking Confirmation #" . str_pad($bookingId, 6, '0', STR_PAD_LEFT) . " - " . SITE_NAME;
+
+            $message = "Dear " . htmlspecialchars($booking['name']) . ",\n\n";
+            $message .= "Thank you for your booking! Here are your booking details:\n\n";
+            $message .= "Booking ID: #" . str_pad($bookingId, 6, '0', STR_PAD_LEFT) . "\n";
+            $message .= "Booking Date: " . date('M j, Y \a\t g:i A', strtotime($booking['reservation_time'])) . "\n";
+            $message .= "Number of Guests: " . $booking['number_of_guests'] . "\n";
+            $message .= "Status: " . ucfirst($booking['status']) . "\n";
+
+            if (!empty($booking['table_number'])) {
+                $message .= "Table Number: " . $booking['table_number'] . "\n";
+            }
+
+            if (!empty($booking['special_requests'])) {
+                $message .= "Special Requests: " . $booking['special_requests'] . "\n";
+            }
+
+            $message .= "\nPhone: " . $booking['phone'] . "\n\n";
+            $message .= "Please arrive on time for your reservation. If you need to cancel or modify your booking, please contact us as soon as possible.\n\n";
+            $message .= "Thank you for choosing " . SITE_NAME . "!\n\n";
+            $message .= "Best regards,\n";
+            $message .= "The " . SITE_NAME . " Team";
+
+            $headers = [
+                'From: ' . SITE_NAME . ' <noreply@' . $_SERVER['HTTP_HOST'] . '>',
+                'Reply-To: noreply@' . $_SERVER['HTTP_HOST'],
+                'Content-Type: text/plain; charset=UTF-8'
+            ];
+
+            // Send email
+            if (mail($booking['email'], $subject, $message, implode("\r\n", $headers))) {
+                $this->jsonResponse(['success' => true, 'message' => 'Confirmation email sent successfully to ' . $booking['email']]);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to send confirmation email'], 500);
+            }
+        } catch (Exception $e) {
+            error_log("Booking email sending error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to send confirmation email'], 500);
+        }
+    }
+
+    // Bulk Update Booking Status
+    public function bulkUpdateStatus()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid request method'], 405);
+            return;
+        }        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        // Handle both JSON and form-encoded data
+        $bookingIds = [];
+        $status = '';
+
+        if ($_SERVER['CONTENT_TYPE'] === 'application/json' || strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
+            // Handle JSON input
+            $input = json_decode(file_get_contents('php://input'), true);
+            $bookingIds = $input['booking_ids'] ?? [];
+            $status = $this->sanitize($input['status'] ?? '');
+        } else {
+            // Handle form-encoded input
+            $bookingIdsString = $_POST['booking_ids'] ?? '';
+            $bookingIds = !empty($bookingIdsString) ? explode(',', $bookingIdsString) : [];
+            $status = $this->sanitize($_POST['status'] ?? '');
+        }
+
+        if (empty($bookingIds) || !is_array($bookingIds)) {
+            $this->jsonResponse(['success' => false, 'message' => 'Booking IDs are required'], 400);
+            return;
+        }
+
+        $allowedStatuses = ['pending', 'confirmed', 'cancelled', 'completed', 'no_show'];
+        if (!in_array($status, $allowedStatuses)) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid status'], 400);
+            return;
+        }
+
+        $bookingModel = new Booking();
+        $successCount = 0;
+        $failedCount = 0;
+        $errors = [];
+
+        foreach ($bookingIds as $bookingId) {
+            $bookingId = (int)$bookingId;
+            if ($bookingId <= 0) {
+                $failedCount++;
+                $errors[] = "Invalid booking ID: $bookingId";
+                continue;
+            }            try {
+                if ($bookingModel->updateBookingStatus($bookingId, $status)) {
+                    $successCount++;
+                } else {
+                    $failedCount++;
+                    $errors[] = "Failed to update booking ID: $bookingId";
+                }
+            } catch (Exception $e) {
+                $failedCount++;
+                $errors[] = "Error updating booking ID $bookingId: " . $e->getMessage();
+                error_log("Bulk update error for booking $bookingId: " . $e->getMessage());
+            }
+        }
+
+        $message = "Bulk update completed: $successCount updated";
+        if ($failedCount > 0) {
+            $message .= ", $failedCount failed";
+        }
+
+        $this->jsonResponse([
+            'success' => $successCount > 0,
+            'message' => $message,
+            'details' => [
+                'total' => count($bookingIds),
+                'success' => $successCount,
+                'failed' => $failedCount,
+                'errors' => $errors
+            ]
+        ]);
+    }
+
+    // =============================================================================
+    // LOGS MANAGEMENT FUNCTIONS
+    // =============================================================================
+
+    public function logs()
+    {
+        $logFiles = $this->getLogFiles();
+        $recentLogs = $this->getRecentLogEntries(100);
+
+        $data = [
+            'title' => 'System Logs',
+            'logFiles' => $logFiles,
+            'recentLogs' => $recentLogs,
+            'csrf_token' => $this->generateCSRF()
         ];
 
-        $this->view('admin/orders/index', $data);
+        $this->loadAdminView('logs/index', $data);
+    }
+
+    public function viewLog($logFile)
+    {
+        $logPath = $this->getLogPath($logFile);
+
+        if (!$logPath || !file_exists($logPath)) {
+            $this->setFlash('error', 'Log file not found.');
+            $this->redirect('/admin/logs');
+            return;
+        }
+
+        $page = (int)($_GET['page'] ?? 1);
+        $linesPerPage = 100;
+        $searchTerm = $_GET['search'] ?? '';
+        $level = $_GET['level'] ?? '';
+
+        $logData = $this->readLogFile($logPath, $page, $linesPerPage, $searchTerm, $level);
+
+        $data = [
+            'title' => 'View Log - ' . basename($logFile),
+            'logFile' => $logFile,
+            'logData' => $logData,
+            'currentPage' => $page,
+            'searchTerm' => $searchTerm,
+            'level' => $level
+        ];
+
+        $this->loadAdminView('logs/view', $data);
+    }
+
+    public function downloadLog($logFile)
+    {
+        $logPath = $this->getLogPath($logFile);
+
+        if (!$logPath || !file_exists($logPath)) {
+            $this->setFlash('error', 'Log file not found.');
+            $this->redirect('/admin/logs');
+            return;
+        }
+
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . basename($logFile) . '"');
+        header('Content-Length: ' . filesize($logPath));
+        readfile($logPath);
+        exit;
+    }
+
+    public function clearLog($logFile)
+    {
+        if (!$this->validateCSRF()) {
+            $this->setFlash('error', 'Invalid security token.');
+            $this->redirect('/admin/logs');
+            return;
+        }
+
+        $logPath = $this->getLogPath($logFile);
+
+        if (!$logPath || !file_exists($logPath)) {
+            $this->setFlash('error', 'Log file not found.');
+            $this->redirect('/admin/logs');
+            return;
+        }
+
+        if (file_put_contents($logPath, '')) {
+            $this->setFlash('success', 'Log file cleared successfully.');
+            error_log("Log file {$logFile} cleared by admin user {$_SESSION['user_id']}");
+        } else {
+            $this->setFlash('error', 'Failed to clear log file.');
+        }
+
+        $this->redirect('/admin/logs');
+    }
+
+    private function getLogFiles()
+    {
+        $logFiles = [];
+        $logDirectory = __DIR__ . '/../';
+
+        // Common log file patterns
+        $patterns = [
+            '*.log',
+            'logs/*.log',
+            'storage/logs/*.log',
+            'var/log/*.log'
+        ];
+
+        foreach ($patterns as $pattern) {
+            $files = glob($logDirectory . $pattern);
+            foreach ($files as $file) {
+                if (is_file($file) && is_readable($file)) {
+                    $relativePath = str_replace($logDirectory, '', $file);
+                    $logFiles[] = [
+                        'name' => basename($file),
+                        'path' => $relativePath,
+                        'size' => filesize($file),
+                        'modified' => filemtime($file),
+                        'readable' => is_readable($file),
+                        'writable' => is_writable($file)
+                    ];
+                }
+            }
+        }
+
+        // Sort by modification date (newest first)
+        usort($logFiles, function($a, $b) {
+            return $b['modified'] - $a['modified'];
+        });
+
+        return $logFiles;
+    }
+
+    private function getLogPath($logFile)
+    {
+        $basePath = __DIR__ . '/../';
+        $sanitizedFile = basename($logFile);
+
+        // Security check - only allow .log files
+        if (!preg_match('/\.log$/', $sanitizedFile)) {
+            return null;
+        }
+
+        $possiblePaths = [
+            $basePath . $sanitizedFile,
+            $basePath . 'logs/' . $sanitizedFile,
+            $basePath . 'storage/logs/' . $sanitizedFile,
+            $basePath . 'var/log/' . $sanitizedFile
+        ];
+
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path) && is_readable($path)) {
+                // Security check - ensure file is within allowed directories
+                $realPath = realpath($path);
+                $realBasePath = realpath($basePath);
+
+                if ($realPath && $realBasePath && strpos($realPath, $realBasePath) === 0) {
+                    return $realPath;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function readLogFile($logPath, $page = 1, $linesPerPage = 100, $searchTerm = '', $level = '')
+    {
+        $lines = file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $totalLines = count($lines);
+
+        // Filter lines if search term or level specified
+        if ($searchTerm || $level) {
+            $filteredLines = [];
+            foreach ($lines as $line) {
+                $matchesSearch = empty($searchTerm) || stripos($line, $searchTerm) !== false;
+                $matchesLevel = empty($level) || $this->logLineMatchesLevel($line, $level);
+
+                if ($matchesSearch && $matchesLevel) {
+                    $filteredLines[] = $line;
+                }
+            }
+            $lines = $filteredLines;
+            $totalLines = count($lines);
+        }
+
+        // Reverse array to show newest entries first
+        $lines = array_reverse($lines);
+
+        $totalPages = ceil($totalLines / $linesPerPage);
+        $offset = ($page - 1) * $linesPerPage;
+        $pageLines = array_slice($lines, $offset, $linesPerPage);
+
+        // Parse log lines for better display
+        $parsedLines = [];
+        foreach ($pageLines as $index => $line) {
+            $parsedLines[] = $this->parseLogLine($line, $offset + $index + 1);
+        }
+
+        return [
+            'lines' => $parsedLines,
+            'totalLines' => $totalLines,
+            'totalPages' => $totalPages,
+            'currentPage' => $page,
+            'linesPerPage' => $linesPerPage
+        ];
+    }
+
+    private function logLineMatchesLevel($line, $level)
+    {
+        $levelPatterns = [
+            'ERROR' => '/\[ERROR\]|\bERROR\b|Fatal error|Parse error/i',
+            'WARNING' => '/\[WARNING\]|\[WARN\]|\bWARNING\b|\bWARN\b/i',
+            'INFO' => '/\[INFO\]|\bINFO\b/i',
+            'DEBUG' => '/\[DEBUG\]|\bDEBUG\b/i'
+        ];
+
+        return isset($levelPatterns[$level]) && preg_match($levelPatterns[$level], $line);
+    }
+
+    private function parseLogLine($line, $lineNumber)
+    {
+        // Try to parse common log formats
+        $parsed = [
+            'number' => $lineNumber,
+            'raw' => $line,
+            'timestamp' => null,
+            'level' => 'INFO',
+            'message' => $line,
+            'context' => null
+        ];
+
+        // Parse timestamp (various formats)
+        if (preg_match('/\[([\d\-\s:]+)\]/', $line, $matches)) {
+            $parsed['timestamp'] = $matches[1];
+        } elseif (preg_match('/^(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/', $line, $matches)) {
+            $parsed['timestamp'] = $matches[1];
+        }
+
+        // Parse log level
+        if (preg_match('/\[(ERROR|WARNING|WARN|INFO|DEBUG)\]/i', $line, $matches)) {
+            $parsed['level'] = strtoupper($matches[1]);
+        } elseif (preg_match('/\b(ERROR|WARNING|WARN|INFO|DEBUG)\b/i', $line, $matches)) {
+            $parsed['level'] = strtoupper($matches[1]);
+        } elseif (strpos($line, 'Fatal error') !== false || strpos($line, 'Parse error') !== false) {
+            $parsed['level'] = 'ERROR';
+        }
+
+        // Extract main message (remove timestamp and level)
+        $message = $line;
+        $message = preg_replace('/^\[[\d\-\s:]+\]\s*/', '', $message);
+        $message = preg_replace('/^\[(ERROR|WARNING|WARN|INFO|DEBUG)\]\s*/i', '', $message);
+        $parsed['message'] = trim($message);
+
+        return $parsed;
+    }
+
+    private function getRecentLogEntries($limit = 50)
+    {
+        $allEntries = [];
+        $logFiles = $this->getLogFiles();
+
+        foreach ($logFiles as $logFile) {
+            $logPath = $this->getLogPath($logFile['path']);
+            if ($logPath && file_exists($logPath)) {
+                $lines = file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                $recentLines = array_slice($lines, -$limit);
+
+                foreach ($recentLines as $line) {
+                    $parsed = $this->parseLogLine($line, 0);
+                    $parsed['file'] = $logFile['name'];
+                    $allEntries[] = $parsed;
+                }
+            }
+        }
+
+        // Sort by timestamp (newest first)
+        usort($allEntries, function($a, $b) {
+            if ($a['timestamp'] && $b['timestamp']) {
+                return strtotime($b['timestamp']) - strtotime($a['timestamp']);
+            }
+            return 0;
+        });
+
+        return array_slice($allEntries, 0, $limit);
     }
 }
