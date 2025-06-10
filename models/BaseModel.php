@@ -92,11 +92,19 @@ class BaseModel {
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
-    }
-
-    public function count() {
+    }    public function count($condition = null, $value = null) {
         $sql = "SELECT COUNT(*) FROM {$this->table}";
+
+        if ($condition && $value) {
+            $sql .= " WHERE $condition = :value";
+        }
+
         $stmt = $this->db->prepare($sql);
+
+        if ($condition && $value) {
+            $stmt->bindValue(':value', $value);
+        }
+
         $stmt->execute();
         return $stmt->fetchColumn();
     }

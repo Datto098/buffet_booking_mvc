@@ -255,13 +255,11 @@ class Booking extends BaseModel {
         $stmt->execute();
         $result = $stmt->fetch();
         return $result['count'] ?? 0;
-    }
-
-    public function count($status = null) {
-        if ($status) {
-            $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE status = :status";
+    }    public function count($condition = null, $value = null) {
+        if ($condition && $value) {
+            $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE $condition = :value";
             $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':status', $status);
+            $stmt->bindValue(':value', $value);
         } else {
             $sql = "SELECT COUNT(*) as count FROM {$this->table}";
             $stmt = $this->db->prepare($sql);

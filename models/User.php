@@ -289,8 +289,7 @@ class User extends BaseModel {
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-    public function updateProfile($userId, $data) {
+    }    public function updateProfile($userId, $data) {
         $fields = [];
         $params = [];
         foreach ($data as $key => $value) {
@@ -304,13 +303,26 @@ class User extends BaseModel {
         $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute($params);
+    }    /**
+     * Count users by role
+     */
+    public function count($condition = null, $value = null) {
+        if ($condition === 'role' && $value) {
+            // Count by role
+            $sql = "SELECT COUNT(*) FROM {$this->table} WHERE role = :role";
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindValue(':role', $value);
+        } elseif ($condition && $value) {
+            // Use parent method for other conditions
+            return parent::count($condition, $value);
+        } else {
+            // Count all users
+            $sql = "SELECT COUNT(*) FROM {$this->table}";
+            $stmt = $this->db->prepare($sql);
+        }
+
+        $stmt->execute();
+        return $stmt->fetchColumn();
     }
 }
 ?>
-
-<?php if (!empty($_SESSION['error'])): ?>
-    <div class="alert alert-danger"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
-<?php endif; ?>
-<?php if (!empty($_SESSION['success'])): ?>
-    <div class="alert alert-success"><?= $_SESSION['success']; unset($_SESSION['success']); ?></div>
-<?php endif; ?>

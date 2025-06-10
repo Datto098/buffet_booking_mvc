@@ -151,8 +151,18 @@ class Order extends BaseModel
         return $stmt->execute();
     }
 
-    public function getOrderStatistics($startDate = null, $endDate = null)
-    {
+    /**
+     * Update order status (alias for SuperAdminController compatibility)
+     * @param int $orderId Order ID
+     * @param string $status New status
+     * @return bool Success status
+     */
+    public function updateStatus($orderId, $status) {
+        return $this->updateOrderStatus($orderId, $status);
+    }
+
+    public function getOrderStatistics($startDate = null, $endDate = null) {
+
         $whereClause = "";
         $params = [];
 
@@ -264,20 +274,63 @@ class Order extends BaseModel
 
         $stmt->execute();
         return $stmt->fetchAll();
-    }
 
-    public function count($status = '')
-    {
-        $sql = "SELECT COUNT(*) FROM {$this->table}";
+    }    /**
+     * Get all orders with comprehensive customer information (for SuperAdmin)
+     * @param int|null $limit Optional limit
+     * @param int $offset Optional offset
+     * @param string $status Optional status filter
+     * @return array Array of orders with customer information
+     */
+    public function getAllOrdersWithCustomer($limit = null, $offset = 0, $status = '') {
+        $sql = "SELECT o.*,
+                       COALESCE(o.customer_name, CONCAT(u.first_name, ' ', u.last_name)) as customer_name,
+                       COALESCE(o.customer_email, u.email) as customer_email,
+                       COALESCE(o.customer_phone, u.phone) as customer_phone,
+                       u.id as user_id,
+                       u.role as user_role,
+                       COUNT(oi.id) as total_items,
+                       COUNT(oi.id) as item_count,
+                       o.created_at as order_date
+                FROM {$this->table} o
+                LEFT JOIN users u ON o.user_id = u.id
+                LEFT JOIN order_items oi ON o.id = oi.order_id";
+
 
         if ($status) {
-            $sql .= " WHERE status = :status";
+            $sql .= " WHERE o.status = :status";
+        }
+
+        $sql .= " GROUP BY o.id ORDER BY o.created_at DESC";
+
+        if ($limit) {
+            $sql .= " LIMIT :limit OFFSET :offset";
         }
 
         $stmt = $this->db->prepare($sql);
 
         if ($status) {
             $stmt->bindValue(':status', $status);
+        }
+
+        if ($limit) {
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }    public function count($condition = null, $value = null) {
+        $sql = "SELECT COUNT(*) FROM {$this->table}";
+
+        if ($condition && $value) {
+            $sql .= " WHERE $condition = :value";
+        }
+
+        $stmt = $this->db->prepare($sql);
+
+        if ($condition && $value) {
+            $stmt->bindValue(':value', $value);
         }
 
         $stmt->execute();
@@ -818,9 +871,7 @@ class Order extends BaseModel
             error_log("Error deleting order: " . $e->getMessage());
             return false;
         }
-    }
-
-    /**
+    }    /**
      * Get dashboard statistics
      */
     public function getDashboardStats() {
@@ -851,5 +902,16 @@ class Order extends BaseModel
             'total_orders' => $totalStats['total_orders'] ?? 0,
             'total_revenue' => $totalStats['total_revenue'] ?? 0
         ];
+    }
+
+    /**
+     * Get total revenue from all orders
+     */
+    public function getTotalRevenue() {
+        $sql = "SELECT COALESCE(SUM(total_amount), 0) as total_revenue FROM {$this->table}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        return $result['total_revenue'] ?? 0;
     }
 }
