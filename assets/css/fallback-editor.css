@@ -1,0 +1,137 @@
+/* Fallback Rich Text Editor Styles */
+.fallback-editor-container {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    background: white;
+    margin-top: 5px;
+}
+
+.fallback-editor .editor-toolbar {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.fallback-editor .editor-toolbar button {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 3px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    min-width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fallback-editor .editor-toolbar button:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.fallback-editor .editor-toolbar button:active {
+    background: #dee2e6;
+    border-color: #6c757d;
+}
+
+.fallback-editor .editor-toolbar .separator {
+    color: #dee2e6;
+    margin: 0 4px;
+    font-size: 14px;
+}
+
+.fallback-editor .editor-content {
+    min-height: 300px;
+    padding: 12px;
+    outline: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #212529;
+}
+
+.fallback-editor .editor-content:focus {
+    box-shadow: inset 0 0 0 2px rgba(13, 110, 253, 0.25);
+}
+
+.fallback-editor .editor-content p {
+    margin: 0 0 1rem 0;
+}
+
+.fallback-editor .editor-content ul,
+.fallback-editor .editor-content ol {
+    margin: 0 0 1rem 0;
+    padding-left: 2rem;
+}
+
+.fallback-editor .editor-content blockquote {
+    margin: 0 0 1rem 0;
+    padding: 0.5rem 1rem;
+    border-left: 4px solid #dee2e6;
+    background: #f8f9fa;
+}
+
+.fallback-editor .editor-content a {
+    color: #0d6efd;
+    text-decoration: underline;
+}
+
+.fallback-editor .editor-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+}
+
+.fallback-editor .editor-content table td,
+.fallback-editor .editor-content table th {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    text-align: left;
+}
+
+.fallback-editor .editor-content table th {
+    background: #f8f9fa;
+    font-weight: bold;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .fallback-editor .editor-toolbar {
+        padding: 6px 8px;
+        gap: 2px;
+    }
+
+    .fallback-editor .editor-toolbar button {
+        min-width: 24px;
+        height: 24px;
+        padding: 2px 4px;
+        font-size: 11px;
+    }
+
+    .fallback-editor .editor-content {
+        padding: 8px;
+        font-size: 13px;
+    }
+}
+
+/* Status indicators */
+.editor-status {
+    padding: 8px 12px;
+    font-size: 12px;
+    background: #d4edda;
+    color: #155724;
+    border-bottom: 1px solid #c3e6cb;
+}
+
+.editor-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-bottom-color: #f5c6cb;
+}

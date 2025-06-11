@@ -32,14 +32,13 @@
 
 <!-- Food Detail Section -->
 <?php if (!empty($food)): ?>
-    <section class="section-luxury">
-        <div class="container">
-            <div class="row align-items-start">
-                <!-- Food Image and Gallery -->
-                <div class="col-lg-6 mb-5">
-                    <div class="food-detail-image">
-                        <img src="<?= !empty($food['image']) ? htmlspecialchars($food['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
-                            class="card-img-luxury food-main-image" alt="<?= htmlspecialchars($food['name']) ?>">
+<section class="section-luxury">
+    <div class="container">
+        <div class="row align-items-start">
+            <!-- Food Image and Gallery -->
+            <div class="col-lg-6 mb-5">                <div class="food-detail-image">
+                    <img src="<?= !empty($food['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($food['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
+                         class="card-img-luxury food-main-image" alt="<?= htmlspecialchars($food['name']) ?>">
 
                         <!-- Luxury Badges -->
                         <div class="food-badges">
@@ -386,14 +385,14 @@
                     <p class="text-muted">Khám phá thêm các món ăn khác trong cùng danh mục</p>
                 </div>
 
-                <div class="row">
-                    <?php foreach ($relatedFoods as $relatedFood): ?>
-                        <div class="col-lg-4 col-md-6 mb-4">
-                            <div class="card h-100 food-card">
-                                <div class="position-relative">
-                                    <img src="<?= !empty($relatedFood['image']) ? htmlspecialchars($relatedFood['image']) : SITE_URL . '/assets/images/no-image.svg' ?>"
-                                        class="card-img-top" alt="<?= htmlspecialchars($relatedFood['name']) ?>"
-                                        style="height: 200px; object-fit: cover;">
+        <div class="row">
+            <?php foreach ($relatedFoods as $relatedFood): ?>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 food-card">
+                        <div class="position-relative">
+                            <img src="<?= !empty($relatedFood['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($relatedFood['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
+                                 class="card-img-top" alt="<?= htmlspecialchars($relatedFood['name']) ?>"
+                                 style="height: 200px; object-fit: cover;">
 
                                     <button class="btn btn-outline-light btn-sm position-absolute top-0 start-0 m-2 favorite-btn"
                                         data-food-id="<?= $relatedFood['id'] ?>">
@@ -592,12 +591,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <?php endif; ?>
 
             <div class="row">
-                <?php foreach ($foods as $item): ?>
-                    <div class="col-lg-4 col-md-6 mb-4">
+                <?php foreach ($foods as $item): ?>                    <div class="col-lg-4 col-md-6 mb-4">
                         <div class="card h-100 food-card">
-                            <img src="<?= !empty($item['image']) ? htmlspecialchars($item['image']) : SITE_URL . '/assets/images/no-image.svg' ?>"
-                                class="card-img-top" alt="<?= htmlspecialchars($item['name']) ?>"
-                                style="height: 200px; object-fit: cover;">
+                            <img src="<?= !empty($item['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($item['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
+                                 class="card-img-top" alt="<?= htmlspecialchars($item['name']) ?>"
+                                 style="height: 200px; object-fit: cover;">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title"><?= htmlspecialchars($item['name']) ?></h5>
                                 <p class="card-text flex-grow-1 text-muted">

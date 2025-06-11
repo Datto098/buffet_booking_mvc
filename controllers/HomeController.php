@@ -15,11 +15,9 @@ class HomeController extends BaseController {
     public function __construct() {
         $this->foodModel = new Food();
         $this->categoryModel = new Category();
-    }
-
-    public function index() {
-        // Get featured foods
-        $featuredFoods = $this->foodModel->getFoodWithCategory(8);
+    }    public function index() {
+        // Get featured foods (popular, new, or seasonal items limited to 6)
+        $featuredFoods = $this->foodModel->getFeaturedFoods(6);
 
         // Get categories
         $categories = $this->categoryModel->findAll();        // Get latest news (if News model exists)

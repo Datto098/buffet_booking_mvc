@@ -282,99 +282,10 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <?php require_once 'views/admin/layouts/footer.php'; ?>
-
-    <script>
-        // Form validation
-        document.getElementById('editCategoryForm').addEventListener('submit', function(e) {
-            const name = document.getElementById('name').value.trim();
-
-            if (!name) {
-                e.preventDefault();
-                alert('Category name is required!');
-                return false;
-            }
-        });
-
-        // Delete confirmation
-        function confirmDelete() {
-            new bootstrap.Modal(document.getElementById('deleteCategoryModal')).show();
-        }
-
-        // Quick action functions
-        function viewCategoryFoods(categoryId) {
-            window.location.href = `<?= SITE_URL ?>/admin/foods?category_id=${categoryId}`;
-        }
-
-        function addFoodToCategory(categoryId) {
-            window.location.href = `<?= SITE_URL ?>/admin/foods/create?category_id=${categoryId}`;
-        }
-
-        function duplicateCategory(categoryId) {
-            if (confirm('Create a duplicate of this category?')) {
-                window.location.href = `<?= SITE_URL ?>/admin/categories/duplicate/${categoryId}`;
-            }
-        }
-
-        function toggleCategoryStatus(categoryId, status) {
-            const actionText = status == 1 ? 'activate' : 'deactivate';
-            if (confirm(`Are you sure you want to ${actionText} this category?`)) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `<?= SITE_URL ?>/admin/categories/${categoryId}/toggle-status`;
-
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = 'csrf_token';
-                csrfToken.value = '<?= $_SESSION['csrf_token'] ?? '' ?>';
-
-                const statusInput = document.createElement('input');
-                statusInput.type = 'hidden';
-                statusInput.name = 'status';
-                statusInput.value = status;
-
-                form.appendChild(csrfToken);
-                form.appendChild(statusInput);
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-
-        // Icon preview
-        document.getElementById('icon').addEventListener('input', function(e) {
-            const iconClass = e.target.value;
-            const color = document.getElementById('color').value;
-            const preview = document.querySelector('.icon-preview i');
-
-            if (iconClass) {
-                preview.className = iconClass + ' fa-3x';
-                preview.style.color = color;
-            } else {
-                preview.className = 'fas fa-question-circle fa-3x text-muted';
-                preview.style.color = '';
-            }
-        });
-
-        // Color preview
-        document.getElementById('color').addEventListener('change', function(e) {
-            const color = e.target.value;
-            const preview = document.querySelector('.icon-preview i');
-            preview.style.color = color;
-        });
-
-        // Image preview
-        document.getElementById('image').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.querySelector('.image-preview');
-                    preview.innerHTML = `<img src="${e.target.result}" class="img-fluid rounded" style="max-height: 150px; object-fit: cover;" alt="Preview">`;
-                };
-                reader.readAsDataURL(file);
-            }
+    </div>    <?php require_once 'views/admin/layouts/footer.php'; ?>    <script>
+        window.SITE_URL = '<?= SITE_URL ?>';
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCategoryEditForm();
         });
     </script>
 

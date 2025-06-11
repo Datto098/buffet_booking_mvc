@@ -363,10 +363,12 @@ class Order extends BaseModel
      * Get order with items for detailed view
      * @param int $orderId Order ID
      * @return array Order details with items
+
      */    public function getOrderWithItems($orderId)
     {
         // Get order details
         $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email
+
                 FROM {$this->table} o
                 LEFT JOIN users u ON o.user_id = u.id
                 WHERE o.id = :order_id";
@@ -378,7 +380,9 @@ class Order extends BaseModel
 
         if (!$order) {
             return []; // Return an empty array instead of null
-        }        // Get order items
+        }
+
+        // Get order items with special instructions
         $sql = "SELECT oi.*, f.name as food_name, f.image, f.description
                 FROM order_items oi
                 LEFT JOIN food_items f ON oi.food_item_id = f.id
@@ -391,9 +395,11 @@ class Order extends BaseModel
         $order['items'] = $stmt->fetchAll();
 
         return $order;
+
     }    // Get orders for CSV export with filtering
     public function getOrdersForExport($filters = [])
     {
+
         $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email,
                        COUNT(oi.id) as total_items
                 FROM {$this->table} o
@@ -619,6 +625,7 @@ class Order extends BaseModel
      * Count orders by user (alias for countUserOrders)
      * @param int $userId User ID
      * @return int Number of orders
+
      */
     public function countByUser($userId)
     {
@@ -636,6 +643,7 @@ class Order extends BaseModel
     }
 
     /**
+
      * Get comprehensive order statistics for admin dashboard
      * @return array Order statistics
      */
@@ -722,29 +730,7 @@ class Order extends BaseModel
                 LIMIT :limit";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
-        $stmt->execute();
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);        $stmt->execute();
         return $stmt->fetchAll();
-    }
-    public function hasUserOrderedFood($userId, $foodId) {
-        $sql = "SELECT COUNT(*) FROM order_items oi
-                JOIN orders o ON oi.order_id = o.id
-                WHERE o.user_id = :user_id AND oi.food_item_id = :food_id AND o.status = 'completed'";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
-        $stmt->bindValue(':food_id', $foodId, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchColumn() > 0;
-    }
-    public function getCompletedOrderIdByUserAndFood($userId, $foodId) {
-        $sql = "SELECT o.id FROM orders o
-                JOIN order_items oi ON o.id = oi.order_id
-                WHERE o.user_id = :user_id AND oi.food_item_id = :food_id AND o.status = 'completed'
-                ORDER BY o.created_at DESC LIMIT 1";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
-        $stmt->bindValue(':food_id', $foodId, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchColumn();
     }
 }

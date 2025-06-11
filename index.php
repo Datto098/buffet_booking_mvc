@@ -135,9 +135,15 @@ function handleAdminRoute($segments)
 
     $section = $segments[1] ?? 'dashboard';
     $action = $segments[2] ?? 'index';
-    $param = $segments[3] ?? null;
-
-    switch ($section) {
+    $param = $segments[3] ?? null;    switch ($section) {
+        case 'dashboard':
+            if ($action === 'stats') {
+                // Handle dashboard stats API endpoint
+                $controller->dashboardStats();
+            } else {
+                $controller->dashboard();
+            }
+            break;
         case 'users':
             handleAdminUsersRoute($controller, $action, $param);
             break;
@@ -157,6 +163,9 @@ function handleAdminRoute($segments)
             break;
         case 'news':
             handleAdminNewsRoute($action, $param);
+            break;
+        case 'logs':
+            handleAdminLogsRoute($controller, $action, $param);
             break;
         default:
             $controller->dashboard();
@@ -222,10 +231,12 @@ function handleAdminCategoriesRoute($controller, $action, $param)
 }
 
 function handleAdminOrdersRoute($controller, $action, $param)
-{
-    switch ($action) {
+{    switch ($action) {
         case 'update-status':
             $controller->updateOrderStatus($param);
+            break;
+        case 'update-payment-status':
+            $controller->updatePaymentStatus($param);
             break;
         case 'details':
             $controller->orderDetails($param);
@@ -235,6 +246,21 @@ function handleAdminOrdersRoute($controller, $action, $param)
             break;
         case 'export-csv':
             $controller->exportOrdersCSV();
+            break;
+        case 'get':
+            $controller->getOrder($param);
+            break;
+        case 'update':
+            $controller->updateOrder($param);
+            break;
+        case 'duplicate':
+            $controller->duplicateOrder($param);
+            break;
+        case 'send-email':
+            $controller->sendOrderEmail($param);
+            break;
+        case 'delete':
+            $controller->deleteOrder($param);
             break;
         default:
             $controller->orders();
@@ -251,7 +277,7 @@ function handleAdminBookingsRoute($controller, $action, $param)
             $controller->storeBooking();
             break;
         case 'update-status':
-            $controller->updateBookingStatus();
+            $controller->updateBookingStatus($param);
             break;
         case 'assign-table':
             $controller->assignTable();
@@ -261,6 +287,12 @@ function handleAdminBookingsRoute($controller, $action, $param)
             break;
         case 'available-tables':
             $controller->getAvailableTables();
+            break;
+        case 'send-confirmation':
+            $controller->sendConfirmationEmail();
+            break;
+        case 'bulk-update-status':
+            $controller->bulkUpdateStatus();
             break;
         case 'edit':
             $controller->editBooking($param);
@@ -278,15 +310,20 @@ function handleAdminTablesRoute($controller, $action, $param)
     switch ($action) {
         case 'create':
             $controller->createTable();
-            break;
-        case 'edit':
+            break;        case 'edit':
             $controller->editTable($param);
             break;
         case 'delete':
             $controller->deleteTable($param);
             break;
+        case 'toggle-status':
+            $controller->toggleTableStatus();
+            break;
         case 'utilization':
             $controller->tableUtilization();
+            break;
+        case 'history':
+            $controller->getTableHistory($param);
             break;
         default:
             $controller->tables();
@@ -308,8 +345,31 @@ function handleAdminNewsRoute($action, $param)
         case 'delete':
             $controller->delete($param);
             break;
+        case 'toggle-status':
+            $controller->toggleStatus();
+            break;
+        case 'bulk-action':
+            $controller->bulkAction();
+            break;
         default:
             $controller->manage();
+    }
+}
+
+function handleAdminLogsRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'download':
+            $controller->downloadLog($param);
+            break;
+        case 'clear':
+            $controller->clearLog($param);
+            break;
+        case 'view':
+            $controller->viewLog($param);
+            break;
+        default:
+            $controller->logs();
     }
 }
 

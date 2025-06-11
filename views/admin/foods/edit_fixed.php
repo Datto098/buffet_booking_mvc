@@ -23,6 +23,7 @@
 
         .image-container {
             width: 100%;
+            height: 200px;
             border-radius: 12px;
             overflow: hidden;
             display: flex;
@@ -106,15 +107,14 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0">
-                                    <i class="fas fa-utensils"></i>
-                                    Food Information
+                                    <i class="fas fa-utensils"></i> Food Information
                                 </h5>
-                                <span class="badge bg-<?= ($food['is_available'] ?? 0) == 1 ? 'success' : 'danger' ?>">
-                                    <?= ($food['is_available'] ?? 0) == 1 ? 'Available' : 'Unavailable' ?>
+                                <span class="badge bg-<?= ($food['status'] ?? 'inactive') == 'active' ? 'success' : 'danger' ?>">
+                                    <?= ucfirst($food['status'] ?? 'inactive') ?>
                                 </span>
                             </div>
                             <div class="card-body">
-                                <form action="<?= SITE_URL ?>/admin/foods/edit/<?= $food['id'] ?>" method="POST" enctype="multipart/form-data" id="editFoodForm">
+                                <form action="<?= SITE_URL ?>/admin/foods/update/<?= $food['id'] ?>" method="POST" enctype="multipart/form-data" id="editFoodForm">
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 
                                     <!-- Food Name and Category -->
@@ -156,69 +156,19 @@
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label for="is_available" class="form-label">Availability</label>
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="is_available" name="is_available" value="1"
-                                                    <?= ($food['is_available'] ?? 0) == 1 ? 'checked' : '' ?>>
-                                                <label class="form-check-label" for="is_available">
-                                                    Available for Order
-                                                </label>
-                                            </div>
+                                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="status" name="status" required>
+                                                <option value="active" <?= ($food['status'] ?? '') == 'active' ? 'selected' : '' ?>>Available</option>
+                                                <option value="inactive" <?= ($food['status'] ?? '') == 'inactive' ? 'selected' : '' ?>>Unavailable</option>
+                                            </select>
                                         </div>
-                                    </div>                                    <!-- Description -->
+                                    </div>
+
+                                    <!-- Description -->
                                     <div class="mb-3">
                                         <label for="description" class="form-label">Description</label>
                                         <textarea class="form-control" id="description" name="description" rows="4"
                                             placeholder="Describe the food item, ingredients, preparation method, etc..."><?= htmlspecialchars($food['description'] ?? '') ?></textarea>
-                                    </div>
-
-                                    <!-- Featured Food Settings -->
-                                    <div class="mb-3">
-                                        <label class="form-label">
-                                            <i class="fas fa-star text-warning"></i> Featured Food Settings
-                                        </label>
-                                        <div class="card border-warning">
-                                            <div class="card-body">
-                                                <div class="row">
-                                                    <div class="col-md-4">
-                                                        <div class="form-check form-switch">
-                                                            <input class="form-check-input" type="checkbox" id="is_popular" name="is_popular" value="1"
-                                                                <?= ($food['is_popular'] ?? 0) == 1 ? 'checked' : '' ?>>
-                                                            <label class="form-check-label" for="is_popular">
-                                                                <i class="fas fa-fire text-danger"></i> Popular Dish
-                                                            </label>
-                                                        </div>
-                                                        <small class="text-muted">Show as popular/trending item</small>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <div class="form-check form-switch">
-                                                            <input class="form-check-input" type="checkbox" id="is_new" name="is_new" value="1"
-                                                                <?= ($food['is_new'] ?? 0) == 1 ? 'checked' : '' ?>>
-                                                            <label class="form-check-label" for="is_new">
-                                                                <i class="fas fa-sparkles text-success"></i> New Dish
-                                                            </label>
-                                                        </div>
-                                                        <small class="text-muted">Mark as newly added item</small>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <div class="form-check form-switch">
-                                                            <input class="form-check-input" type="checkbox" id="is_seasonal" name="is_seasonal" value="1"
-                                                                <?= ($food['is_seasonal'] ?? 0) == 1 ? 'checked' : '' ?>>
-                                                            <label class="form-check-label" for="is_seasonal">
-                                                                <i class="fas fa-leaf text-info"></i> Seasonal
-                                                            </label>
-                                                        </div>
-                                                        <small class="text-muted">Limited time seasonal dish</small>
-                                                    </div>
-                                                </div>
-                                                <div class="alert alert-info mt-3 mb-0">
-                                                    <small>
-                                                        <i class="fas fa-info-circle"></i>
-                                                        Foods marked as Popular, New, or Seasonal will appear in the "Featured Foods" section on the homepage.
-                                                    </small>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
 
                                     <!-- Image Upload -->
@@ -253,10 +203,8 @@
                                     <i class="fas fa-image"></i> Food Image
                                 </h6>
                             </div>
-                            <div class="card-body text-center"
-                                style="overflow: hidden;">
-                                <div class="image-preview"
-                                    style="max-width: 100%">
+                            <div class="card-body text-center">
+                                <div class="image-preview">
                                     <?php if (!empty($food['image'])): ?>
                                         <div class="image-container">
                                             <img src="<?= SITE_URL ?>/uploads/food_images/<?= htmlspecialchars($food['image']) ?>"
@@ -367,13 +315,110 @@
                 </div>
             </div>
         </div>
-    </div>    <?php require_once 'views/admin/layouts/footer.php'; ?>    <script>
-        // Set up site URL for admin functions
-        window.SITE_URL = '<?= SITE_URL ?>';
+    </div>
 
-        // Page initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeFoodEditForm();
+    <?php require_once 'views/admin/layouts/footer.php'; ?>
+
+    <script>
+        // Form validation
+        document.getElementById('editFoodForm').addEventListener('submit', function(e) {
+            const name = document.getElementById('name').value.trim();
+            const price = document.getElementById('price').value;
+            const categoryId = document.getElementById('category_id').value;
+
+            if (!name) {
+                e.preventDefault();
+                alert('Food name is required!');
+                document.getElementById('name').focus();
+                return false;
+            }
+
+            if (!categoryId) {
+                e.preventDefault();
+                alert('Please select a category!');
+                document.getElementById('category_id').focus();
+                return false;
+            }
+
+            if (!price || price <= 0) {
+                e.preventDefault();
+                alert('Valid price is required!');
+                document.getElementById('price').focus();
+                return false;
+            }
+        });
+
+        // Delete confirmation
+        function confirmDelete() {
+            new bootstrap.Modal(document.getElementById('deleteFoodModal')).show();
+        }
+
+        // Quick action functions
+        function viewFoodOrders(foodId) {
+            window.location.href = `<?= SITE_URL ?>/admin/orders?food_id=${foodId}`;
+        }
+
+        function viewFoodReviews(foodId) {
+            window.location.href = `<?= SITE_URL ?>/admin/reviews?food_id=${foodId}`;
+        }
+
+        function duplicateFood(foodId) {
+            if (confirm('Create a duplicate of this food item?')) {
+                window.location.href = `<?= SITE_URL ?>/admin/foods/duplicate/${foodId}`;
+            }
+        }
+
+        function toggleFoodStatus(foodId, status) {
+            const actionText = status === 'active' ? 'make available' : 'make unavailable';
+            if (confirm(`Are you sure you want to ${actionText} this food item?`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `<?= SITE_URL ?>/admin/foods/${foodId}/toggle-status`;
+
+                const csrfToken = document.createElement('input');
+                csrfToken.type = 'hidden';
+                csrfToken.name = 'csrf_token';
+                csrfToken.value = '<?= $_SESSION['csrf_token'] ?? '' ?>';
+
+                const statusInput = document.createElement('input');
+                statusInput.type = 'hidden';
+                statusInput.name = 'status';
+                statusInput.value = status;
+
+                form.appendChild(csrfToken);
+                form.appendChild(statusInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Image preview functionality
+        document.getElementById('image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Please select a valid image file (JPG, PNG, or GIF)');
+                    this.value = '';
+                    return;
+                }
+
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    this.value = '';
+                    return;
+                }
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.querySelector('.image-preview');
+                    preview.innerHTML = `<div class="image-container"><img src="${e.target.result}" class="food-image" alt="Preview"></div>`;
+                };
+                reader.readAsDataURL(file);
+            }
         });
     </script>
 </body>

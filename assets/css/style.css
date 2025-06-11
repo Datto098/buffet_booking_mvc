@@ -40,8 +40,9 @@ body {
 
 /* Hero Section */
 .hero-section {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #20c997 100%);
-    min-height: 500px;
+    background: url("../images/nha-hang-buffet-2.png") no-repeat center center/cover;
+    /* background: linear-gradient(135deg, var(--primary-color) 0%, #20c997 100%); */
+    min-height: 100vh;
 }
 
 /* Card Styles */

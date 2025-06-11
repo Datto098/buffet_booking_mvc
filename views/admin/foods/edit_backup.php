@@ -18,13 +18,16 @@
             border: 3px dashed #dee2e6;
             border-radius: 12px;
             margin-bottom: 15px;
-            padding: 30px;
+            padding: 15px;
         }
 
         .image-container {
             width: 100%;
+            height: 200px;
             border-radius: 12px;
             overflow: hidden;
+            /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+            /* background: #f8f9fa; */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -106,35 +109,33 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0">
-                                    <i class="fas fa-utensils"></i>
-                                    Food Information
+                                    <i class="fas fa-utensils"></i> Food Information
                                 </h5>
-                                <span class="badge bg-<?= ($food['is_available'] ?? 0) == 1 ? 'success' : 'danger' ?>">
-                                    <?= ($food['is_available'] ?? 0) == 1 ? 'Available' : 'Unavailable' ?>
+                                <span class="badge bg-<?= ($food['status'] ?? 'inactive') == 'active' ? 'success' : 'danger' ?>">
+                                    <?= ucfirst($food['status'] ?? 'inactive') ?>
                                 </span>
                             </div>
                             <div class="card-body">
-                                <form action="<?= SITE_URL ?>/admin/foods/edit/<?= $food['id'] ?>" method="POST" enctype="multipart/form-data" id="editFoodForm">
+                                <form action="<?= SITE_URL ?>/admin/foods/update/<?= $food['id'] ?>" method="POST" enctype="multipart/form-data" id="editFoodForm">
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
 
-                                    <!-- Food Name and Category -->
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="name" class="form-label">Food Name <span class="text-danger">*</span></label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="fas fa-utensils"></i></span>
                                                 <input type="text" class="form-control" id="name" name="name"
-                                                    value="<?= htmlspecialchars($food['name'] ?? '') ?>" required
-                                                    placeholder="Enter food name...">
+                                                    value="<?= htmlspecialchars($food['name'] ?? '') ?>" required>
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
                                             <select class="form-select" id="category_id" name="category_id" required>
-                                                <option value="">Choose category...</option>
-                                                <?php if (isset($categories) && !empty($categories)): ?>
+                                                <option value="">Select Category</option>
+                                                <?php if (!empty($categories)): ?>
                                                     <?php foreach ($categories as $category): ?>
-                                                        <option value="<?= $category['id'] ?>" <?= ($food['category_id'] ?? '') == $category['id'] ? 'selected' : '' ?>>
+                                                        <option value="<?= $category['id'] ?>"
+                                                            <?= ($food['category_id'] ?? '') == $category['id'] ? 'selected' : '' ?>>
                                                             <?= htmlspecialchars($category['name']) ?>
                                                         </option>
                                                     <?php endforeach; ?>
@@ -143,95 +144,82 @@
                                         </div>
                                     </div>
 
-                                    <!-- Price and Status -->
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="price" class="form-label">Price <span class="text-danger">*</span></label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                                <input type="number" class="form-control" id="price" name="price"
-                                                    value="<?= htmlspecialchars($food['price'] ?? '') ?>" required min="0" step="1000"
-                                                    placeholder="Enter price in VND...">
-                                                <span class="input-group-text">VND</span>
+                                                <input type="number" class="form-control" id="price" name="price" step="0.01" min="0"
+                                                    value="<?= htmlspecialchars($food['price'] ?? '') ?>" required>
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label for="is_available" class="form-label">Availability</label>
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" id="is_available" name="is_available" value="1"
-                                                    <?= ($food['is_available'] ?? 0) == 1 ? 'checked' : '' ?>>
-                                                <label class="form-check-label" for="is_available">
-                                                    Available for Order
-                                                </label>
+                                            <label for="cooking_time" class="form-label">Cooking Time (minutes)</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                                <input type="number" class="form-control" id="cooking_time" name="cooking_time" min="1"
+                                                    value="<?= htmlspecialchars($food['cooking_time'] ?? '') ?>">
                                             </div>
                                         </div>
-                                    </div>                                    <!-- Description -->
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="status" name="status" required>
+                                                <option value="active" <?= ($food['status'] ?? '') == 'active' ? 'selected' : '' ?>>Available</option>
+                                                <option value="inactive" <?= ($food['status'] ?? '') == 'inactive' ? 'selected' : '' ?>>Unavailable</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="image" class="form-label">Food Image</label>
+                                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                        </div>
+                                    </div>
+
                                     <div class="mb-3">
                                         <label for="description" class="form-label">Description</label>
                                         <textarea class="form-control" id="description" name="description" rows="4"
-                                            placeholder="Describe the food item, ingredients, preparation method, etc..."><?= htmlspecialchars($food['description'] ?? '') ?></textarea>
+                                            placeholder="Describe the food item, ingredients, etc..."><?= htmlspecialchars($food['description'] ?? '') ?></textarea>
                                     </div>
 
-                                    <!-- Featured Food Settings -->
                                     <div class="mb-3">
-                                        <label class="form-label">
-                                            <i class="fas fa-star text-warning"></i> Featured Food Settings
-                                        </label>
-                                        <div class="card border-warning">
-                                            <div class="card-body">
-                                                <div class="row">
-                                                    <div class="col-md-4">
-                                                        <div class="form-check form-switch">
-                                                            <input class="form-check-input" type="checkbox" id="is_popular" name="is_popular" value="1"
-                                                                <?= ($food['is_popular'] ?? 0) == 1 ? 'checked' : '' ?>>
-                                                            <label class="form-check-label" for="is_popular">
-                                                                <i class="fas fa-fire text-danger"></i> Popular Dish
-                                                            </label>
-                                                        </div>
-                                                        <small class="text-muted">Show as popular/trending item</small>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <div class="form-check form-switch">
-                                                            <input class="form-check-input" type="checkbox" id="is_new" name="is_new" value="1"
-                                                                <?= ($food['is_new'] ?? 0) == 1 ? 'checked' : '' ?>>
-                                                            <label class="form-check-label" for="is_new">
-                                                                <i class="fas fa-sparkles text-success"></i> New Dish
-                                                            </label>
-                                                        </div>
-                                                        <small class="text-muted">Mark as newly added item</small>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <div class="form-check form-switch">
-                                                            <input class="form-check-input" type="checkbox" id="is_seasonal" name="is_seasonal" value="1"
-                                                                <?= ($food['is_seasonal'] ?? 0) == 1 ? 'checked' : '' ?>>
-                                                            <label class="form-check-label" for="is_seasonal">
-                                                                <i class="fas fa-leaf text-info"></i> Seasonal
-                                                            </label>
-                                                        </div>
-                                                        <small class="text-muted">Limited time seasonal dish</small>
-                                                    </div>
-                                                </div>
-                                                <div class="alert alert-info mt-3 mb-0">
-                                                    <small>
-                                                        <i class="fas fa-info-circle"></i>
-                                                        Foods marked as Popular, New, or Seasonal will appear in the "Featured Foods" section on the homepage.
-                                                    </small>
-                                                </div>
+                                        <label for="ingredients" class="form-label">Ingredients</label>
+                                        <textarea class="form-control" id="ingredients" name="ingredients" rows="3"
+                                            placeholder="List main ingredients..."><?= htmlspecialchars($food['ingredients'] ?? '') ?></textarea>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="spice_level" class="form-label">Spice Level</label>
+                                            <select class="form-select" id="spice_level" name="spice_level">
+                                                <option value="">Not Specified</option>
+                                                <option value="mild" <?= ($food['spice_level'] ?? '') == 'mild' ? 'selected' : '' ?>>Mild</option>
+                                                <option value="medium" <?= ($food['spice_level'] ?? '') == 'medium' ? 'selected' : '' ?>>Medium</option>
+                                                <option value="hot" <?= ($food['spice_level'] ?? '') == 'hot' ? 'selected' : '' ?>>Hot</option>
+                                                <option value="very_hot" <?= ($food['spice_level'] ?? '') == 'very_hot' ? 'selected' : '' ?>>Very Hot</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="calories" class="form-label">Calories</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="fas fa-fire"></i></span>
+                                                <input type="number" class="form-control" id="calories" name="calories" min="0"
+                                                    value="<?= htmlspecialchars($food['calories'] ?? '') ?>">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="is_vegetarian" class="form-label">Dietary</label>
+                                            <div class="form-check mt-2">
+                                                <input class="form-check-input" type="checkbox" id="is_vegetarian" name="is_vegetarian" value="1"
+                                                    <?= ($food['is_vegetarian'] ?? 0) ? 'checked' : '' ?>>
+                                                <label class="form-check-label" for="is_vegetarian">
+                                                    Vegetarian
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Image Upload -->
-                                    <div class="mb-3">
-                                        <label for="image" class="form-label">Food Image</label>
-                                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                                        <div class="form-text">
-                                            <i class="fas fa-info-circle"></i> Choose a new image to replace the current one. Leave empty to keep current image.
-                                            <br>Accepted formats: JPG, PNG, GIF. Maximum size: 5MB.
-                                        </div>
-                                    </div>
-
-                                    <!-- Action Buttons -->
                                     <div class="d-flex justify-content-between">
                                         <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
                                             <i class="fas fa-times"></i> Cancel
@@ -253,19 +241,16 @@
                                     <i class="fas fa-image"></i> Food Image
                                 </h6>
                             </div>
-                            <div class="card-body text-center"
-                                style="overflow: hidden;">
-                                <div class="image-preview"
-                                    style="max-width: 100%">
-                                    <?php if (!empty($food['image'])): ?>
-                                        <div class="image-container">
+                            <div class="card-body text-center " style="display: flex; flex-direction: column; align-items: center; overflow: hidden">
+                                <div class="image-preview" style="width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; max-width: 100%; margin-top: 15px; ">
+                                    <?php if (!empty($food['image'])): ?>                                        <div class="image-container">
                                             <img src="<?= SITE_URL ?>/uploads/food_images/<?= htmlspecialchars($food['image']) ?>"
                                                 class="food-image" alt="Food Image">
                                         </div>
                                     <?php else: ?>
                                         <div class="image-placeholder">
-                                            <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
-                                            <p class="text-muted mb-0">No image uploaded</p>
+                                            <i class="fas fa-utensils fa-2x text-muted"></i>
+                                            <p class="text-muted mt-2 mb-0">No image uploaded</p>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -367,13 +352,85 @@
                 </div>
             </div>
         </div>
-    </div>    <?php require_once 'views/admin/layouts/footer.php'; ?>    <script>
-        // Set up site URL for admin functions
-        window.SITE_URL = '<?= SITE_URL ?>';
+    </div>
 
-        // Page initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeFoodEditForm();
+    <?php require_once 'views/admin/layouts/footer.php'; ?>
+
+    <script>
+        // Form validation
+        document.getElementById('editFoodForm').addEventListener('submit', function(e) {
+            const name = document.getElementById('name').value.trim();
+            const price = document.getElementById('price').value;
+
+            if (!name) {
+                e.preventDefault();
+                alert('Food name is required!');
+                return false;
+            }
+
+            if (!price || price <= 0) {
+                e.preventDefault();
+                alert('Valid price is required!');
+                return false;
+            }
+        });
+
+        // Delete confirmation
+        function confirmDelete() {
+            new bootstrap.Modal(document.getElementById('deleteFoodModal')).show();
+        }
+
+        // Quick action functions
+        function viewFoodOrders(foodId) {
+            window.location.href = `<?= SITE_URL ?>/admin/orders?food_id=${foodId}`;
+        }
+
+        function viewFoodReviews(foodId) {
+            window.location.href = `<?= SITE_URL ?>/admin/reviews?food_id=${foodId}`;
+        }
+
+        function duplicateFood(foodId) {
+            if (confirm('Create a duplicate of this food item?')) {
+                window.location.href = `<?= SITE_URL ?>/admin/foods/duplicate/${foodId}`;
+            }
+        }
+
+        function toggleFoodStatus(foodId, status) {
+            const actionText = status === 'active' ? 'make available' : 'make unavailable';
+            if (confirm(`Are you sure you want to ${actionText} this food item?`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `<?= SITE_URL ?>/admin/foods/${foodId}/toggle-status`;
+
+                const csrfToken = document.createElement('input');
+                csrfToken.type = 'hidden';
+                csrfToken.name = 'csrf_token';
+                csrfToken.value = '<?= $_SESSION['csrf_token'] ?? '' ?>';
+
+                const statusInput = document.createElement('input');
+                statusInput.type = 'hidden';
+                statusInput.name = 'status';
+                statusInput.value = status;
+
+                form.appendChild(csrfToken);
+                form.appendChild(statusInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Image preview
+        document.getElementById('image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.querySelector('.image-preview');
+                    preview.innerHTML = ''; // Clear previous preview
+                    preview.innerHTML = `<div class="image-container"><img src="${e.target.result}" class="food-image" alt="Preview"></div>`;
+                };
+                reader.readAsDataURL(file);
+            }
         });
     </script>
 </body>

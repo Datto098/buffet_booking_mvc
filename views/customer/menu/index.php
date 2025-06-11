@@ -3,13 +3,16 @@
 /**
  * Menu Index View
  */
+
+// Ensure SITE_URL is available
+$SITE_URL = defined('SITE_URL') ? SITE_URL : 'http://localhost/buffet_booking_mvc';
 ?>
 
 <!-- Hero Section -->
 <section class="hero-section">
     <div class="container">
         <div class="hero-content text-center">
-            <h1 class="hero-title " style="color: var(--text-primary);">
+            <h1 class="hero-title " style="color: #fff">
                 Thực Đơn Buffet <br>
                 <span class="text-white">Đẳng Cấp Quốc Tế</span>
             </h1>
@@ -149,9 +152,8 @@
             <?php else: ?>
                 <div class="food-grid" id="foodGrid">
                     <?php foreach ($foods as $index => $food): ?>
-                        <div class="food-item" style="animation-delay: <?php echo ($index % 12) * 0.1; ?>s">
-                            <div class="food-image">
-                                <img src="<?= !empty($food['image']) ? htmlspecialchars($food['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
+                        <div class="food-item" style="animation-delay: <?php echo ($index % 12) * 0.1; ?>s">                            <div class="food-image">
+                                <img src="<?= !empty($food['image']) ? $SITE_URL . "/uploads/food_images/" . htmlspecialchars($food['image']) : $SITE_URL . '/assets/images/food-placeholder.svg' ?>"
                                     alt="<?= htmlspecialchars($food['name']) ?>"
                                     class="card-img-luxury">
                                 <div class="food-badge">
@@ -172,12 +174,11 @@
                                         <?= number_format($food['price'], 0, ',', '.') ?>đ
                                     </span>
                                 </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-luxury add-to-cart-btn flex-grow-1"
+                                <div class="d-flex gap-2">                                    <button class="btn btn-luxury add-to-cart-btn flex-grow-1"
                                         data-food-id="<?= $food['id'] ?>"
                                         data-food-name="<?= htmlspecialchars($food['name']) ?>"
                                         data-food-price="<?= $food['price'] ?>"
-                                        data-food-image="<?= !empty($food['image']) ? htmlspecialchars($food['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>">
+                                        data-food-image="<?= !empty($food['image']) ? $SITE_URL . '/uploads/food_images/' . htmlspecialchars($food['image']) : $SITE_URL . '/assets/images/food-placeholder.svg' ?>">
                                         <i class="fas fa-shopping-cart"></i> Thêm vào giỏ
                                     </button>
                                     <a href="<?= SITE_URL ?>/food/detail/<?= $food['id'] ?>"

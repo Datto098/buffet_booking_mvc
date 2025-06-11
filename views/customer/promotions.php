@@ -7,7 +7,7 @@
 <section class="hero-section">
     <div class="container">
         <div class="hero-content">
-            <nav aria-label="breadcrumb" class="mb-4">
+            <!-- <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb justify-content-center" style="background: rgba(255,255,255,0.1); border-radius: 30px; padding: 0.75rem 1.5rem;">
                     <li class="breadcrumb-item">
                         <a href="<?= SITE_URL ?>" style="color: rgba(255,255,255,0.8);">
@@ -16,12 +16,12 @@
                     </li>
                     <li class="breadcrumb-item active" style="color: var(--primary-gold);">Khuyến Mãi</li>
                 </ol>
-            </nav>
+            </nav> -->
             <h1 class="hero-title " >
-                <span  style="color: var(--text-primary);">Ưu Đãi</span> <br>
+                <span  style="color: #fff">Ưu Đãi</span> <br>
                 <span class="text-white">Độc Quyền</span>
             </h1>
-            <p class="hero-subtitle banner-subtitle">
+            <p class="hero-subtitle banner-subtitle" style="color: #fff">
                 Khám phá những món ăn tinh tế với mức giá ưu đãi đặc biệt.
                 Thưởng thức ẩm thực đẳng cấp mà không cần lo về chi phí.
             </p>
@@ -253,7 +253,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <div class="cta-text fade-in-up">
-                        <h2 class="cta-title">
+                        <h2 class="cta-title" style="color: #fff;">
                             <i class="fas fa-calendar-check me-3"></i>
                             Đặt Bàn Ngay Hôm Nay!
                         </h2>
@@ -528,7 +528,8 @@
 
     /* CTA Section */
     .cta-section {
-        background: linear-gradient(135deg, var(--primary-navy), var(--primary-gold));
+        background:  var(--primary-navy);
+        /* background: linear-gradient(135deg, var(--primary-navy), var(--primary-gold)); */
         color: white;
         padding: 5rem 0;
         position: relative;

@@ -40,17 +40,16 @@
                     <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card card-gradient-primary h-100 shadow">
                             <div class="card-body">
-                                <div class="row no-gutters align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-white text-uppercase mb-1">
+                                <div class="row no-gutters align-items-center">                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                             Total Orders
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-white">
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" data-stat="total_orders">
                                             <?= number_format($stats['total_orders'] ?? 0) ?>
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-shopping-cart fa-2x text-white-50"></i>
+                                        <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
                                     </div>
                                 </div>
                             </div>
@@ -60,17 +59,16 @@
                     <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card card-gradient-success h-100 shadow">
                             <div class="card-body">
-                                <div class="row no-gutters align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-white text-uppercase mb-1">
+                                <div class="row no-gutters align-items-center">                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                             Revenue (This Month)
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-white">
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" data-stat="monthly_revenue">
                                             $<?= number_format($stats['monthly_revenue'] ?? 0, 2) ?>
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-dollar-sign fa-2x text-white-50"></i>
+                                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
                                     </div>
                                 </div>
                             </div>
@@ -80,17 +78,16 @@
                     <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card card-gradient-info h-100 shadow">
                             <div class="card-body">
-                                <div class="row no-gutters align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-white text-uppercase mb-1">
+                                <div class="row no-gutters align-items-center">                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                             Active Bookings
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-white">
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
                                             <?= number_format($stats['active_bookings'] ?? 0) ?>
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-calendar-check fa-2x text-white-50"></i>
+                                        <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
                                     </div>
                                 </div>
                             </div>
@@ -100,17 +97,15 @@
                     <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card card-gradient-warning h-100 shadow">
                             <div class="card-body">
-                                <div class="row no-gutters align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-white text-uppercase mb-1">
+                                <div class="row no-gutters align-items-center">                                    <div class="col mr-2">                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                             Total Users
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-white">
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" data-stat="total_users">
                                             <?= number_format($stats['total_users'] ?? 0) ?>
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-users fa-2x text-white-50"></i>
+                                        <i class="fas fa-users fa-2x text-gray-300"></i>
                                     </div>
                                 </div>
                             </div>
@@ -274,25 +269,24 @@
                                     <i class="fas fa-bolt me-2"></i>Quick Actions
                                 </h6>
                             </div>
-                            <div class="card-body">
-                                <div class="row">
+                            <div class="card-body">                                <div class="row">
                                     <div class="col-md-3 mb-3">
-                                        <a href="<?= SITE_URL ?>/admin/foods/create" class="btn btn-outline-primary btn-block">
+                                        <a href="<?= SITE_URL ?>/admin/foods/create" class="btn btn-outline-primary w-100">
                                             <i class="fas fa-plus-circle"></i> Add New Food
                                         </a>
                                     </div>
                                     <div class="col-md-3 mb-3">
-                                        <a href="<?= SITE_URL ?>/admin/categories/create" class="btn btn-outline-success btn-block">
+                                        <a href="<?= SITE_URL ?>/admin/categories/create" class="btn btn-outline-success w-100">
                                             <i class="fas fa-tags"></i> Add Category
                                         </a>
                                     </div>
                                     <div class="col-md-3 mb-3">
-                                        <a href="<?= SITE_URL ?>/admin/tables/create" class="btn btn-outline-info btn-block">
+                                        <a href="<?= SITE_URL ?>/admin/tables/create" class="btn btn-outline-info w-100">
                                             <i class="fas fa-chair"></i> Add Table
                                         </a>
                                     </div>
                                     <div class="col-md-3 mb-3">
-                                        <a href="<?= SITE_URL ?>/admin/users" class="btn btn-outline-warning btn-block">
+                                        <a href="<?= SITE_URL ?>/admin/users" class="btn btn-outline-warning w-100">
                                             <i class="fas fa-users-cog"></i> Manage Users
                                         </a>
                                     </div>
@@ -300,101 +294,25 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </main>
+                </div>            </main>
         </div>
     </div>
 
     <?php require_once 'views/admin/layouts/footer.php'; ?>
 
     <script>
-        // Dashboard specific JavaScript
+        window.SITE_URL = '<?= SITE_URL ?>';
         document.addEventListener('DOMContentLoaded', function() {
-            initializeCharts();
+            const chartData = {
+                monthly_revenue_data: <?= json_encode($stats['monthly_revenue_data'] ?? [0,0,0,0,0,0,0,0,0,0,0,0]) ?>,
+                booking_stats: {
+                    confirmed: <?= $stats['confirmed_bookings'] ?? 0 ?>,
+                    pending: <?= $stats['pending_bookings'] ?? 0 ?>,
+                    cancelled: <?= $stats['cancelled_bookings'] ?? 0 ?>
+                }
+            };
+            initializeCharts(chartData);
         });
-
-        function refreshDashboard() {
-            location.reload();
-        }
-
-        function exportChart(chartType) {
-            // Placeholder for chart export functionality
-            alert('Export functionality would be implemented here');
-        }
-
-        function initializeCharts() {
-            // Revenue Chart
-            const revenueCtx = document.getElementById('revenueChart');
-            if (revenueCtx) {
-                new Chart(revenueCtx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                        datasets: [{
-                            label: 'Revenue',
-                            data: <?= json_encode($stats['monthly_revenue_data'] ?? [0,0,0,0,0,0,0,0,0,0,0,0]) ?>,
-                            borderColor: 'rgb(54, 162, 235)',
-                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                            tension: 0.1,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: function(value) {
-                                        return '$' + value.toLocaleString();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Booking Status Chart
-            const statusCtx = document.getElementById('bookingStatusChart');
-            if (statusCtx) {
-                new Chart(statusCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Confirmed', 'Pending', 'Cancelled'],
-                        datasets: [{
-                            data: [
-                                <?= $stats['confirmed_bookings'] ?? 0 ?>,
-                                <?= $stats['pending_bookings'] ?? 0 ?>,
-                                <?= $stats['cancelled_bookings'] ?? 0 ?>
-                            ],
-                            backgroundColor: [
-                                '#28a745',
-                                '#ffc107',
-                                '#dc3545'
-                            ],
-                            borderWidth: 2,
-                            borderColor: '#fff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
-                            }
-                        }
-                    }
-                });
-            }
-        }
     </script>
 </body>
 </html>

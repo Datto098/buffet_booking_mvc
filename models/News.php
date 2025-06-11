@@ -294,5 +294,64 @@ class News extends BaseModel {
             return $this->transformNewsData($newsItem);
         }, $news);
     }
+
+    /**
+     * Update news status
+     */
+    public function updateNewsStatus($id, $status) {
+        $sql = "UPDATE {$this->table} SET status = :status, updated_at = NOW() WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+
+        try {
+            return $stmt->execute([
+                ':id' => $id,
+                ':status' => $status
+            ]);
+        } catch (Exception $e) {
+            error_log("Error updating news status: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Bulk update news status
+     */
+    public function bulkUpdateStatus($ids, $status) {
+        if (empty($ids)) {
+            return false;
+        }
+
+        $placeholders = str_repeat('?,', count($ids) - 1) . '?';
+        $sql = "UPDATE {$this->table} SET status = ?, updated_at = NOW() WHERE id IN ($placeholders)";
+        $stmt = $this->db->prepare($sql);
+
+        try {
+            $params = array_merge([$status], $ids);
+            return $stmt->execute($params);
+        } catch (Exception $e) {
+            error_log("Error bulk updating news status: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Bulk delete news
+     */
+    public function bulkDelete($ids) {
+        if (empty($ids)) {
+            return false;
+        }
+
+        $placeholders = str_repeat('?,', count($ids) - 1) . '?';
+        $sql = "DELETE FROM {$this->table} WHERE id IN ($placeholders)";
+        $stmt = $this->db->prepare($sql);
+
+        try {
+            return $stmt->execute($ids);
+        } catch (Exception $e) {
+            error_log("Error bulk deleting news: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>
