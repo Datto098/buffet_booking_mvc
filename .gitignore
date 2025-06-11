@@ -1,6 +1,5 @@
 # Bảo mật
 config/database.php
-uploads/
 *.log
 
 # IDE
@@ -24,9 +23,7 @@ temp/
 cache/
 
 # User uploads (for development)
-uploads/food_images/*
-uploads/news_images/*
-uploads/user_avatars/*
+
 
 # Keep the upload directories but not the contents
 !uploads/food_images/.gitkeep

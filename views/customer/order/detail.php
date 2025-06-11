@@ -62,7 +62,7 @@ $order_items = isset($order['items']) && is_array($order['items']) ? $order['ite
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <?php if ($item['image']): ?>
-                                            <img src="<?= SITE_URL ?>/assets/images/food/<?= $item['image'] ?? 'food-placeholder.svg' ?>"
+                                            <img src="<?= SITE_URL ?>/uploads/food_images/<?= $item['image'] ?? 'food-placeholder.svg' ?>"
                                                  alt="<?= htmlspecialchars($item['food_name'] ?? $item['name'] ?? 'Món đã xóa') ?>"
                                                  class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
                                             <?php endif; ?>

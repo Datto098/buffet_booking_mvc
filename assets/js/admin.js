@@ -354,6 +354,14 @@ function initializeStatusUpdates() {
 	const statusSelects = document.querySelectorAll('.status-select');
 
 	statusSelects.forEach((select) => {
+		// Check if listener already added to prevent duplicates
+		if (select.hasAttribute('data-status-listener-added')) {
+			return;
+		}
+
+		// Mark as having listener added
+		select.setAttribute('data-status-listener-added', 'true');
+
 		select.addEventListener('change', function () {
 			const orderId = this.dataset.orderId || this.dataset.bookingId;
 			const newStatus = this.value;
@@ -1855,6 +1863,14 @@ function initializeOrderStatusUpdates() {
 	const statusSelects = document.querySelectorAll('.status-select');
 
 	statusSelects.forEach((select) => {
+		// Skip if listener already added to prevent duplicates
+		if (select.hasAttribute('data-order-status-listener-added')) {
+			return;
+		}
+
+		// Mark as having order status listener added
+		select.setAttribute('data-order-status-listener-added', 'true');
+
 		select.addEventListener('change', function () {
 			const orderId = this.dataset.orderId;
 			const newStatus = this.value;
@@ -2378,8 +2394,8 @@ function saveTableAssignment() {
 function toggleBulkActions() {
 	const bulkActionsBar = document.getElementById('bulkActionsBar');
 	if (bulkActionsBar) {
-		bulkActionsBar.style.display =
-			bulkActionsBar.style.display === 'none' ? 'block' : 'none';
+		const isVisible = bulkActionsBar.style.display !== 'none';
+		bulkActionsBar.style.display = isVisible ? 'none' : 'block';
 	}
 }
 
@@ -2422,18 +2438,25 @@ function initializeBulkBookingSelection() {
 			).length;
 
 			if (selectAllCheckbox) {
-				selectAllCheckbox.checked =
-					checkedCheckboxes === totalCheckboxes;
 				selectAllCheckbox.indeterminate =
 					checkedCheckboxes > 0 &&
 					checkedCheckboxes < totalCheckboxes;
+				selectAllCheckbox.checked =
+					checkedCheckboxes === totalCheckboxes;
 			}
 		});
 	});
-
 	// Initialize status change handlers
 	const statusSelects = document.querySelectorAll('.status-select');
 	statusSelects.forEach((select) => {
+		// Skip if listener already added to prevent duplicates
+		if (select.hasAttribute('data-booking-status-listener-added')) {
+			return;
+		}
+
+		// Mark as having booking status listener added
+		select.setAttribute('data-booking-status-listener-added', 'true');
+
 		select.addEventListener('change', function () {
 			const bookingId = this.dataset.bookingId;
 			const newStatus = this.value;
@@ -2479,6 +2502,9 @@ document.addEventListener('DOMContentLoaded', function () {
  * Toggle table status (available/unavailable)
  * @param {number} tableId - Table ID
  * @param {number} isAvailable - 1 for available, 0 for unavailable
+
+
+
  */
 function toggleTableStatus(tableId, isAvailable) {
 	if (!tableId) {
@@ -2493,7 +2519,7 @@ function toggleTableStatus(tableId, isAvailable) {
 	button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
 
 	// Make AJAX request
-	fetch(`${window.SITE_URL || ''}/admin/tables/toggle-status`, {
+	fetch(`${SITE_URL || ''}/admin/tables/toggle-status`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -2516,7 +2542,7 @@ function toggleTableStatus(tableId, isAvailable) {
 				// Reload the page to reflect changes
 				setTimeout(() => {
 					window.location.reload();
-				}, 1000);
+				}, 1500);
 			} else {
 				showAlert(
 					'error',
@@ -2559,7 +2585,7 @@ function viewTableHistory(tableId) {
 		bsModal.show();
 
 		// Load history data
-		fetch(`${window.SITE_URL || ''}/admin/tables/history/${tableId}`, {
+		fetch(`${SITE_URL || ''}/admin/tables/history/${tableId}`, {
 			headers: {
 				'X-Requested-With': 'XMLHttpRequest',
 			},
@@ -2737,72 +2763,290 @@ function updateTablePreview() {
 			: 'fa-times-circle text-danger';
 
 	preview.innerHTML = `
-		<div class="table-visual ${statusClass} mx-auto" style="width: 80px; height: 80px; border-radius: 50%; background: ${
-		isAvailable == 1 ? '#28a745' : '#dc3545'
-	}; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-			${capacity}
-		</div>
-		<div class="mt-2">
-			<i class="fas ${statusIcon}"></i>
-			<small class="text-muted d-block">${location}</small>
+		<div class="card">
+			<div class="card-body">
+				<div class="d-flex justify-content-between align-items-start mb-3">
+					<h5 class="card-title mb-0">${escapeHtml(name)}</h5>
+					<span class="badge bg-${status === 'active' ? 'success' : 'secondary'}">
+						${status === 'active' ? 'Active' : 'Inactive'}
+					</span>
+				</div>
+				<p class="card-text text-muted">${escapeHtml(description)}</p>
+				<small class="text-muted">Sort Order: ${escapeHtml(sortOrder)}</small>
+			</div>
 		</div>
 	`;
+
+	previewCard.style.display = 'block';
+	previewCard.scrollIntoView({ behavior: 'smooth' });
 }
 
 /**
- * Apply table filters
+ * ==================== ADDITIONAL CATEGORY HELPER FUNCTIONS ====================
+ */
+
+/**
+ * Toggle bulk actions visibility
+ */
+function toggleBulkActions() {
+	const bulkActionsBar = document.getElementById('bulkActionsBar');
+	if (bulkActionsBar) {
+		const isVisible = bulkActionsBar.style.display !== 'none';
+		bulkActionsBar.style.display = isVisible ? 'none' : 'block';
+	}
+}
+
+/**
+ * Apply category filters
  */
 function applyFilters() {
 	const form = document.getElementById('filterForm');
 	if (form) {
-		form.submit();
+		const formData = new FormData(form);
+		const params = new URLSearchParams();
+
+		for (let [key, value] of formData.entries()) {
+			if (value) {
+				params.append(key, value);
+			}
+		}
+
+		window.location.href = `${SITE_URL}/admin/categories?${params.toString()}`;
 	}
 }
 
 /**
- * Clear table filters
+ * Clear category filters
  */
 function clearFilters() {
-	const url = new URL(window.location);
-	url.search = '';
-	window.location = url;
+	window.location.href = `${SITE_URL}/admin/categories`;
 }
 
 /**
- * Quick booking function for tables
- * @param {number} tableId - Table ID to book
+ * Confirm delete category (for edit page)
  */
-function quickBooking(tableId) {
-	if (!tableId || tableId <= 0) {
-		showNotification('Invalid table ID', 'error');
-		return;
-	}
-
-	// Redirect to booking page with pre-selected table
-	window.location.href = `${window.SITE_URL}/admin/bookings/create?table_id=${tableId}`;
+function confirmDelete() {
+	const modal = new bootstrap.Modal(
+		document.getElementById('deleteCategoryModal')
+	);
+	modal.show();
 }
 
 /**
- * Search tables function
+ * View foods in category
  */
-function searchTables() {
-	const searchInput = document.querySelector('#tableSearch');
-	const searchTerm = searchInput ? searchInput.value.trim() : '';
+function viewCategoryFoods(categoryId) {
+	if (!categoryId) {
+		console.error('Category ID is required');
+		return;
+	}
+	window.location.href = `${SITE_URL}/admin/foods?category_id=${categoryId}`;
+}
 
-	if (!searchTerm) {
-		showNotification('Please enter a search term', 'warning');
+/**
+ * Add new food to category
+ */
+function addFoodToCategory(categoryId) {
+	if (!categoryId) {
+		console.error('Category ID is required');
+		return;
+	}
+	window.location.href = `${SITE_URL}/admin/foods/create?category_id=${categoryId}`;
+}
+
+/**
+ * Duplicate category
+ */
+function duplicateCategory(categoryId) {
+	if (!categoryId) {
+		console.error('Category ID is required');
 		return;
 	}
 
-	// Show loading state
-	const searchButton = event.target;
-	const originalText = searchButton.innerHTML;
-	searchButton.innerHTML =
-		'<i class="fas fa-spinner fa-spin"></i> Searching...';
-	searchButton.disabled = true;
+	if (confirm('Create a duplicate of this category?')) {
+		showLoadingOverlay();
 
-	// Perform search by reloading page with search parameter
-	const currentUrl = new URL(window.location.href);
-	currentUrl.searchParams.set('search', searchTerm);
-	window.location.href = currentUrl.toString();
+		fetch(`${SITE_URL}/admin/categories/get/${categoryId}`, {
+			method: 'GET',
+			headers: {
+				'X-Requested-With': 'XMLHttpRequest',
+			},
+		})
+			.then((response) => response.json())
+			.then((data) => {
+				hideLoadingOverlay();
+
+				if (data.success) {
+					const category = data.category;
+					const duplicatedName = `${category.name} (Copy)`;
+
+					// Redirect to create page with pre-filled data
+					const params = new URLSearchParams({
+						name: duplicatedName,
+						description: category.description || '',
+						status: 'inactive', // Start as inactive for duplicates
+					});
+
+					window.location.href = `${SITE_URL}/admin/categories/create?${params.toString()}`;
+				} else {
+					showAlert(
+						'Failed to load category for duplication',
+						'error'
+					);
+				}
+			})
+			.catch((error) => {
+				hideLoadingOverlay();
+				console.error('Error:', error);
+				showAlert('Failed to duplicate category', 'error');
+			});
+	}
 }
+
+/**
+ * Toggle category status
+ */
+function toggleCategoryStatus(categoryId, status) {
+	if (!categoryId) {
+		console.error('Category ID is required');
+		return;
+	}
+
+	const statusText = status == 1 ? 'activate' : 'deactivate';
+	if (confirm(`Are you sure you want to ${statusText} this category?`)) {
+		showLoadingOverlay();
+
+		const formData = new FormData();
+		formData.append('status', status == 1 ? 'active' : 'inactive');
+		formData.append(
+			'csrf_token',
+			document
+				.querySelector('meta[name="csrf-token"]')
+				?.getAttribute('content') || ''
+		);
+
+		fetch(`${SITE_URL}/admin/categories/update/${categoryId}`, {
+			method: 'POST',
+			headers: {
+				'X-Requested-With': 'XMLHttpRequest',
+			},
+			body: formData,
+		})
+			.then((response) => response.json())
+			.then((data) => {
+				hideLoadingOverlay();
+
+				if (data.success) {
+					showAlert(
+						`Category ${statusText}d successfully`,
+						'success'
+					);
+					setTimeout(() => {
+						window.location.reload();
+					}, 1500);
+				} else {
+					showAlert('Failed to update category status', 'error');
+				}
+			})
+			.catch((error) => {
+				hideLoadingOverlay();
+				console.error('Error:', error);
+				showAlert('Failed to update category status', 'error');
+			});
+	}
+}
+
+/**
+ * Reset category form
+ */
+function resetForm() {
+	const form = document.getElementById('categoryForm');
+	if (form) {
+		form.reset();
+
+		// Clear any preview
+		const previewCard = document.getElementById('previewCard');
+		if (previewCard) {
+			previewCard.style.display = 'none';
+		}
+	}
+}
+
+/**
+ * Preview category
+ */
+function previewCategory() {
+	const form = document.getElementById('categoryForm');
+	if (!form) return;
+
+	const formData = new FormData(form);
+	const name = formData.get('name') || 'Untitled Category';
+	const description =
+		formData.get('description') || 'No description provided';
+	const status = formData.get('status') || 'active';
+	const sortOrder = formData.get('sort_order') || '0';
+
+	const previewCard = document.getElementById('previewCard');
+	const previewContent = document.getElementById('categoryPreview');
+
+	if (previewCard && previewContent) {
+		previewContent.innerHTML = `
+			<div class="card">
+				<div class="card-body">
+					<div class="d-flex justify-content-between align-items-start mb-3">
+						<h5 class="card-title mb-0">${escapeHtml(name)}</h5>
+						<span class="badge bg-${status === 'active' ? 'success' : 'secondary'}">
+							${status === 'active' ? 'Active' : 'Inactive'}
+						</span>
+					</div>
+					<p class="card-text text-muted">${escapeHtml(description)}</p>
+					<small class="text-muted">Sort Order: ${escapeHtml(sortOrder)}</small>
+				</div>
+			</div>
+		`;
+
+		previewCard.style.display = 'block';
+		previewCard.scrollIntoView({ behavior: 'smooth' });
+	}
+}
+
+// ==================== CATEGORY EVENT LISTENERS ====================
+
+// Add event listeners when DOM is ready
+document.addEventListener('DOMContentLoaded', function () {
+	// Category selection management
+	const selectAllCheckbox = document.getElementById('selectAll');
+	if (selectAllCheckbox) {
+		selectAllCheckbox.addEventListener('change', function () {
+			const checkboxes = document.querySelectorAll('.category-checkbox');
+			checkboxes.forEach((cb) => (cb.checked = this.checked));
+			updateSelectedCount();
+		});
+	}
+
+	// Individual category checkboxes
+	const categoryCheckboxes = document.querySelectorAll('.category-checkbox');
+	categoryCheckboxes.forEach((checkbox) => {
+		checkbox.addEventListener('change', function () {
+			updateSelectedCount();
+
+			// Update select all checkbox state
+			const totalCheckboxes =
+				document.querySelectorAll('.category-checkbox').length;
+			const checkedCheckboxes = document.querySelectorAll(
+				'.category-checkbox:checked'
+			).length;
+
+			if (selectAllCheckbox) {
+				selectAllCheckbox.indeterminate =
+					checkedCheckboxes > 0 &&
+					checkedCheckboxes < totalCheckboxes;
+				selectAllCheckbox.checked =
+					checkedCheckboxes === totalCheckboxes;
+			}
+		});
+	});
+
+	// Initialize selected count
+	updateSelectedCount();
+});

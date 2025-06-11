@@ -640,14 +640,29 @@ class AdminController extends BaseController
         } else {
             echo json_encode(['success' => false, 'message' => 'Booking not found']);
         }
-    }
-    public function getCategory($id)
+    }    public function getCategory($id)
     {
         header('Content-Type: application/json');
-        $category = $this->categoryModel->findById((int)$id);
+
+        $categoryModel = new Category();
+        $foodModel = new Food();
+
+        $category = $categoryModel->findById((int)$id);
         if ($category) {
+            // Get additional statistics
+            $category['food_count'] = $foodModel->countByCategory($id);
+
             // Transform data for frontend compatibility
             $category['status'] = $category['is_active'] == 1 ? 'active' : 'inactive';
+
+            // Format dates for display
+            if (isset($category['created_at'])) {
+                $category['created_at'] = date('Y-m-d H:i:s', strtotime($category['created_at']));
+            }
+            if (isset($category['updated_at'])) {
+                $category['updated_at'] = date('Y-m-d H:i:s', strtotime($category['updated_at']));
+            }
+
             echo json_encode(['success' => true, 'category' => $category]);
         } else {
             http_response_code(404);
@@ -1144,16 +1159,28 @@ class AdminController extends BaseController
         ];
 
         $this->loadAdminView('categories/edit', $data);
-    }
-    public function deleteCategory($id = null)
+    }    public function deleteCategory($id = null)
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        // Support both POST (form submission) and DELETE (AJAX) methods
+        $isAjax = $_SERVER['REQUEST_METHOD'] === 'DELETE' ||
+                  (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+                   strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'DELETE') {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+                return;
+            }
             $this->setFlash('error', 'Method not allowed.');
             $this->redirect('/admin/categories');
             return;
         }
 
         if (!$this->validateCSRF()) {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+                return;
+            }
             $this->setFlash('error', 'Invalid security token.');
             $this->redirect('/admin/categories');
             return;
@@ -1163,6 +1190,10 @@ class AdminController extends BaseController
         $categoryId = (int)($id ?? $_POST['category_id'] ?? 0);
 
         if ($categoryId <= 0) {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid category ID'], 400);
+                return;
+            }
             $this->setFlash('error', 'Invalid category ID.');
             $this->redirect('/admin/categories');
             return;
@@ -1174,6 +1205,10 @@ class AdminController extends BaseController
         // Check if category exists
         $category = $categoryModel->findById($categoryId);
         if (!$category) {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Category not found'], 404);
+                return;
+            }
             $this->setFlash('error', 'Category not found.');
             $this->redirect('/admin/categories');
             return;
@@ -1182,14 +1217,24 @@ class AdminController extends BaseController
         // Check if category has foods
         $foodCount = $foodModel->countByCategory($categoryId);
         if ($foodCount > 0) {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Cannot delete category that contains food items'], 400);
+                return;
+            }
             $this->setFlash('error', 'Cannot delete category that contains food items.');
             $this->redirect('/admin/categories');
             return;
-        }
-
-        if ($categoryModel->delete($categoryId)) {
+        }        if ($categoryModel->delete($categoryId)) {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => true, 'message' => 'Category deleted successfully']);
+                return;
+            }
             $this->setFlash('success', 'Category deleted successfully.');
         } else {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to delete category'], 500);
+                return;
+            }
             $this->setFlash('error', 'Failed to delete category.');
         }
 
@@ -1566,6 +1611,65 @@ class AdminController extends BaseController
 
         fclose($output);
     }
+
+    public function exportCategories()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            return;
+        }
+
+        $categoryModel = new Category();
+        $foodModel = new Food();
+
+        // Get all categories with stats
+        $categories = $categoryModel->getAllWithStats();
+
+        // Add food count for each category
+        foreach ($categories as &$category) {
+            $category['food_count'] = $foodModel->countByCategory($category['id']);
+        }
+
+        // Set headers for CSV download
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="categories_export_' . date('Y-m-d') . '.csv"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        // Create file pointer for output
+        $output = fopen('php://output', 'w');
+
+        // Add CSV header
+        fputcsv($output, [
+            'ID',
+            'Name',
+            'Description',
+            'Status',
+            'Sort Order',
+            'Food Items',
+            'Created Date',
+            'Updated Date'
+        ]);
+
+        // Add data rows
+        foreach ($categories as $category) {
+            fputcsv($output, [
+                $category['id'],
+                $category['name'],
+                $category['description'] ?? '',
+                ($category['is_active'] ?? 0) == 1 ? 'Active' : 'Inactive',
+                $category['sort_order'] ?? 0,
+                $category['food_count'] ?? 0,
+                isset($category['created_at']) ? date('Y-m-d H:i:s', strtotime($category['created_at'])) : '',
+                isset($category['updated_at']) ? date('Y-m-d H:i:s', strtotime($category['updated_at'])) : ''
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    // ...existing code...
 
     private function getTotalFoodsInCategories($categories)
     {
@@ -2453,5 +2557,61 @@ class AdminController extends BaseController
         });
 
         return array_slice($allEntries, 0, $limit);
+    }
+
+    public function bulkUpdateCategoryStatus()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            return;
+        }
+
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        // Get input data
+        $input = json_decode(file_get_contents('php://input'), true);
+        $categoryIds = $input['category_ids'] ?? [];
+        $status = $input['status'] ?? '';
+
+        if (empty($categoryIds) || !is_array($categoryIds)) {
+            $this->jsonResponse(['success' => false, 'message' => 'No categories selected'], 400);
+            return;
+        }
+
+        if (!in_array($status, ['active', 'inactive'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid status'], 400);
+            return;
+        }
+
+        $categoryModel = new Category();
+        $isActive = $status === 'active' ? 1 : 0;
+        $updatedCount = 0;
+
+        foreach ($categoryIds as $categoryId) {
+            $categoryId = (int)$categoryId;
+            if ($categoryId > 0) {
+                $updateData = [
+                    'is_active' => $isActive,
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+
+                if ($categoryModel->update($categoryId, $updateData)) {
+                    $updatedCount++;
+                }
+            }
+        }
+
+        if ($updatedCount > 0) {
+            $statusText = $status === 'active' ? 'activated' : 'deactivated';
+            $this->jsonResponse([
+                'success' => true,
+                'message' => "$updatedCount categories $statusText successfully"
+            ]);
+        } else {
+            $this->jsonResponse(['success' => false, 'message' => 'No categories were updated'], 500);
+        }
     }
 }

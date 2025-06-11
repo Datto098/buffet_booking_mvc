@@ -12,6 +12,8 @@ require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Booking.php';
 require_once __DIR__ . '/../models/Table.php';
 require_once __DIR__ . '/../models/Promotion.php';
+require_once __DIR__ . '/../models/Review.php';
+require_once __DIR__ . '/../models/Notification.php';
 
 class SuperAdminController extends BaseController
 {
@@ -22,6 +24,8 @@ class SuperAdminController extends BaseController
     private $bookingModel;
     private $tableModel;
     private $promotionModel;
+    private $reviewModel;
+    private $notificationModel;
 
     public function __construct()
     {
@@ -30,9 +34,10 @@ class SuperAdminController extends BaseController
         $this->foodModel = new Food();
         $this->categoryModel = new Category();
         $this->orderModel = new Order();
-        $this->bookingModel = new Booking();
-        $this->tableModel = new Table();
+        $this->bookingModel = new Booking();        $this->tableModel = new Table();
         $this->promotionModel = new Promotion();
+        $this->reviewModel = new Review();
+        $this->notificationModel = new Notification();
     }
 
     public function dashboard()
@@ -921,15 +926,15 @@ class SuperAdminController extends BaseController
         $totalPages = ceil($totalPromotions / $limit);
 
         // Get statistics
-        $stats = $this->promotionModel->getStats();
-
-        $data = [
+        $stats = $this->promotionModel->getStats();        $data = [
             'title' => 'Promotion Management',
             'promotions' => $promotions,
             'stats' => $stats,
             'currentPage' => $page,
             'totalPages' => $totalPages,
             'totalPromotions' => $totalPromotions,
+            'food_items' => $this->promotionModel->getAllFoodItems(),
+            'categories' => $this->promotionModel->getAllCategories(),
             'csrf_token' => $this->generateCSRF()
         ];
 
@@ -942,18 +947,19 @@ class SuperAdminController extends BaseController
             if (!$this->validateCSRF()) {
                 $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
                 return;
-            }
-
-            $promotionData = [
+            }            $promotionData = [
                 'name' => $this->sanitize($_POST['name']),
                 'code' => strtoupper($this->sanitize($_POST['code'])),
                 'description' => $this->sanitize($_POST['description'] ?? ''),
                 'type' => $this->sanitize($_POST['type']),
+                'application_type' => $this->sanitize($_POST['application_type'] ?? 'all'),
                 'discount_value' => (float)$_POST['discount_value'],
                 'start_date' => $_POST['start_date'],
                 'end_date' => $_POST['end_date'],
                 'usage_limit' => !empty($_POST['usage_limit']) ? (int)$_POST['usage_limit'] : null,
-                'minimum_amount' => !empty($_POST['minimum_amount']) ? (float)$_POST['minimum_amount'] : null
+                'minimum_amount' => !empty($_POST['minimum_amount']) ? (float)$_POST['minimum_amount'] : null,
+                'food_items' => $_POST['food_items'] ?? [],
+                'categories' => $_POST['categories'] ?? []
             ];
 
             // Validate required fields
@@ -973,50 +979,143 @@ class SuperAdminController extends BaseController
                 $this->jsonResponse(['success' => true, 'message' => 'Promotion created successfully.']);
             } else {
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to create promotion.'], 500);
+            }        }
+    }    public function getPromotion($id)
+    {
+        try {
+            error_log("getPromotion called with ID: " . $id);
+
+            // First, ensure the required tables exist
+            $this->ensurePromotionTables();
+
+            $promotion = $this->promotionModel->findById($id);
+            error_log("Promotion found: " . ($promotion ? 'YES' : 'NO'));
+
+            if ($promotion) {
+                try {
+                    // Try to get related data, with fallback if tables don't exist
+                    $promotion['food_items'] = $this->promotionModel->getFoodItemIds($id);
+                } catch (Exception $e) {
+                    error_log("Warning: Could not get food items - " . $e->getMessage());
+                    $promotion['food_items'] = [];
+                }
+
+                try {
+                    $promotion['categories'] = $this->promotionModel->getCategoryIds($id);
+                } catch (Exception $e) {
+                    error_log("Warning: Could not get categories - " . $e->getMessage());
+                    $promotion['categories'] = [];
+                }
+
+                error_log("Food items count: " . count($promotion['food_items']));
+                error_log("Categories count: " . count($promotion['categories']));
+
+                $this->jsonResponse(['success' => true, 'promotion' => $promotion]);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Promotion not found.'], 404);
             }
+        } catch (Exception $e) {
+            error_log("Error in getPromotion: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Internal server error: ' . $e->getMessage()], 500);
         }
     }
 
-    public function editPromotion($id)
+    /**
+     * Ensure promotion relationship tables exist
+     */
+    private function ensurePromotionTables()
+    {
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Check if promotion_food_items table exists
+            $stmt = $db->query("SHOW TABLES LIKE 'promotion_food_items'");
+            if ($stmt->rowCount() == 0) {
+                $sql = "CREATE TABLE promotion_food_items (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    promotion_id INT NOT NULL,
+                    food_item_id INT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_promotion_id (promotion_id),
+                    INDEX idx_food_item_id (food_item_id)
+                )";
+                $db->exec($sql);
+                error_log("Created promotion_food_items table");
+            }
+
+            // Check if promotion_categories table exists
+            $stmt = $db->query("SHOW TABLES LIKE 'promotion_categories'");
+            if ($stmt->rowCount() == 0) {
+                $sql = "CREATE TABLE promotion_categories (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    promotion_id INT NOT NULL,
+                    category_id INT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_promotion_id (promotion_id),
+                    INDEX idx_category_id (category_id)
+                )";
+                $db->exec($sql);
+                error_log("Created promotion_categories table");
+            }
+        } catch (Exception $e) {
+            error_log("Error creating promotion tables: " . $e->getMessage());
+        }
+    }    public function editPromotion($id)
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!$this->validateCSRF()) {
-                $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
-                return;
-            }
+            try {
+                if (!$this->validateCSRF()) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+                    return;
+                }
 
-            $promotionData = [
-                'name' => $this->sanitize($_POST['name']),
-                'code' => strtoupper($this->sanitize($_POST['code'])),
-                'description' => $this->sanitize($_POST['description'] ?? ''),
-                'type' => $this->sanitize($_POST['type']),
-                'discount_value' => (float)$_POST['discount_value'],
-                'start_date' => $_POST['start_date'],
-                'end_date' => $_POST['end_date'],
-                'usage_limit' => !empty($_POST['usage_limit']) ? (int)$_POST['usage_limit'] : null,
-                'minimum_amount' => !empty($_POST['minimum_amount']) ? (float)$_POST['minimum_amount'] : null
-            ];
+                // Ensure tables exist before processing
+                $this->ensurePromotionTables();
 
-            // Validate required fields
-            if (empty($promotionData['name']) || empty($promotionData['code']) ||
-                empty($promotionData['type']) || $promotionData['discount_value'] <= 0) {
-                $this->jsonResponse(['success' => false, 'message' => 'Please fill in all required fields correctly.'], 400);
-                return;
-            }
+                error_log("editPromotion called for ID: $id with data: " . print_r($_POST, true));
 
-            // Check if code already exists for other promotions
-            if ($this->promotionModel->codeExists($promotionData['code'], $id)) {
-                $this->jsonResponse(['success' => false, 'message' => 'Promotion code already exists.'], 400);
-                return;
-            }
+                $promotionData = [
+                    'name' => $this->sanitize($_POST['name']),
+                    'code' => strtoupper($this->sanitize($_POST['code'])),
+                    'description' => $this->sanitize($_POST['description'] ?? ''),
+                    'type' => $this->sanitize($_POST['type']),
+                    'application_type' => $this->sanitize($_POST['application_type'] ?? 'all'),
+                    'discount_value' => (float)$_POST['discount_value'],
+                    'start_date' => $_POST['start_date'],
+                    'end_date' => $_POST['end_date'],
+                    'usage_limit' => !empty($_POST['usage_limit']) ? (int)$_POST['usage_limit'] : null,
+                    'minimum_amount' => !empty($_POST['minimum_amount']) ? (float)$_POST['minimum_amount'] : null,
+                    'food_items' => $_POST['food_items'] ?? [],
+                    'categories' => $_POST['categories'] ?? []
+                ];
 
-            if ($this->promotionModel->updatePromotion($id, $promotionData)) {
-                $this->jsonResponse(['success' => true, 'message' => 'Promotion updated successfully.']);
-            } else {
-                $this->jsonResponse(['success' => false, 'message' => 'Failed to update promotion.'], 500);
+                error_log("Promotion data: " . print_r($promotionData, true));
+
+                // Validate required fields
+                if (empty($promotionData['name']) || empty($promotionData['code']) ||
+                    empty($promotionData['type']) || $promotionData['discount_value'] <= 0) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Please fill in all required fields correctly.'], 400);
+                    return;
+                }
+
+                // Check if code already exists for other promotions
+                if ($this->promotionModel->codeExists($promotionData['code'], $id)) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Promotion code already exists.'], 400);
+                    return;
+                }
+
+                if ($this->promotionModel->updatePromotion($id, $promotionData)) {
+                    $this->jsonResponse(['success' => true, 'message' => 'Promotion updated successfully.']);
+                } else {
+                    $this->jsonResponse(['success' => false, 'message' => 'Failed to update promotion.'], 500);
+                }
+            } catch (Exception $e) {
+                error_log("Error in editPromotion: " . $e->getMessage());
+                error_log("Stack trace: " . $e->getTraceAsString());
+                $this->jsonResponse(['success' => false, 'message' => 'Internal server error: ' . $e->getMessage()], 500);
             }
         } else {
-            // GET request - return promotion data for editing
+            // GET request - return promotion data for editing (for backward compatibility)
             $promotion = $this->promotionModel->findById($id);
 
             if ($promotion) {
@@ -1149,6 +1248,370 @@ class SuperAdminController extends BaseController
             'recent_bookings' => $recentBookings,
             'recent_users' => $recentUsers
         ];
+    }
+
+    // ==================== REVIEW MANAGEMENT ====================
+
+    /**
+     * Display reviews management page
+     */
+    public function reviews()
+    {
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        $filters = [
+            'status' => $_GET['status'] ?? '',
+            'rating' => $_GET['rating'] ?? '',
+            'search' => $_GET['search'] ?? ''
+        ];
+
+        $reviews = $this->reviewModel->getAllReviews($limit, $offset, $filters);
+        $totalReviews = $this->reviewModel->countReviews($filters);
+        $totalPages = ceil($totalReviews / $limit);
+
+        $data = [
+            'title' => 'Reviews Management',
+            'reviews' => $reviews,
+            'totalReviews' => $totalReviews,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'filters' => $filters,
+            'stats' => $this->reviewModel->getReviewStats()
+        ];
+
+        $this->loadSuperAdminView('reviews/index', $data);
+    }    /**
+     * View review details
+     */
+    public function reviewDetails($id)
+    {
+        $reviewData = $this->reviewModel->getReviewById($id);
+
+        if (!$reviewData) {
+            $this->jsonResponse([
+                'success' => false,
+                'message' => 'Review not found'
+            ], 404);
+            return;
+        }
+
+        // Capture the HTML output
+        ob_start();
+        $this->view('superadmin/reviews/details', ['reviewData' => $reviewData], false);
+        $html = ob_get_clean();
+
+        $this->jsonResponse([
+            'success' => true,
+            'html' => $html
+        ]);
+    }/**
+     * Approve review
+     */
+    public function approveReview($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $result = $this->reviewModel->updateApprovalStatus($id, 1);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Review approved successfully' : 'Failed to approve review'
+            ]);
+        }
+    }
+
+    /**
+     * Reject/Unapprove review
+     */
+    public function rejectReview($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $result = $this->reviewModel->updateApprovalStatus($id, 0);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Review rejected successfully' : 'Failed to reject review'
+            ]);
+        }
+    }
+
+    /**
+     * Verify review
+     */
+    public function verifyReview($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $result = $this->reviewModel->updateVerifiedStatus($id, 1);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Review verified successfully' : 'Failed to verify review'
+            ]);
+        }
+    }
+
+    /**
+     * Delete review
+     */
+    public function deleteReview($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $result = $this->reviewModel->deleteReview($id);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Review deleted successfully' : 'Failed to delete review'
+            ]);
+        }
+    }
+
+    /**
+     * Bulk actions for reviews
+     */
+    public function reviewsBulkAction()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $action = $_POST['action'] ?? '';
+            $reviewIds = $_POST['review_ids'] ?? [];
+
+            if (empty($reviewIds)) {
+                $this->jsonResponse([
+                    'success' => false,
+                    'message' => 'No reviews selected'
+                ]);
+                return;
+            }
+
+            $result = false;
+            $message = '';
+
+            switch ($action) {
+                case 'approve':
+                    $result = $this->reviewModel->bulkApprove($reviewIds);
+                    $message = $result ? 'Reviews approved successfully' : 'Failed to approve reviews';
+                    break;
+                case 'delete':
+                    $result = $this->reviewModel->bulkDelete($reviewIds);
+                    $message = $result ? 'Reviews deleted successfully' : 'Failed to delete reviews';
+                    break;
+                default:
+                    $message = 'Invalid action';
+            }
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $message
+            ]);
+        }
+    }    /**
+     * Get review statistics for AJAX
+     */
+    public function reviewStats()
+    {
+        header('Content-Type: application/json');
+        $stats = $this->reviewModel->getReviewStats();
+        echo json_encode($stats);
+        exit;
+    }
+
+    // ==========================================
+    // NOTIFICATION MANAGEMENT
+    // ==========================================
+
+    /**
+     * Display notifications page
+     */
+    public function notifications()
+    {
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+        $type = $_GET['type'] ?? '';
+        $unreadOnly = isset($_GET['unread']) && $_GET['unread'] == '1';
+
+        $userId = $_SESSION['user']['id'];
+
+        // Get notifications
+        if ($type) {
+            $notifications = $this->notificationModel->getNotificationsByType($userId, $type, $limit, $offset);
+            $totalNotifications = count($this->notificationModel->getNotificationsByType($userId, $type, 1000)); // Quick count
+        } else {
+            $notifications = $this->notificationModel->getUserNotifications($userId, $limit, $offset, $unreadOnly);
+            $totalNotifications = $this->notificationModel->countUserNotifications($userId, $unreadOnly);
+        }
+
+        $totalPages = ceil($totalNotifications / $limit);
+
+        // Get statistics
+        $stats = $this->notificationModel->getNotificationStats($userId);
+
+        $data = [
+            'title' => 'Notifications',
+            'notifications' => $notifications,
+            'stats' => $stats,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'currentType' => $type,
+            'unreadOnly' => $unreadOnly,
+            'csrf_token' => $this->generateCSRF()
+        ];
+
+        $this->loadSuperAdminView('notifications/index', $data);
+    }
+
+    /**
+     * Get unread notification count for AJAX
+     */
+    public function getUnreadCount()
+    {
+        header('Content-Type: application/json');
+        $userId = $_SESSION['user']['id'];
+        $count = $this->notificationModel->getUnreadCount($userId);
+        echo json_encode(['unread_count' => $count]);
+        exit;
+    }
+
+    /**
+     * Get recent notifications for AJAX
+     */
+    public function getRecentNotifications()
+    {
+        header('Content-Type: application/json');
+        $userId = $_SESSION['user']['id'];
+        $notifications = $this->notificationModel->getRecentNotifications($userId, 10);
+
+        // Format notifications for display
+        $formattedNotifications = array_map(function($notification) {
+            return [
+                'id' => $notification['id'],
+                'type' => $notification['type'],
+                'title' => $notification['title'],
+                'message' => $notification['message'],
+                'data' => json_decode($notification['data'], true),
+                'is_read' => $notification['is_read'],
+                'created_at' => $notification['created_at'],
+                'time_ago' => $this->timeAgo($notification['created_at'])
+            ];
+        }, $notifications);
+
+        echo json_encode([
+            'success' => true,
+            'notifications' => $formattedNotifications
+        ]);
+        exit;
+    }
+
+    /**
+     * Mark notification as read
+     */
+    public function markNotificationRead($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $userId = $_SESSION['user']['id'];
+            $result = $this->notificationModel->markAsRead($id, $userId);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Notification marked as read' : 'Failed to mark notification as read'
+            ]);
+        }
+    }
+
+    /**
+     * Mark all notifications as read
+     */
+    public function markAllNotificationsRead()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $userId = $_SESSION['user']['id'];
+            $result = $this->notificationModel->markAllAsRead($userId);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'All notifications marked as read' : 'Failed to mark notifications as read'
+            ]);
+        }
+    }
+
+    /**
+     * Delete notification
+     */
+    public function deleteNotification($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'DELETE') {
+            $userId = $_SESSION['user']['id'];
+            $result = $this->notificationModel->deleteNotification($id, $userId);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Notification deleted successfully' : 'Failed to delete notification'
+            ]);
+        }
+    }
+
+    /**
+     * Handle bulk notification actions
+     */
+    public function notificationsBulkAction()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $action = $_POST['action'] ?? '';
+            $notificationIds = $_POST['notification_ids'] ?? [];
+            $userId = $_SESSION['user']['id'];
+
+            if (empty($notificationIds)) {
+                $this->jsonResponse([
+                    'success' => false,
+                    'message' => 'No notifications selected'
+                ]);
+                return;
+            }
+
+            $result = false;
+            $message = '';
+
+            switch ($action) {
+                case 'mark_read':
+                    $result = true;
+                    foreach ($notificationIds as $id) {
+                        if (!$this->notificationModel->markAsRead($id, $userId)) {
+                            $result = false;
+                            break;
+                        }
+                    }
+                    $message = $result ? 'Selected notifications marked as read' : 'Failed to mark some notifications as read';
+                    break;
+
+                case 'delete':
+                    $result = $this->notificationModel->bulkDelete($notificationIds, $userId);
+                    $message = $result ? 'Selected notifications deleted' : 'Failed to delete notifications';
+                    break;
+
+                default:
+                    $message = 'Invalid action';
+            }
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $message
+            ]);
+        }
+    }
+
+    /**
+     * Helper method to format time ago
+     */
+    private function timeAgo($datetime)
+    {
+        $time = time() - strtotime($datetime);
+
+        if ($time < 60) return 'just now';
+        if ($time < 3600) return floor($time/60) . ' minutes ago';
+        if ($time < 86400) return floor($time/3600) . ' hours ago';
+        if ($time < 2592000) return floor($time/86400) . ' days ago';
+
+        return date('M j, Y', strtotime($datetime));
     }
 }
 ?>

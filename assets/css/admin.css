@@ -7,7 +7,7 @@
     --admin-secondary: #858796;
     --admin-success: #1cc88a;
     --admin-warning: #f6c23e;
-    --admin-danger: #e74a3b;
+    --admin-danger: #ef4444;
     --admin-info: #36b9cc;
     --admin-dark: #2c3034;
     --admin-light: #f8f9fc;
@@ -462,7 +462,7 @@ main.col-md-9.ms-sm-auto.col-lg-10 {
 
 .status-cancelled {
     background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
-    color: #721c24;
+    color: #991b1b;
 }
 
 /* Payment Status Styles */
@@ -484,8 +484,8 @@ main.col-md-9.ms-sm-auto.col-lg-10 {
 }
 
 .payment-status-container .text-danger {
-    color: #e74a3b !important;
-    border-color: #e74a3b;
+    color: #ef4444 !important;
+    border-color: #ef4444;
 }
 
 .payment-status-container .text-info {
@@ -731,7 +731,7 @@ main.col-md-9.ms-sm-auto.col-lg-10 {
 
 .alert-danger {
     background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-    color: #721c24;
+    color: #991b1b;
 }
 
 .alert-warning {
