@@ -54,7 +54,7 @@ class CartController extends BaseController {
         }        // Check if food exists and is available
         $food = $this->foodModel->getFoodDetails($foodId);
         if (!$food || !$food['is_available']) {
-            $this->jsonResponse(['error' => 'Food not available'], 404);
+            $this->jsonResponse(['error' => 'Food not available', 'debug' => $foodId], 404);
         }
 
         // Check stock quantity if applicable
@@ -187,30 +187,36 @@ class CartController extends BaseController {
         if (!isset($_SESSION['cart'])) {
             $_SESSION['cart'] = [];
         }
-
         if (isset($_SESSION['cart'][$foodId])) {
             $_SESSION['cart'][$foodId] += $quantity;
         } else {
             $_SESSION['cart'][$foodId] = $quantity;
         }
+        $this->updateCartCount();
     }
 
     private function updateCartQuantity($foodId, $quantity) {
         if (!isset($_SESSION['cart'])) {
             $_SESSION['cart'] = [];
         }
-
         $_SESSION['cart'][$foodId] = $quantity;
+        $this->updateCartCount();
     }
 
     private function removeFromCart($foodId) {
         if (isset($_SESSION['cart'][$foodId])) {
             unset($_SESSION['cart'][$foodId]);
         }
+        $this->updateCartCount();
     }
 
     private function clearCart() {
         unset($_SESSION['cart']);
+        $this->updateCartCount();
+    }
+
+    private function updateCartCount() {
+        $_SESSION['cart_count'] = count($_SESSION['cart'] ?? []);
     }
 
     // Quick add from menu

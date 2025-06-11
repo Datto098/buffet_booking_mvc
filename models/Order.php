@@ -726,4 +726,25 @@ class Order extends BaseModel
         $stmt->execute();
         return $stmt->fetchAll();
     }
+    public function hasUserOrderedFood($userId, $foodId) {
+        $sql = "SELECT COUNT(*) FROM order_items oi
+                JOIN orders o ON oi.order_id = o.id
+                WHERE o.user_id = :user_id AND oi.food_item_id = :food_id AND o.status = 'completed'";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':food_id', $foodId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchColumn() > 0;
+    }
+    public function getCompletedOrderIdByUserAndFood($userId, $foodId) {
+        $sql = "SELECT o.id FROM orders o
+                JOIN order_items oi ON o.id = oi.order_id
+                WHERE o.user_id = :user_id AND oi.food_item_id = :food_id AND o.status = 'completed'
+                ORDER BY o.created_at DESC LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':food_id', $foodId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchColumn();
+    }
 }

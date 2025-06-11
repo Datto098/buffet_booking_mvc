@@ -472,7 +472,8 @@ function handleCustomerRoute($page, $action, $param)
         'booking' => 'controllers/BookingController.php',
         'user' => 'controllers/UserController.php',
         'auth' => 'controllers/AuthController.php',
-        'news' => 'controllers/NewsController.php'
+        'news' => 'controllers/NewsController.php',
+         'review' => 'controllers/ReviewController.php'
     ];
 
     if (!isset($routes[$page])) {

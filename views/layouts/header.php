@@ -8,7 +8,7 @@
 
     <!-- Meta Tags for SEO -->
     <meta name="description" content="<?php echo $meta_description ?? 'Nhà hàng buffet sang trọng với không gian đẳng cấp và thực đơn phong phú'; ?>">
-    <meta name="keywords" content="nhà hàng buffet, buffet cao cấp, ẩm thực, đặt bàn, khuyến mãi"> <!-- Bootstrap CSS -->
+    <meta name="keywords" content="nhà hàng buffet, buffet cao cấp, ẩm thực, đặt bàn, khuyến mãi">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
