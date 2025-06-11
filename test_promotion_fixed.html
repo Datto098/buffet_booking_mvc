@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Test Promotion Edit - Fixed Database Structure</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 20px;
+				background-color: #f5f5f5;
+			}
+			.container {
+				max-width: 800px;
+				margin: 0 auto;
+				background: white;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			}
+			h1 {
+				color: #2c3e50;
+				text-align: center;
+			}
+			.test-section {
+				margin: 20px 0;
+				padding: 15px;
+				background: #f8f9fa;
+				border-radius: 5px;
+				border-left: 4px solid #007bff;
+			}
+			.success {
+				border-left-color: #28a745;
+				background-color: #d4edda;
+			}
+			.error {
+				border-left-color: #dc3545;
+				background-color: #f8d7da;
+			}
+			.warning {
+				border-left-color: #ffc107;
+				background-color: #fff3cd;
+			}
+			button {
+				background: #007bff;
+				color: white;
+				border: none;
+				padding: 10px 20px;
+				border-radius: 5px;
+				cursor: pointer;
+				margin: 5px;
+			}
+			button:hover {
+				background: #0056b3;
+			}
+			.result {
+				margin-top: 10px;
+				padding: 10px;
+				background: #e9ecef;
+				border-radius: 4px;
+				white-space: pre-wrap;
+				font-family: monospace;
+				font-size: 12px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>🎉 Promotion Edit API Test - Database Fixed!</h1>
+
+			<div class="test-section success">
+				<h3>✅ Database Structure Fixed</h3>
+				<p>
+					The missing <code>application_type</code> column has been
+					successfully added to the promotions table.
+				</p>
+				<p>
+					The promotion relationship tables (<code
+						>promotion_food_items</code
+					>
+					and <code>promotion_categories</code>) have been created.
+				</p>
+			</div>
+
+			<div class="test-section">
+				<h3>🧪 Test Promotion Edit API</h3>
+				<p>
+					Click the button below to test the promotion edit
+					functionality with the fixed database structure:
+				</p>
+				<button onclick="testPromotionEdit()">
+					Test Promotion Edit
+				</button>
+				<div id="editResult" class="result" style="display: none"></div>
+			</div>
+
+			<div class="test-section">
+				<h3>🔍 Test Get Promotion API</h3>
+				<p>
+					Test retrieving promotion data (including the new
+					application_type field):
+				</p>
+				<button onclick="testGetPromotion()">Test Get Promotion</button>
+				<div id="getResult" class="result" style="display: none"></div>
+			</div>
+
+			<div class="test-section">
+				<h3>🌐 Access Promotion Management</h3>
+				<p>Ready to use the promotion management system:</p>
+				<a
+					href="http://localhost/buffet_booking_mvc/superadmin/promotions"
+					target="_blank"
+					style="text-decoration: none"
+				>
+					<button>Open Promotion Management</button>
+				</a>
+			</div>
+		</div>
+
+		<script>
+			async function testPromotionEdit() {
+				const resultDiv = document.getElementById('editResult');
+				resultDiv.style.display = 'block';
+				resultDiv.textContent = 'Testing promotion edit...';
+
+				try {
+					// First get CSRF token by making a request to the promotions page
+					const csrfResponse = await fetch(
+						'http://localhost/buffet_booking_mvc/superadmin/promotions'
+					);
+					const csrfText = await csrfResponse.text();
+
+					// Extract CSRF token from the page
+					const csrfMatch = csrfText.match(
+						/name="csrf_token" value="([^"]+)"/
+					);
+					const csrfToken = csrfMatch ? csrfMatch[1] : '';
+
+					// Test data for promotion edit
+					const formData = new FormData();
+					formData.append('promotion_id', '1');
+					formData.append('csrf_token', csrfToken);
+					formData.append('name', 'Updated Test Promotion');
+					formData.append('code', 'UPDATED10');
+					formData.append('type', 'percentage');
+					formData.append('application_type', 'all');
+					formData.append('discount_value', '15.00');
+					formData.append('start_date', '2025-06-15');
+					formData.append('end_date', '2025-07-15');
+					formData.append('usage_limit', '200');
+					formData.append('minimum_amount', '100.00');
+					formData.append(
+						'description',
+						'Updated test promotion with new application_type field'
+					);
+
+					const response = await fetch(
+						'http://localhost/buffet_booking_mvc/superadmin/promotions/edit/1',
+						{
+							method: 'POST',
+							body: formData,
+							headers: {
+								'X-Requested-With': 'XMLHttpRequest',
+							},
+						}
+					);
+
+					const result = await response.text();
+
+					try {
+						const jsonResult = JSON.parse(result);
+						if (jsonResult.success) {
+							resultDiv.className = 'result success';
+							resultDiv.textContent =
+								'✅ SUCCESS: Promotion edit is working!\n\nResponse: ' +
+								JSON.stringify(jsonResult, null, 2);
+						} else {
+							resultDiv.className = 'result error';
+							resultDiv.textContent =
+								'❌ FAILED: ' +
+								(jsonResult.message || 'Unknown error') +
+								'\n\nResponse: ' +
+								JSON.stringify(jsonResult, null, 2);
+						}
+					} catch (parseError) {
+						resultDiv.className = 'result error';
+						resultDiv.textContent =
+							'❌ FAILED: Invalid JSON response\n\nRaw response: ' +
+							result;
+					}
+				} catch (error) {
+					resultDiv.className = 'result error';
+					resultDiv.textContent = '❌ FAILED: ' + error.message;
+				}
+			}
+
+			async function testGetPromotion() {
+				const resultDiv = document.getElementById('getResult');
+				resultDiv.style.display = 'block';
+				resultDiv.textContent = 'Testing get promotion...';
+
+				try {
+					const response = await fetch(
+						'http://localhost/buffet_booking_mvc/superadmin/promotions/get/1'
+					);
+					const result = await response.text();
+
+					try {
+						const jsonResult = JSON.parse(result);
+						if (jsonResult.success) {
+							resultDiv.className = 'result success';
+							resultDiv.textContent =
+								'✅ SUCCESS: Get promotion is working!\n\nPromotion data:\n' +
+								JSON.stringify(jsonResult.promotion, null, 2);
+						} else {
+							resultDiv.className = 'result error';
+							resultDiv.textContent =
+								'❌ FAILED: ' +
+								(jsonResult.message || 'Unknown error') +
+								'\n\nResponse: ' +
+								JSON.stringify(jsonResult, null, 2);
+						}
+					} catch (parseError) {
+						resultDiv.className = 'result error';
+						resultDiv.textContent =
+							'❌ FAILED: Invalid JSON response\n\nRaw response: ' +
+							result;
+					}
+				} catch (error) {
+					resultDiv.className = 'result error';
+					resultDiv.textContent = '❌ FAILED: ' + error.message;
+				}
+			}
+		</script>
+	</body>
+</html>

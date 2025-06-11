@@ -61,23 +61,82 @@ class HomeController extends BaseController {
 
         $this->loadView('customer/about', $data);
     }    public function promotions() {
-        // Get promotional foods with category information
-        $promotionalFoods = $this->foodModel->getFoodWithCategory(16); // Lấy nhiều món hơn để thể hiện khuyến mãi
+        // Load Promotion model
+        require_once 'models/Promotion.php';
+        $promotionModel = new Promotion();
 
-        // Add mock discount information to foods
-        foreach ($promotionalFoods as &$food) {
-            // Generate random discount percentage between 15-40%
-            $discountPercent = rand(15, 40);
-            $food['discount_percent'] = $discountPercent;
-            $food['original_price'] = $food['price'];
-            $food['discounted_price'] = $food['price'] * (100 - $discountPercent) / 100;
-            $food['is_hot_deal'] = $discountPercent >= 30;
+        // Get active promotions with their associated food items
+        $activePromotions = $promotionModel->getActivePromotionsWithFoodItems();
+
+        // Process food items to include promotion discount information
+        $promotionalFoods = [];
+
+        foreach ($activePromotions as $promotion) {
+            foreach ($promotion['food_items'] as $food) {
+                // Skip if this food item is already processed (to avoid duplicates)
+                $exists = false;
+                foreach ($promotionalFoods as $existingFood) {
+                    if ($existingFood['id'] === $food['id']) {
+                        $exists = true;
+                        break;
+                    }
+                }
+
+                if (!$exists) {
+                    // Calculate discounted price based on promotion
+                    $originalPrice = (float)$food['price'];
+                    $discountedPrice = $originalPrice;
+                    $discountPercent = 0;
+
+                    if ($promotion['type'] === 'percentage') {
+                        $discountPercent = (int)$promotion['discount_value'];
+                        $discountedPrice = $originalPrice * (100 - $discountPercent) / 100;
+                    } elseif ($promotion['type'] === 'fixed') {
+                        $discountAmount = (float)$promotion['discount_value'];
+                        $discountedPrice = max(0, $originalPrice - $discountAmount);
+                        $discountPercent = $originalPrice > 0 ? round(($discountAmount / $originalPrice) * 100) : 0;
+                    } elseif ($promotion['type'] === 'buy_one_get_one') {
+                        $discountPercent = 50; // 50% off for BOGO
+                        $discountedPrice = $originalPrice * 0.5;
+                    }
+
+                    // Add promotion information to food item
+                    $food['original_price'] = $originalPrice;
+                    $food['discounted_price'] = $discountedPrice;
+                    $food['discount_percent'] = $discountPercent;
+                    $food['is_hot_deal'] = $discountPercent >= 30;
+                    $food['promotion_id'] = $promotion['id'];
+                    $food['promotion_name'] = $promotion['name'];
+                    $food['promotion_code'] = $promotion['code'];
+                    $food['promotion_type'] = $promotion['type'];
+                    $food['promotion_end_date'] = $promotion['end_date'];
+
+                    $promotionalFoods[] = $food;
+                }
+            }
+        }
+
+        // If no promotion foods found, get some featured foods as fallback
+        if (empty($promotionalFoods)) {
+            $fallbackFoods = $this->foodModel->getFoodWithCategory(12);
+            foreach ($fallbackFoods as &$food) {
+                // Add minimal discount for display purposes
+                $discountPercent = rand(10, 25);
+                $food['discount_percent'] = $discountPercent;
+                $food['original_price'] = $food['price'];
+                $food['discounted_price'] = $food['price'] * (100 - $discountPercent) / 100;
+                $food['is_hot_deal'] = $discountPercent >= 20;
+                $food['promotion_name'] = 'Special Offer';
+                $food['promotion_type'] = 'percentage';
+            }
+            $promotionalFoods = $fallbackFoods;
         }
 
         $data = [
             'title' => 'Khuyến Mãi Đặc Biệt - ' . SITE_NAME,
             'promotionalFoods' => $promotionalFoods,
-            'meta_description' => 'Khám phá những món ăn khuyến mãi đặc biệt với giá ưu đãi tại ' . SITE_NAME . '. Tiết kiệm đến 40% cho các món ăn ngon nhất!'
+            'activePromotions' => $activePromotions,
+            'meta_description' => 'Khám phá những món ăn khuyến mãi đặc biệt với giá ưu đãi tại ' . SITE_NAME . '. Tiết kiệm đến ' . (isset($promotionalFoods[0]) ? $promotionalFoods[0]['discount_percent'] : '40') . '% cho các món ăn ngon nhất!'
         ];
 
         $this->loadView('customer/promotions', $data);

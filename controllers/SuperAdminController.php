@@ -921,15 +921,15 @@ class SuperAdminController extends BaseController
         $totalPages = ceil($totalPromotions / $limit);
 
         // Get statistics
-        $stats = $this->promotionModel->getStats();
-
-        $data = [
+        $stats = $this->promotionModel->getStats();        $data = [
             'title' => 'Promotion Management',
             'promotions' => $promotions,
             'stats' => $stats,
             'currentPage' => $page,
             'totalPages' => $totalPages,
             'totalPromotions' => $totalPromotions,
+            'food_items' => $this->promotionModel->getAllFoodItems(),
+            'categories' => $this->promotionModel->getAllCategories(),
             'csrf_token' => $this->generateCSRF()
         ];
 
@@ -942,18 +942,19 @@ class SuperAdminController extends BaseController
             if (!$this->validateCSRF()) {
                 $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
                 return;
-            }
-
-            $promotionData = [
+            }            $promotionData = [
                 'name' => $this->sanitize($_POST['name']),
                 'code' => strtoupper($this->sanitize($_POST['code'])),
                 'description' => $this->sanitize($_POST['description'] ?? ''),
                 'type' => $this->sanitize($_POST['type']),
+                'application_type' => $this->sanitize($_POST['application_type'] ?? 'all'),
                 'discount_value' => (float)$_POST['discount_value'],
                 'start_date' => $_POST['start_date'],
                 'end_date' => $_POST['end_date'],
                 'usage_limit' => !empty($_POST['usage_limit']) ? (int)$_POST['usage_limit'] : null,
-                'minimum_amount' => !empty($_POST['minimum_amount']) ? (float)$_POST['minimum_amount'] : null
+                'minimum_amount' => !empty($_POST['minimum_amount']) ? (float)$_POST['minimum_amount'] : null,
+                'food_items' => $_POST['food_items'] ?? [],
+                'categories' => $_POST['categories'] ?? []
             ];
 
             // Validate required fields
@@ -973,50 +974,143 @@ class SuperAdminController extends BaseController
                 $this->jsonResponse(['success' => true, 'message' => 'Promotion created successfully.']);
             } else {
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to create promotion.'], 500);
+            }        }
+    }    public function getPromotion($id)
+    {
+        try {
+            error_log("getPromotion called with ID: " . $id);
+
+            // First, ensure the required tables exist
+            $this->ensurePromotionTables();
+
+            $promotion = $this->promotionModel->findById($id);
+            error_log("Promotion found: " . ($promotion ? 'YES' : 'NO'));
+
+            if ($promotion) {
+                try {
+                    // Try to get related data, with fallback if tables don't exist
+                    $promotion['food_items'] = $this->promotionModel->getFoodItemIds($id);
+                } catch (Exception $e) {
+                    error_log("Warning: Could not get food items - " . $e->getMessage());
+                    $promotion['food_items'] = [];
+                }
+
+                try {
+                    $promotion['categories'] = $this->promotionModel->getCategoryIds($id);
+                } catch (Exception $e) {
+                    error_log("Warning: Could not get categories - " . $e->getMessage());
+                    $promotion['categories'] = [];
+                }
+
+                error_log("Food items count: " . count($promotion['food_items']));
+                error_log("Categories count: " . count($promotion['categories']));
+
+                $this->jsonResponse(['success' => true, 'promotion' => $promotion]);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Promotion not found.'], 404);
             }
+        } catch (Exception $e) {
+            error_log("Error in getPromotion: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Internal server error: ' . $e->getMessage()], 500);
         }
     }
 
-    public function editPromotion($id)
+    /**
+     * Ensure promotion relationship tables exist
+     */
+    private function ensurePromotionTables()
+    {
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Check if promotion_food_items table exists
+            $stmt = $db->query("SHOW TABLES LIKE 'promotion_food_items'");
+            if ($stmt->rowCount() == 0) {
+                $sql = "CREATE TABLE promotion_food_items (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    promotion_id INT NOT NULL,
+                    food_item_id INT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_promotion_id (promotion_id),
+                    INDEX idx_food_item_id (food_item_id)
+                )";
+                $db->exec($sql);
+                error_log("Created promotion_food_items table");
+            }
+
+            // Check if promotion_categories table exists
+            $stmt = $db->query("SHOW TABLES LIKE 'promotion_categories'");
+            if ($stmt->rowCount() == 0) {
+                $sql = "CREATE TABLE promotion_categories (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    promotion_id INT NOT NULL,
+                    category_id INT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_promotion_id (promotion_id),
+                    INDEX idx_category_id (category_id)
+                )";
+                $db->exec($sql);
+                error_log("Created promotion_categories table");
+            }
+        } catch (Exception $e) {
+            error_log("Error creating promotion tables: " . $e->getMessage());
+        }
+    }    public function editPromotion($id)
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!$this->validateCSRF()) {
-                $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
-                return;
-            }
+            try {
+                if (!$this->validateCSRF()) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+                    return;
+                }
 
-            $promotionData = [
-                'name' => $this->sanitize($_POST['name']),
-                'code' => strtoupper($this->sanitize($_POST['code'])),
-                'description' => $this->sanitize($_POST['description'] ?? ''),
-                'type' => $this->sanitize($_POST['type']),
-                'discount_value' => (float)$_POST['discount_value'],
-                'start_date' => $_POST['start_date'],
-                'end_date' => $_POST['end_date'],
-                'usage_limit' => !empty($_POST['usage_limit']) ? (int)$_POST['usage_limit'] : null,
-                'minimum_amount' => !empty($_POST['minimum_amount']) ? (float)$_POST['minimum_amount'] : null
-            ];
+                // Ensure tables exist before processing
+                $this->ensurePromotionTables();
 
-            // Validate required fields
-            if (empty($promotionData['name']) || empty($promotionData['code']) ||
-                empty($promotionData['type']) || $promotionData['discount_value'] <= 0) {
-                $this->jsonResponse(['success' => false, 'message' => 'Please fill in all required fields correctly.'], 400);
-                return;
-            }
+                error_log("editPromotion called for ID: $id with data: " . print_r($_POST, true));
 
-            // Check if code already exists for other promotions
-            if ($this->promotionModel->codeExists($promotionData['code'], $id)) {
-                $this->jsonResponse(['success' => false, 'message' => 'Promotion code already exists.'], 400);
-                return;
-            }
+                $promotionData = [
+                    'name' => $this->sanitize($_POST['name']),
+                    'code' => strtoupper($this->sanitize($_POST['code'])),
+                    'description' => $this->sanitize($_POST['description'] ?? ''),
+                    'type' => $this->sanitize($_POST['type']),
+                    'application_type' => $this->sanitize($_POST['application_type'] ?? 'all'),
+                    'discount_value' => (float)$_POST['discount_value'],
+                    'start_date' => $_POST['start_date'],
+                    'end_date' => $_POST['end_date'],
+                    'usage_limit' => !empty($_POST['usage_limit']) ? (int)$_POST['usage_limit'] : null,
+                    'minimum_amount' => !empty($_POST['minimum_amount']) ? (float)$_POST['minimum_amount'] : null,
+                    'food_items' => $_POST['food_items'] ?? [],
+                    'categories' => $_POST['categories'] ?? []
+                ];
 
-            if ($this->promotionModel->updatePromotion($id, $promotionData)) {
-                $this->jsonResponse(['success' => true, 'message' => 'Promotion updated successfully.']);
-            } else {
-                $this->jsonResponse(['success' => false, 'message' => 'Failed to update promotion.'], 500);
+                error_log("Promotion data: " . print_r($promotionData, true));
+
+                // Validate required fields
+                if (empty($promotionData['name']) || empty($promotionData['code']) ||
+                    empty($promotionData['type']) || $promotionData['discount_value'] <= 0) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Please fill in all required fields correctly.'], 400);
+                    return;
+                }
+
+                // Check if code already exists for other promotions
+                if ($this->promotionModel->codeExists($promotionData['code'], $id)) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Promotion code already exists.'], 400);
+                    return;
+                }
+
+                if ($this->promotionModel->updatePromotion($id, $promotionData)) {
+                    $this->jsonResponse(['success' => true, 'message' => 'Promotion updated successfully.']);
+                } else {
+                    $this->jsonResponse(['success' => false, 'message' => 'Failed to update promotion.'], 500);
+                }
+            } catch (Exception $e) {
+                error_log("Error in editPromotion: " . $e->getMessage());
+                error_log("Stack trace: " . $e->getTraceAsString());
+                $this->jsonResponse(['success' => false, 'message' => 'Internal server error: ' . $e->getMessage()], 500);
             }
         } else {
-            // GET request - return promotion data for editing
+            // GET request - return promotion data for editing (for backward compatibility)
             $promotion = $this->promotionModel->findById($id);
 
             if ($promotion) {

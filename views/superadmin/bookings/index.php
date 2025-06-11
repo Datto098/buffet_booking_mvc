@@ -301,11 +301,9 @@
 
 
 
-<script>
-    window.SITE_URL = '<?= SITE_URL ?>';
-</script>
 
 <script>
+     window.SITE_URL = '<?= SITE_URL ?>';
     function refreshBookings() {
         location.reload();
     }

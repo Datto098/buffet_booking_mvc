@@ -352,6 +352,9 @@ function handleSuperAdminPromotionsRoute($controller, $action, $param)
         case 'create':
             $controller->createPromotion();
             break;
+        case 'get':
+            $controller->getPromotion($param);
+            break;
         case 'edit':
             $controller->editPromotion($param);
             break;
@@ -401,8 +404,7 @@ function handleAdminFoodsRoute($controller, $action, $param)
 }
 
 function handleAdminCategoriesRoute($controller, $action, $param)
-{
-    switch ($action) {
+{    switch ($action) {
         case 'create':
             $controller->createCategory();
             break;
@@ -415,6 +417,11 @@ function handleAdminCategoriesRoute($controller, $action, $param)
             $controller->updateCategory($param);
             break;        case 'delete': // Added case for delete
             $controller->deleteCategory($param);
+            break;        case 'bulk-update-status':
+            $controller->bulkUpdateCategoryStatus();
+            break;
+        case 'export':
+            $controller->exportCategories();
             break;
         case 'subcategories':
             $controller->getSubcategories($param);

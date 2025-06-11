@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Promotion Edit Functionality Test</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 20px;
+				background-color: #f5f5f5;
+			}
+			.container {
+				max-width: 1200px;
+				margin: 0 auto;
+				background: white;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			}
+			.test-section {
+				margin-bottom: 30px;
+				padding: 15px;
+				border: 1px solid #ddd;
+				border-radius: 5px;
+			}
+			.test-section h3 {
+				margin-top: 0;
+				color: #333;
+			}
+			.success {
+				color: #28a745;
+				font-weight: bold;
+			}
+			.error {
+				color: #dc3545;
+				font-weight: bold;
+			}
+			.info {
+				color: #007bff;
+				font-weight: bold;
+			}
+			pre {
+				background: #f8f9fa;
+				padding: 10px;
+				border-radius: 4px;
+				overflow-x: auto;
+				font-size: 12px;
+			}
+			.btn {
+				padding: 8px 16px;
+				margin: 5px;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				text-decoration: none;
+				display: inline-block;
+			}
+			.btn-primary {
+				background: #007bff;
+				color: white;
+			}
+			.btn-success {
+				background: #28a745;
+				color: white;
+			}
+			.btn-info {
+				background: #17a2b8;
+				color: white;
+			}
+			.btn-warning {
+				background: #ffc107;
+				color: black;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>🎉 Promotion Edit Functionality - Final Verification</h1>
+
+			<div class="test-section">
+				<h3>1. API Endpoint Test</h3>
+				<p id="api-status">Testing API endpoint...</p>
+				<pre id="api-response"></pre>
+			</div>
+
+			<div class="test-section">
+				<h3>2. Food Items & Categories Test</h3>
+				<p id="data-status">Checking food items and categories...</p>
+				<pre id="data-response"></pre>
+			</div>
+
+			<div class="test-section">
+				<h3>3. JavaScript Edit Function Test</h3>
+				<p id="js-status">Testing JavaScript edit function...</p>
+				<button class="btn btn-primary" onclick="testEditFunction()">
+					Test Edit Promotion
+				</button>
+				<pre id="js-response"></pre>
+			</div>
+
+			<div class="test-section">
+				<h3>4. Complete Workflow Test</h3>
+				<p id="workflow-status">Ready to test complete workflow</p>
+				<div>
+					<a
+						href="http://localhost/buffet_booking_mvc/login.php"
+						class="btn btn-info"
+						target="_blank"
+						>1. Login as Super Admin</a
+					>
+					<a
+						href="http://localhost/buffet_booking_mvc/superadmin/promotions"
+						class="btn btn-success"
+						target="_blank"
+						>2. Go to Promotions Page</a
+					>
+					<a
+						href="http://localhost/buffet_booking_mvc/superadmin/promotions/get/1"
+						class="btn btn-warning"
+						target="_blank"
+						>3. Test Direct API</a
+					>
+				</div>
+			</div>
+
+			<div class="test-section">
+				<h3>5. Database Verification</h3>
+				<p id="db-status">Checking database tables...</p>
+				<pre id="db-response"></pre>
+			</div>
+
+			<div class="test-section">
+				<h3>📋 Test Results Summary</h3>
+				<ul id="results-summary">
+					<li>Waiting for tests to complete...</li>
+				</ul>
+			</div>
+		</div>
+
+		<script>
+			// Simulate the edit promotion function from the actual promotions page
+			function editPromotion(promotionId) {
+				console.log('Edit promotion called with ID:', promotionId);
+
+				const statusEl = document.getElementById('js-status');
+				const responseEl = document.getElementById('js-response');
+
+				statusEl.innerHTML =
+					'<span class="info">Testing edit function...</span>';
+
+				fetch(
+					`http://localhost/buffet_booking_mvc/superadmin/promotions/get/${promotionId}`
+				)
+					.then((response) => {
+						console.log('Response status:', response.status);
+						if (!response.ok) {
+							throw new Error(
+								`HTTP error! status: ${response.status}`
+							);
+						}
+						return response.text();
+					})
+					.then((text) => {
+						console.log('Raw response:', text);
+						try {
+							const data = JSON.parse(text);
+							console.log('Parsed data:', data);
+
+							if (data.success) {
+								statusEl.innerHTML =
+									'<span class="success">✅ Edit function works correctly!</span>';
+								responseEl.textContent = JSON.stringify(
+									data,
+									null,
+									2
+								);
+
+								// Test food items and categories
+								const foodItems =
+									data.promotion.food_items || [];
+								const categories =
+									data.promotion.categories || [];
+
+								if (
+									foodItems.length > 0 ||
+									categories.length > 0
+								) {
+									statusEl.innerHTML +=
+										'<br><span class="success">✅ Food items and categories loaded successfully!</span>';
+									statusEl.innerHTML += `<br><span class="info">Food items: ${foodItems.length}, Categories: ${categories.length}</span>`;
+								} else {
+									statusEl.innerHTML +=
+										'<br><span class="warning">⚠️ No food items or categories found (this is normal for testing)</span>';
+								}
+
+								updateResultsSummary(
+									'edit-function',
+									true,
+									'Edit function works correctly'
+								);
+							} else {
+								statusEl.innerHTML =
+									'<span class="error">❌ API returned error: ' +
+									(data.message || 'Unknown error') +
+									'</span>';
+								responseEl.textContent = text;
+								updateResultsSummary(
+									'edit-function',
+									false,
+									'API returned error'
+								);
+							}
+						} catch (parseError) {
+							statusEl.innerHTML =
+								'<span class="error">❌ JSON parse error: ' +
+								parseError.message +
+								'</span>';
+							responseEl.textContent = 'Raw response: ' + text;
+							updateResultsSummary(
+								'edit-function',
+								false,
+								'JSON parse error'
+							);
+						}
+					})
+					.catch((error) => {
+						console.error('Fetch error:', error);
+						statusEl.innerHTML =
+							'<span class="error">❌ Fetch error: ' +
+							error.message +
+							'</span>';
+						responseEl.textContent = 'Error: ' + error.message;
+						updateResultsSummary(
+							'edit-function',
+							false,
+							'Fetch error: ' + error.message
+						);
+					});
+			}
+
+			function testEditFunction() {
+				editPromotion(1);
+			}
+
+			// Test API endpoint
+			function testApiEndpoint() {
+				const statusEl = document.getElementById('api-status');
+				const responseEl = document.getElementById('api-response');
+
+				statusEl.innerHTML =
+					'<span class="info">Testing API endpoint...</span>';
+
+				fetch(
+					'http://localhost/buffet_booking_mvc/superadmin/promotions/get/1'
+				)
+					.then((response) => {
+						if (response.ok) {
+							statusEl.innerHTML =
+								'<span class="success">✅ API endpoint is accessible</span>';
+							updateResultsSummary(
+								'api-endpoint',
+								true,
+								'API endpoint accessible'
+							);
+							return response.json();
+						} else {
+							throw new Error(`HTTP ${response.status}`);
+						}
+					})
+					.then((data) => {
+						responseEl.textContent = JSON.stringify(data, null, 2);
+						if (data.success) {
+							statusEl.innerHTML +=
+								'<br><span class="success">✅ API returns valid data</span>';
+							updateResultsSummary(
+								'api-data',
+								true,
+								'API returns valid data'
+							);
+						}
+					})
+					.catch((error) => {
+						statusEl.innerHTML =
+							'<span class="error">❌ API endpoint error: ' +
+							error.message +
+							'</span>';
+						responseEl.textContent = 'Error: ' + error.message;
+						updateResultsSummary(
+							'api-endpoint',
+							false,
+							'API error: ' + error.message
+						);
+					});
+			}
+
+			// Check database via PHP script
+			function checkDatabase() {
+				const statusEl = document.getElementById('db-status');
+				const responseEl = document.getElementById('db-response');
+
+				statusEl.innerHTML =
+					'<span class="info">Checking database...</span>';
+
+				fetch('test_direct_promotion_api.php')
+					.then((response) => response.text())
+					.then((html) => {
+						// Parse the HTML response to check for success indicators
+						if (
+							html.includes('✅ Promotion found') &&
+							html.includes('Food items:') &&
+							html.includes('Categories:')
+						) {
+							statusEl.innerHTML =
+								'<span class="success">✅ Database tables and data verified</span>';
+							updateResultsSummary(
+								'database',
+								true,
+								'Database verified'
+							);
+						} else {
+							statusEl.innerHTML =
+								'<span class="error">❌ Database verification failed</span>';
+							updateResultsSummary(
+								'database',
+								false,
+								'Database verification failed'
+							);
+						}
+
+						// Extract relevant parts of the response
+						const parser = new DOMParser();
+						const doc = parser.parseFromString(html, 'text/html');
+						const preElements = doc.querySelectorAll('pre');
+						let extractedData = '';
+						preElements.forEach((pre) => {
+							if (
+								pre.textContent.includes('"success"') ||
+								pre.textContent.includes('Array')
+							) {
+								extractedData += pre.textContent + '\n\n';
+							}
+						});
+						responseEl.textContent =
+							extractedData || 'No data extracted';
+					})
+					.catch((error) => {
+						statusEl.innerHTML =
+							'<span class="error">❌ Database check failed: ' +
+							error.message +
+							'</span>';
+						responseEl.textContent = 'Error: ' + error.message;
+						updateResultsSummary(
+							'database',
+							false,
+							'Database check error'
+						);
+					});
+			}
+
+			let testResults = {};
+
+			function updateResultsSummary(testName, success, message) {
+				testResults[testName] = { success, message };
+
+				const summaryEl = document.getElementById('results-summary');
+				const results = Object.entries(testResults)
+					.map(([name, result]) => {
+						const icon = result.success ? '✅' : '❌';
+						const className = result.success ? 'success' : 'error';
+						return `<li><span class="${className}">${icon} ${name}: ${result.message}</span></li>`;
+					})
+					.join('');
+
+				summaryEl.innerHTML = results || '<li>No results yet</li>';
+			}
+
+			// Run tests on page load
+			window.onload = function () {
+				setTimeout(testApiEndpoint, 500);
+				setTimeout(checkDatabase, 1000);
+			};
+		</script>
+	</body>
+</html>
