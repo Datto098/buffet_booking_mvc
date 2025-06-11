@@ -79,7 +79,7 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center">                                    <?php if (!empty($item['image'])): ?>
-                                        <img src="<?= SITE_URL ?>/assets/images/foods/<?= htmlspecialchars($item['image']) ?>"
+                                        <img src="<?= SITE_URL ?>/uploads/food_images/<?= htmlspecialchars($item['image']) ?>"
                                              alt="<?= htmlspecialchars($item['food_name']) ?>"
                                              class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
                                     <?php endif; ?>

@@ -246,9 +246,13 @@ function handleSuperAdminRoute($segments)
             break;
         case 'restaurant':
             handleSuperAdminRestaurantRoute($controller, $action, $param);
-            break;
-        case 'promotions':
+            break;        case 'promotions':
             handleSuperAdminPromotionsRoute($controller, $action, $param);
+            break;        case 'reviews':
+            handleSuperAdminReviewsRoute($controller, $action, $param);
+            break;
+        case 'notifications':
+            handleSuperAdminNotificationsRoute($controller, $action, $param);
             break;
         case 'statistics':
             $controller->statistics();
@@ -366,6 +370,60 @@ function handleSuperAdminPromotionsRoute($controller, $action, $param)
             break;
         default:
             $controller->promotions();
+    }
+}
+
+function handleSuperAdminReviewsRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'details':
+            $controller->reviewDetails($param);
+            break;
+        case 'approve':
+            $controller->approveReview($param);
+            break;
+        case 'reject':
+            $controller->rejectReview($param);
+            break;
+        case 'verify':
+            $controller->verifyReview($param);
+            break;
+        case 'delete':
+            $controller->deleteReview($param);
+            break;
+        case 'bulk-action':
+            $controller->reviewsBulkAction();
+            break;
+        case 'stats':
+            $controller->reviewStats();
+            break;        default:
+            $controller->reviews();
+    }
+}
+
+function handleSuperAdminNotificationsRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'unread-count':
+            $controller->getUnreadCount();
+            break;
+        case 'recent':
+            $controller->getRecentNotifications();
+            break;
+        case 'mark-read':
+            $controller->markNotificationRead($param);
+            break;
+        case 'mark-all-read':
+            $controller->markAllNotificationsRead();
+            break;
+        case 'delete':
+            $controller->deleteNotification($param);
+            break;
+        case 'bulk-action':
+            $controller->notificationsBulkAction();
+            break;
+        default:
+            $controller->notifications();
     }
 }
 

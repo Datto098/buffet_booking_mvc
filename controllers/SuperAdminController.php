@@ -12,6 +12,8 @@ require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Booking.php';
 require_once __DIR__ . '/../models/Table.php';
 require_once __DIR__ . '/../models/Promotion.php';
+require_once __DIR__ . '/../models/Review.php';
+require_once __DIR__ . '/../models/Notification.php';
 
 class SuperAdminController extends BaseController
 {
@@ -22,6 +24,8 @@ class SuperAdminController extends BaseController
     private $bookingModel;
     private $tableModel;
     private $promotionModel;
+    private $reviewModel;
+    private $notificationModel;
 
     public function __construct()
     {
@@ -30,9 +34,10 @@ class SuperAdminController extends BaseController
         $this->foodModel = new Food();
         $this->categoryModel = new Category();
         $this->orderModel = new Order();
-        $this->bookingModel = new Booking();
-        $this->tableModel = new Table();
+        $this->bookingModel = new Booking();        $this->tableModel = new Table();
         $this->promotionModel = new Promotion();
+        $this->reviewModel = new Review();
+        $this->notificationModel = new Notification();
     }
 
     public function dashboard()
@@ -1243,6 +1248,370 @@ class SuperAdminController extends BaseController
             'recent_bookings' => $recentBookings,
             'recent_users' => $recentUsers
         ];
+    }
+
+    // ==================== REVIEW MANAGEMENT ====================
+
+    /**
+     * Display reviews management page
+     */
+    public function reviews()
+    {
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        $filters = [
+            'status' => $_GET['status'] ?? '',
+            'rating' => $_GET['rating'] ?? '',
+            'search' => $_GET['search'] ?? ''
+        ];
+
+        $reviews = $this->reviewModel->getAllReviews($limit, $offset, $filters);
+        $totalReviews = $this->reviewModel->countReviews($filters);
+        $totalPages = ceil($totalReviews / $limit);
+
+        $data = [
+            'title' => 'Reviews Management',
+            'reviews' => $reviews,
+            'totalReviews' => $totalReviews,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'filters' => $filters,
+            'stats' => $this->reviewModel->getReviewStats()
+        ];
+
+        $this->loadSuperAdminView('reviews/index', $data);
+    }    /**
+     * View review details
+     */
+    public function reviewDetails($id)
+    {
+        $reviewData = $this->reviewModel->getReviewById($id);
+
+        if (!$reviewData) {
+            $this->jsonResponse([
+                'success' => false,
+                'message' => 'Review not found'
+            ], 404);
+            return;
+        }
+
+        // Capture the HTML output
+        ob_start();
+        $this->view('superadmin/reviews/details', ['reviewData' => $reviewData], false);
+        $html = ob_get_clean();
+
+        $this->jsonResponse([
+            'success' => true,
+            'html' => $html
+        ]);
+    }/**
+     * Approve review
+     */
+    public function approveReview($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $result = $this->reviewModel->updateApprovalStatus($id, 1);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Review approved successfully' : 'Failed to approve review'
+            ]);
+        }
+    }
+
+    /**
+     * Reject/Unapprove review
+     */
+    public function rejectReview($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $result = $this->reviewModel->updateApprovalStatus($id, 0);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Review rejected successfully' : 'Failed to reject review'
+            ]);
+        }
+    }
+
+    /**
+     * Verify review
+     */
+    public function verifyReview($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $result = $this->reviewModel->updateVerifiedStatus($id, 1);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Review verified successfully' : 'Failed to verify review'
+            ]);
+        }
+    }
+
+    /**
+     * Delete review
+     */
+    public function deleteReview($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $result = $this->reviewModel->deleteReview($id);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Review deleted successfully' : 'Failed to delete review'
+            ]);
+        }
+    }
+
+    /**
+     * Bulk actions for reviews
+     */
+    public function reviewsBulkAction()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $action = $_POST['action'] ?? '';
+            $reviewIds = $_POST['review_ids'] ?? [];
+
+            if (empty($reviewIds)) {
+                $this->jsonResponse([
+                    'success' => false,
+                    'message' => 'No reviews selected'
+                ]);
+                return;
+            }
+
+            $result = false;
+            $message = '';
+
+            switch ($action) {
+                case 'approve':
+                    $result = $this->reviewModel->bulkApprove($reviewIds);
+                    $message = $result ? 'Reviews approved successfully' : 'Failed to approve reviews';
+                    break;
+                case 'delete':
+                    $result = $this->reviewModel->bulkDelete($reviewIds);
+                    $message = $result ? 'Reviews deleted successfully' : 'Failed to delete reviews';
+                    break;
+                default:
+                    $message = 'Invalid action';
+            }
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $message
+            ]);
+        }
+    }    /**
+     * Get review statistics for AJAX
+     */
+    public function reviewStats()
+    {
+        header('Content-Type: application/json');
+        $stats = $this->reviewModel->getReviewStats();
+        echo json_encode($stats);
+        exit;
+    }
+
+    // ==========================================
+    // NOTIFICATION MANAGEMENT
+    // ==========================================
+
+    /**
+     * Display notifications page
+     */
+    public function notifications()
+    {
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+        $type = $_GET['type'] ?? '';
+        $unreadOnly = isset($_GET['unread']) && $_GET['unread'] == '1';
+
+        $userId = $_SESSION['user']['id'];
+
+        // Get notifications
+        if ($type) {
+            $notifications = $this->notificationModel->getNotificationsByType($userId, $type, $limit, $offset);
+            $totalNotifications = count($this->notificationModel->getNotificationsByType($userId, $type, 1000)); // Quick count
+        } else {
+            $notifications = $this->notificationModel->getUserNotifications($userId, $limit, $offset, $unreadOnly);
+            $totalNotifications = $this->notificationModel->countUserNotifications($userId, $unreadOnly);
+        }
+
+        $totalPages = ceil($totalNotifications / $limit);
+
+        // Get statistics
+        $stats = $this->notificationModel->getNotificationStats($userId);
+
+        $data = [
+            'title' => 'Notifications',
+            'notifications' => $notifications,
+            'stats' => $stats,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'currentType' => $type,
+            'unreadOnly' => $unreadOnly,
+            'csrf_token' => $this->generateCSRF()
+        ];
+
+        $this->loadSuperAdminView('notifications/index', $data);
+    }
+
+    /**
+     * Get unread notification count for AJAX
+     */
+    public function getUnreadCount()
+    {
+        header('Content-Type: application/json');
+        $userId = $_SESSION['user']['id'];
+        $count = $this->notificationModel->getUnreadCount($userId);
+        echo json_encode(['unread_count' => $count]);
+        exit;
+    }
+
+    /**
+     * Get recent notifications for AJAX
+     */
+    public function getRecentNotifications()
+    {
+        header('Content-Type: application/json');
+        $userId = $_SESSION['user']['id'];
+        $notifications = $this->notificationModel->getRecentNotifications($userId, 10);
+
+        // Format notifications for display
+        $formattedNotifications = array_map(function($notification) {
+            return [
+                'id' => $notification['id'],
+                'type' => $notification['type'],
+                'title' => $notification['title'],
+                'message' => $notification['message'],
+                'data' => json_decode($notification['data'], true),
+                'is_read' => $notification['is_read'],
+                'created_at' => $notification['created_at'],
+                'time_ago' => $this->timeAgo($notification['created_at'])
+            ];
+        }, $notifications);
+
+        echo json_encode([
+            'success' => true,
+            'notifications' => $formattedNotifications
+        ]);
+        exit;
+    }
+
+    /**
+     * Mark notification as read
+     */
+    public function markNotificationRead($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $userId = $_SESSION['user']['id'];
+            $result = $this->notificationModel->markAsRead($id, $userId);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Notification marked as read' : 'Failed to mark notification as read'
+            ]);
+        }
+    }
+
+    /**
+     * Mark all notifications as read
+     */
+    public function markAllNotificationsRead()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $userId = $_SESSION['user']['id'];
+            $result = $this->notificationModel->markAllAsRead($userId);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'All notifications marked as read' : 'Failed to mark notifications as read'
+            ]);
+        }
+    }
+
+    /**
+     * Delete notification
+     */
+    public function deleteNotification($id)
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'DELETE') {
+            $userId = $_SESSION['user']['id'];
+            $result = $this->notificationModel->deleteNotification($id, $userId);
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $result ? 'Notification deleted successfully' : 'Failed to delete notification'
+            ]);
+        }
+    }
+
+    /**
+     * Handle bulk notification actions
+     */
+    public function notificationsBulkAction()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $action = $_POST['action'] ?? '';
+            $notificationIds = $_POST['notification_ids'] ?? [];
+            $userId = $_SESSION['user']['id'];
+
+            if (empty($notificationIds)) {
+                $this->jsonResponse([
+                    'success' => false,
+                    'message' => 'No notifications selected'
+                ]);
+                return;
+            }
+
+            $result = false;
+            $message = '';
+
+            switch ($action) {
+                case 'mark_read':
+                    $result = true;
+                    foreach ($notificationIds as $id) {
+                        if (!$this->notificationModel->markAsRead($id, $userId)) {
+                            $result = false;
+                            break;
+                        }
+                    }
+                    $message = $result ? 'Selected notifications marked as read' : 'Failed to mark some notifications as read';
+                    break;
+
+                case 'delete':
+                    $result = $this->notificationModel->bulkDelete($notificationIds, $userId);
+                    $message = $result ? 'Selected notifications deleted' : 'Failed to delete notifications';
+                    break;
+
+                default:
+                    $message = 'Invalid action';
+            }
+
+            $this->jsonResponse([
+                'success' => $result,
+                'message' => $message
+            ]);
+        }
+    }
+
+    /**
+     * Helper method to format time ago
+     */
+    private function timeAgo($datetime)
+    {
+        $time = time() - strtotime($datetime);
+
+        if ($time < 60) return 'just now';
+        if ($time < 3600) return floor($time/60) . ' minutes ago';
+        if ($time < 86400) return floor($time/3600) . ' hours ago';
+        if ($time < 2592000) return floor($time/86400) . ' days ago';
+
+        return date('M j, Y', strtotime($datetime));
     }
 }
 ?>

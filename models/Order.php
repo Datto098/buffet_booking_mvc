@@ -5,10 +5,16 @@
  */
 
 require_once 'BaseModel.php';
+require_once 'Notification.php';
 
 class Order extends BaseModel
-{
-    protected $table = 'orders';
+{    protected $table = 'orders';
+    private $notificationModel;
+
+    public function __construct() {
+        parent::__construct();
+        $this->notificationModel = new Notification();
+    }
 
     public function createOrder($orderData, $orderItems = null)
     {
@@ -69,14 +75,29 @@ class Order extends BaseModel
                         ':special_instructions' => $item['special_instructions'] ?? null,
                         ':created_at' => date('Y-m-d H:i:s')
                     ]);
-                }
-            }
+                }            }
 
             $this->db->commit();
+
+            // Create notification for new order
+            $this->createOrderNotification($orderId, $orderData);
+
             return $orderId;
-        } catch (Exception $e) {
-            $this->db->rollBack();
+        } catch (Exception $e) {            $this->db->rollBack();
             throw $e;
+        }
+    }
+
+    /**
+     * Create notification for new order
+     */
+    private function createOrderNotification($orderId, $orderData) {
+        try {
+            return $this->notificationModel->createOrderNotification($orderId, $orderData);
+        } catch (Exception $e) {
+            // Log error but don't fail the order creation
+            error_log("Failed to create order notification: " . $e->getMessage());
+            return false;
         }
     }
 
