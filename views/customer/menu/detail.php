@@ -32,13 +32,14 @@
 
 <!-- Food Detail Section -->
 <?php if (!empty($food)): ?>
-<section class="section-luxury">
-    <div class="container">
-        <div class="row align-items-start">
-            <!-- Food Image and Gallery -->
-            <div class="col-lg-6 mb-5">                <div class="food-detail-image">
-                    <img src="<?= !empty($food['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($food['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
-                         class="card-img-luxury food-main-image" alt="<?= htmlspecialchars($food['name']) ?>">
+    <section class="section-luxury">
+        <div class="container">
+            <div class="row align-items-start">
+                <!-- Food Image and Gallery -->
+                <div class="col-lg-6 mb-5">
+                    <div class="food-detail-image">
+                        <img src="<?= !empty($food['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($food['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
+                            class="card-img-luxury food-main-image" alt="<?= htmlspecialchars($food['name']) ?>">
 
                         <!-- Luxury Badges -->
                         <div class="food-badges">
@@ -324,14 +325,30 @@
             <?php if (!empty($comments)): ?>
                 <?php foreach ($comments as $comment): ?>
                     <div class="card mb-3 shadow-sm">
-                        <div class="card-body d-flex align-items-start">
-                            <!-- Avatar ... -->
-                            <div class="ms-3 flex-grow-1">
-                                <strong>
-                                    <?= htmlspecialchars(trim(($comment['first_name'] ?? '') . ' ' . ($comment['last_name'] ?? ''))) ?: 'Ẩn danh' ?>
-                                </strong>
-                                <span class="ms-2">
-                                    <?php
+                        <div class="card-body d-flex align-items-start position-relative">
+                            <!-- Avatar trái -->
+                            <div class="me-3 flex-shrink-0">
+                                <?php if (!empty($comment['avatar'])): ?>
+                                    <img src="<?= SITE_URL ?>/assets/images/<?= htmlspecialchars($comment['avatar']) ?>"
+                                        alt="Profile Picture"
+                                        class="rounded-circle border"
+                                        width="56" height="56"
+                                        style="object-fit:cover; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                                <?php else: ?>
+                                    <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center"
+                                        style="width:56px;height:56px;background:#f3f3f3;border:1px solid #eee;">
+                                        <i class="fas fa-user fa-2x text-muted"></i>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <!-- Nội dung bình luận -->
+                            <div class="flex-grow-1 pe-5">
+                                <div class="d-flex align-items-center mb-1">
+                                    <strong class="me-2" style="font-size:1.1em;">
+                                        <?= htmlspecialchars(trim(($comment['first_name'] ?? '') . ' ' . ($comment['last_name'] ?? ''))) ?: 'Ẩn danh' ?>
+                                    </strong>
+                                    <span>
+                                        <?php
                                         $rating = isset($comment['rating']) ? floatval($comment['rating']) : 0;
                                         for ($i = 1; $i <= 5; $i++) {
                                             if ($rating >= $i) {
@@ -342,31 +359,92 @@
                                                 echo '<i class="far fa-star text-warning"></i>';
                                             }
                                         }
-                                    ?>
-                                </span>
-                                <div>
-                                    <?= isset($comment['comment']) ? htmlspecialchars($comment['comment']) : '' ?>
+                                        ?>
+                                    </span>
                                 </div>
-                                <div class="text-muted" style="font-size: 0.9em;">
+                                <div class="mb-1 text-muted" style="font-size:0.95em;">
                                     <?= isset($comment['created_at']) ? date('d/m/Y H:i', strtotime($comment['created_at'])) : '' ?>
                                 </div>
-
-                                <!-- Photos -->
-                                <?php
-                                $photos = !empty($comment['photos']) ? json_decode($comment['photos'], true) : [];
-                                foreach ($photos as $photo) {
-                                    echo '<img src="' . SITE_URL . '/assets/images/' . htmlspecialchars($photo) . '" style="max-width:120px;margin:4px;border-radius:8px;">';
-                                }
-                                ?>
-                                <!-- Nút xóa chỉ cho đúng user -->
+                                <div class="mb-2">
+                                    <?= isset($comment['comment']) ? nl2br(htmlspecialchars($comment['comment'])) : '' ?>
+                                </div>
+                                <!-- Ảnh bình luận -->
+                                <div class="mb-2">
+                                    <?php
+                                    $photos = !empty($comment['photos']) ? json_decode($comment['photos'], true) : [];
+                                    foreach ($photos as $photo) {
+                                        echo '<img src="' . SITE_URL . '/assets/images/' . htmlspecialchars($photo) . '" style="max-width:100px;margin:4px 8px 4px 0;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.07);">';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+                            <!-- Nút chức năng bên phải -->
+                            <div class="comment-actions d-flex flex-row align-items-center justify-content-end position-absolute" style="top:16px; right:24px; min-width:110px; gap: 10px;">
                                 <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $comment['user_id']): ?>
                                     <form method="post" action="<?= SITE_URL ?>/review/delete/<?= $comment['id'] ?>" onsubmit="return confirm('Bạn chắc chắn muốn xóa đánh giá này?');" style="display:inline;">
-                                        <button type="submit" class="btn btn-sm btn-danger mt-2">
+                                        <button type="submit" class="btn btn-sm btn-danger rounded-pill mb-2" style="margin-top: 10px;">
                                             <i class="fas fa-trash"></i> Xóa
                                         </button>
                                     </form>
+                                    <a href="javascript:void(0);"
+                                        class="btn btn-warning btn-sm rounded-pill edit-review-btn"
+                                        data-id="<?= $comment['id'] ?>"
+                                        data-content="<?= htmlspecialchars($comment['comment'], ENT_QUOTES) ?>"
+                                        data-rating="<?= $comment['rating'] ?>"
+                                        data-photos='<?= htmlspecialchars($comment['photos'] ?? "[]", ENT_QUOTES) ?>'>
+                                        <i class="fas fa-edit"></i> Sửa
+                                    </a>
                                 <?php endif; ?>
+                                <?php
+                                $liked = false;
+                                if (isset($_SESSION['user_id'])) {
+                                    $liked = $this->reviewModel->hasUserLiked($_SESSION['user_id'], $comment['id']);
+                                }
+                                ?>
+                                <button type="button"
+                                    class="btn btn-outline-primary btn-sm like-btn<?= $liked ? ' active' : '' ?>"
+                                    data-review-id="<?= $comment['id'] ?>">
+                                    <i class="fas fa-thumbs-up"></i>
+                                    <span class="like-count"><?= (int)($comment['helpful_count'] ?? 0) ?></span>
+                                </button>
                             </div>
+                        </div>
+
+                        <!-- Form sửa bình luận -->
+                        <div class="edit-comment-form" id="edit-form-<?= $comment['id'] ?>" style="display:none;">
+                            <form method="POST" action="<?= SITE_URL ?>/review/update/<?= $comment['id'] ?>" enctype="multipart/form-data">
+                                <div class="mb-2">
+                                    <label class="form-label mb-1">Sửa đánh giá:</label>
+                                    <div class="star-rating-edit" style="font-size: 1.3rem;">
+                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                            <input type="radio" id="edit-star<?= $i ?>-<?= $comment['id'] ?>" name="rate" value="<?= $i ?>" style="display:none;">
+                                            <label for="edit-star<?= $i ?>-<?= $comment['id'] ?>" style="cursor:pointer;">
+                                                <i class="fa-star far text-warning"></i>
+                                            </label>
+                                        <?php endfor; ?>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <textarea name="content" class="form-control" rows="2" required></textarea>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Ảnh mới (tùy chọn):</label>
+                                    <input type="file" name="photo[]" accept="image/*" class="form-control" multiple>
+                                    <div class="mt-2">
+                                        <?php
+                                        $photos = !empty($comment['photos']) ? json_decode($comment['photos'], true) : [];
+                                        foreach ($photos as $photo) {
+                                            echo '<div style="display:inline-block;position:relative;margin-right:8px;">';
+                                            echo '<img src="' . SITE_URL . '/assets/images/' . htmlspecialchars($photo) . '" style="max-width:80px;border-radius:6px;">';
+                                            echo '<input type="checkbox" name="delete_photos[]" value="' . htmlspecialchars($photo) . '"> Xóa';
+                                            echo '</div>';
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> Lưu</button>
+                                <button type="button" class="btn btn-secondary btn-sm cancel-edit-btn" data-comment-id="<?= $comment['id'] ?>">Hủy</button>
+                            </form>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -385,14 +463,14 @@
                     <p class="text-muted">Khám phá thêm các món ăn khác trong cùng danh mục</p>
                 </div>
 
-        <div class="row">
-            <?php foreach ($relatedFoods as $relatedFood): ?>
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card h-100 food-card">
-                        <div class="position-relative">
-                            <img src="<?= !empty($relatedFood['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($relatedFood['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
-                                 class="card-img-top" alt="<?= htmlspecialchars($relatedFood['name']) ?>"
-                                 style="height: 200px; object-fit: cover;">
+                <div class="row">
+                    <?php foreach ($relatedFoods as $relatedFood): ?>
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="card h-100 food-card">
+                                <div class="position-relative">
+                                    <img src="<?= !empty($relatedFood['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($relatedFood['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
+                                        class="card-img-top" alt="<?= htmlspecialchars($relatedFood['name']) ?>"
+                                        style="height: 200px; object-fit: cover;">
 
                                     <button class="btn btn-outline-light btn-sm position-absolute top-0 start-0 m-2 favorite-btn"
                                         data-food-id="<?= $relatedFood['id'] ?>">
@@ -438,6 +516,37 @@
 
     <!-- Custom CSS for this page -->
     <style>
+        .comment-actions {
+            min-width: 110px;
+            z-index: 2;
+            gap: 10px;
+        }
+
+        .btn-warning {
+            color: #fff;
+            background-color: #ffc107;
+            border-color: #ffc107;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+            border-color: #d39e00;
+        }
+
+        @media (max-width: 768px) {
+            .comment-actions {
+                position: static !important;
+                flex-direction: column !important;
+                margin-top: 12px;
+                min-width: 0;
+                gap: 8px;
+            }
+        }
+
+        .card-body {
+            position: relative;
+        }
+
         .food-card {
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             border: none;
@@ -447,6 +556,29 @@
         .food-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .like-btn.active {
+            background: #0d6efd;
+            color: #fff;
+            border-color: #0d6efd;
+        }
+
+        /* Thêm vào <style> cuối file */
+        .avatar-placeholder {
+            background: #f3f3f3;
+            border: 1px solid #eee;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-body .btn.like-btn.active {
+            background: #0d6efd;
+            color: #fff;
+            border-color: #0d6efd;
         }
 
         .detail-item {
@@ -560,27 +692,144 @@
     </script>
 
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.like-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var reviewId = this.dataset.reviewId;
-            var likeCountSpan = this.querySelector('.like-count');
-            fetch('<?= SITE_URL ?>/review/like/' + reviewId, {
-                method: 'POST',
-                headers: {'X-Requested-With': 'XMLHttpRequest'}
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    likeCountSpan.textContent = data.like_count;
-                } else {
-                    alert(data.message || 'Bạn cần đăng nhập để thích!');
-                }
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.like-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    <?php if (!isset($_SESSION['user_id'])): ?>
+                        alert('Vui lòng đăng nhập để like bình luận!');
+                        return;
+                    <?php endif; ?>
+                    var reviewId = this.dataset.reviewId;
+                    var likeCountSpan = this.querySelector('.like-count');
+                    var button = this;
+                    fetch('<?= SITE_URL ?>/review/like/' + reviewId, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (typeof data.like_count !== 'undefined') {
+                                likeCountSpan.textContent = data.like_count;
+                            }
+                            if (data.liked) {
+                                button.classList.add('active');
+                            } else {
+                                button.classList.remove('active');
+                            }
+                        });
+                });
             });
         });
-    });
-});
-</script>
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.edit-review-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var id = this.dataset.id;
+                    var content = this.dataset.content;
+                    var rating = this.dataset.rating;
+                    var photos = [];
+                    try {
+                        photos = JSON.parse(this.dataset.photos);
+                    } catch (e) {}
+
+                    // Set form action
+                    var form = document.getElementById('editReviewForm');
+                    form.action = '<?= SITE_URL ?>/review/update/' + id;
+
+                    // Set content
+                    form.querySelector('textarea[name="content"]').value = content;
+
+                    // Set rating
+                    var stars = form.querySelectorAll('#edit-stars input[type=radio]');
+                    stars.forEach(function(star) {
+                        star.checked = (star.value == rating);
+                        var icon = star.nextElementSibling.querySelector('i');
+                        if (star.value <= rating) {
+                            icon.classList.remove('far');
+                            icon.classList.add('fas');
+                        } else {
+                            icon.classList.remove('fas');
+                            icon.classList.add('far');
+                        }
+                        // Đổi màu khi chọn
+                        star.addEventListener('change', function() {
+                            stars.forEach(function(s) {
+                                var ic = s.nextElementSibling.querySelector('i');
+                                if (s.value <= star.value) {
+                                    ic.classList.remove('far');
+                                    ic.classList.add('fas');
+                                } else {
+                                    ic.classList.remove('fas');
+                                    ic.classList.add('far');
+                                }
+                            });
+                        });
+                    });
+
+                    // Hiện ảnh cũ
+                    var oldPhotosDiv = document.getElementById('edit-old-photos');
+                    oldPhotosDiv.innerHTML = '';
+                    if (photos && photos.length) {
+                        photos.forEach(function(photo) {
+                            oldPhotosDiv.innerHTML += `
+                        <div style="display:inline-block;position:relative;margin-right:8px;">
+                            <img src="<?= SITE_URL ?>/assets/images/${photo}" style="max-width:80px;border-radius:6px;">
+                            <input type="checkbox" name="delete_photos[]" value="${photo}"> Xóa
+                        </div>
+                    `;
+                        });
+                    }
+
+                    // Show modal
+                    var modal = new bootstrap.Modal(document.getElementById('editReviewModal'));
+                    modal.show();
+                });
+            });
+        });
+    </script>
+
+    <!-- Modal sửa bình luận -->
+    <div class="modal fade" id="editReviewModal" tabindex="-1" aria-labelledby="editReviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" id="editReviewForm" enctype="multipart/form-data">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editReviewModalLabel">Sửa bình luận</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-2">
+                            <label>Số sao:</label>
+                            <div id="edit-stars">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <input type="radio" id="edit-star<?= $i ?>" name="rate" value="<?= $i ?>" style="display:none;">
+                                    <label for="edit-star<?= $i ?>" style="cursor:pointer;">
+                                        <i class="fa-star far text-warning"></i>
+                                    </label>
+                                <?php endfor; ?>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label>Nội dung:</label>
+                            <textarea name="content" class="form-control" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label>Ảnh mới (tùy chọn):</label>
+                            <input type="file" name="photo[]" accept="image/*" class="form-control" multiple>
+                            <div id="edit-old-photos" class="mt-2"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btn-sm">Lưu</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 <?php else: ?>
     <!-- Hiển thị danh sách món ăn trong danh mục -->
     <section class="section-luxury">
@@ -591,11 +840,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <?php endif; ?>
 
             <div class="row">
-                <?php foreach ($foods as $item): ?>                    <div class="col-lg-4 col-md-6 mb-4">
+                <?php foreach ($foods as $item): ?> <div class="col-lg-4 col-md-6 mb-4">
                         <div class="card h-100 food-card">
                             <img src="<?= !empty($item['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($item['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
-                                 class="card-img-top" alt="<?= htmlspecialchars($item['name']) ?>"
-                                 style="height: 200px; object-fit: cover;">
+                                class="card-img-top" alt="<?= htmlspecialchars($item['name']) ?>"
+                                style="height: 200px; object-fit: cover;">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title"><?= htmlspecialchars($item['name']) ?></h5>
                                 <p class="card-text flex-grow-1 text-muted">
@@ -623,8 +872,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php endif; ?>
 
 <?php if (!empty($_SESSION['message'])): ?>
-    <div class="alert alert-success"><?= $_SESSION['message']; unset($_SESSION['message']); ?></div>
+    <div class="alert alert-success"><?= $_SESSION['message'];
+                                        unset($_SESSION['message']); ?></div>
 <?php endif; ?>
 <?php if (!empty($_SESSION['error'])): ?>
-    <div class="alert alert-danger"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
+    <div class="alert alert-danger"><?= $_SESSION['error'];
+                                    unset($_SESSION['error']); ?></div>
 <?php endif; ?>

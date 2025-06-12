@@ -151,7 +151,8 @@ class FoodController extends BaseController {
         // print_r($userOrdered);
         // echo "</pre>";
         $comments = $this->reviewModel->getReviewsByFood($food['id']);
-        $avgData = $this->reviewModel->getAverageRatingByFood($food['id']);
+        $avgRating = $this->reviewModel->getAverageRating($food['id']);
+        $totalRating = $this->reviewModel->getTotalRating($food['id']);
         $isReviewed = false;
         if (isset($_SESSION['user_id'])) {
             $isReviewed = $this->reviewModel->hasUserReviewedFood($_SESSION['user_id'], $food['id']);
@@ -163,8 +164,8 @@ class FoodController extends BaseController {
             'relatedFoods' => $relatedFoods,
             'userOrdered' => $userOrdered,
             'comments' => $comments,
-            'avgRating' => $avgData['avg_rating'] ?? 0,
-            'totalRating' => $avgData['total'] ?? 0,
+            'avgRating' => $avgRating,
+            'totalRating' => $totalRating,
             'isReviewed' => $isReviewed
         ];
 
@@ -263,10 +264,14 @@ class FoodController extends BaseController {
 
     public function comment($foodId) {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user'])) {
+           
+
             $userId = $_SESSION['user']['id'];
             $rating = intval($_POST['rate'] ?? 0);
             $comment = trim($_POST['content'] ?? '');
             $photos = [];
+
+           
 
             // Xử lý upload ảnh (nếu có)
             if (!empty($_FILES['photo']['name'][0])) {

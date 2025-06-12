@@ -810,12 +810,11 @@ class Order extends BaseModel
     public function hasUserOrderedFood($userId, $foodId) {
         $sql = "SELECT COUNT(*) FROM orders o
                 JOIN order_items oi ON o.id = oi.order_id
-                WHERE o.user_id = :user_id AND oi.food_item_id = :food_id AND o.status = 'completed'";
+                WHERE o.user_id = :user_id
+                  AND oi.food_item_id = :food_id
+                  AND o.status = 'completed'";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            ':user_id' => $userId,
-            ':food_id' => $foodId
-        ]);
+        $stmt->execute([':user_id' => $userId, ':food_id' => $foodId]);
         return $stmt->fetchColumn() > 0;
     }
     public function getCompletedOrderIdByUserAndFood($userId, $foodId) {
