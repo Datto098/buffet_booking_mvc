@@ -262,9 +262,7 @@ class BaseController {
         $segments = explode('/', $uri);
 
         return $segments;
-    }
-
-    /**
+    }    /**
      * Get current URL segment at specified position
      *
      * @param int $position Position of the segment (1-based)

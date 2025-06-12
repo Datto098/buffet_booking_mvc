@@ -171,6 +171,12 @@
     animation-delay: 1.5s;
 }
 
+.luxury-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
 @keyframes float {
 
     0%,
@@ -253,5 +259,9 @@
 
     .promotion-price .savings-text {
         font-size: 0.85rem;
+    }
+
+    .luxury-grid-3 {
+        grid-template-columns: repeat(1, 1fr);
     }
 }

@@ -1,0 +1,16 @@
+# SuperAdmin directory .htaccess
+# This handles superadmin routes and redirects to parent index.php for routing
+
+# Enable rewrite engine
+RewriteEngine On
+
+# If requesting just /superadmin or /superadmin/, serve the local index.php
+RewriteRule ^$ index.php [L]
+
+# For any other superadmin routes (like /superadmin/users), redirect to parent index.php for proper routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)$ ../index.php [L]
+
+# Prevent directory listing
+Options -Indexes

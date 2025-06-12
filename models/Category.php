@@ -81,24 +81,30 @@ class Category extends BaseModel {
         $stmt->execute();
         return $stmt->fetchAll();
     }    /**
-     * Count categories, optionally by status
-     * @param string $status Optional status to filter by ('active' or 'inactive')
+     * Count categories based on condition and value
+     * @param string|null $condition Column name to filter by
+     * @param mixed $value Value to filter by
      * @return int Number of categories
      */
-    public function count($status = null) {
-        if ($status) {
-            $is_active = ($status === 'active') ? 1 : 0;
-            $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE is_active = :is_active";
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':is_active', $is_active, PDO::PARAM_INT);
-            $stmt->execute();
-            $result = $stmt->fetch();
-            return $result['count'] ?? 0;
+    public function count($condition = null, $value = null) {
+        if ($condition && $value) {
+            if ($condition === 'status') {
+                $is_active = ($value === 'active') ? 1 : 0;
+                $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE is_active = :is_active";
+                $stmt = $this->db->prepare($sql);
+                $stmt->bindValue(':is_active', $is_active, PDO::PARAM_INT);
+                $stmt->execute();
+                $result = $stmt->fetch();
+                return $result['count'] ?? 0;
+            } else {
+                // Use parent method for other conditions
+                return parent::count($condition, $value);
+            }
         } else {
             // Call parent count method for standard counting
             return parent::count();
         }
-    }    public function getMainCategories() {
+    }public function getMainCategories() {
         $sql = "SELECT * FROM {$this->table} ORDER BY name ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
