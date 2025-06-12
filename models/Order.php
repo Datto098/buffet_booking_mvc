@@ -807,136 +807,33 @@ class Order extends BaseModel
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);        $stmt->execute();
         return $stmt->fetchAll();
     }
-<<<<<<< HEAD
-=======
-
-    /**
-     * Find order by ID
-     * @param int $id Order ID
-     * @return array|false Order data or false if not found
-     */
-    public function findById($id) {
-        $sql = "SELECT * FROM {$this->table} WHERE id = :id";
+    public function hasUserOrderedFood($userId, $foodId) {
+        $sql = "SELECT COUNT(*) FROM orders o
+                JOIN order_items oi ON o.id = oi.order_id
+                WHERE o.user_id = :user_id AND oi.food_item_id = :food_id AND o.status = 'completed'";
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetch();
+        $stmt->execute([
+            ':user_id' => $userId,
+            ':food_id' => $foodId
+        ]);
+        return $stmt->fetchColumn() > 0;
     }
-
-    /**
-     * Update order data
-     * @param int $id Order ID
-     * @param array $data Update data
-     * @return bool Success status
-     */
-    public function update($id, $data) {
-        $setParts = [];
-        $params = [':id' => $id];
-
-        foreach ($data as $key => $value) {
-            $setParts[] = "`$key` = :$key";
-            $params[":$key"] = $value;
-        }
-
-        $sql = "UPDATE {$this->table} SET " . implode(', ', $setParts) . " WHERE id = :id";
+    public function getCompletedOrderIdByUserAndFood($userId, $foodId) {
+        $sql = "SELECT o.id
+                FROM orders o
+                JOIN order_items oi ON o.id = oi.order_id
+                WHERE o.user_id = :user_id
+                  AND oi.food_item_id = :food_id
+                  AND o.status = 'completed'
+                ORDER BY o.completed_at DESC
+                LIMIT 1";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute($params);
+        $stmt->execute([
+            ':user_id' => $userId,
+            ':food_id' => $foodId
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['id'] : null;
     }
-
-    /**
-     * Get total spent by user (for AdminController usage)
-     * @param int $userId User ID
-     * @return float Total amount spent
-     */
-    // public function getTotalSpentByUser($userId) {
-    //     $sql = "SELECT SUM(total_amount) as total FROM {$this->table}
-    //             WHERE user_id = :user_id AND status IN ('completed', 'delivered')";
-    //     $stmt = $this->db->prepare($sql);
-    //     $stmt->bindValue(':user_id', (int)$userId, PDO::PARAM_INT);
-    //     $stmt->execute();
-    //     $result = $stmt->fetch();
-    //     return $result['total'] ?? 0;
-    // }
-
-    /**
-     * Count orders by user
-     * @param int $userId User ID
-     * @return int Order count
-     */
-    // public function countByUser($userId) {
-    //     $sql = "SELECT COUNT(*) as count FROM {$this->table} WHERE user_id = :user_id";        $stmt = $this->db->prepare($sql);
-    //     $stmt->bindValue(':user_id', (int)$userId, PDO::PARAM_INT);
-    //     $stmt->execute();
-    //     $result = $stmt->fetch();
-    //     return $result['count'] ?? 0;
-    // }
-
-    /**
-     * Delete an order and its items
-     */
-    public function deleteOrder($orderId) {
-        try {
-            $this->db->beginTransaction();
-
-            // Delete order items first
-            $stmt = $this->db->prepare("DELETE FROM order_items WHERE order_id = :order_id");
-            $stmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
-            $stmt->execute();
-
-            // Delete the order
-            $stmt = $this->db->prepare("DELETE FROM orders WHERE id = :id");
-            $stmt->bindValue(':id', $orderId, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $this->db->commit();
-            return true;
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            error_log("Error deleting order: " . $e->getMessage());
-            return false;
-        }
-    }    /**
-     * Get dashboard statistics
-     */
-    public function getDashboardStats() {
-        // Get today's stats
-        $sql = "SELECT
-                    COUNT(*) as today_orders,
-                    COALESCE(SUM(total_amount), 0) as today_revenue
-                FROM {$this->table}
-                WHERE DATE(created_at) = CURDATE()";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-        $todayStats = $stmt->fetch();
-
-        // Get total stats
-        $sql = "SELECT
-                    COUNT(*) as total_orders,
-                    COALESCE(SUM(total_amount), 0) as total_revenue
-                FROM {$this->table}";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-        $totalStats = $stmt->fetch();
-
-        return [
-            'today_orders' => $todayStats['today_orders'] ?? 0,
-            'today_revenue' => $todayStats['today_revenue'] ?? 0,
-            'total_orders' => $totalStats['total_orders'] ?? 0,
-            'total_revenue' => $totalStats['total_revenue'] ?? 0
-        ];
-    }
-
-    /**
-     * Get total revenue from all orders
-     */
-    public function getTotalRevenue() {
-        $sql = "SELECT COALESCE(SUM(total_amount), 0) as total_revenue FROM {$this->table}";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return $result['total_revenue'] ?? 0;
-    }
->>>>>>> dev
 }
+

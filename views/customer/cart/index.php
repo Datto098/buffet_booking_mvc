@@ -47,7 +47,9 @@
                             <div class="cart-item" data-food-id="<?= $item['food']['id'] ?>">
                                 <div class="row align-items-center py-3 <?= $index > 0 ? 'border-top' : '' ?>"> <!-- Food Image -->
                                     <div class="col-md-2 col-3">
-                                        <img src="<?= !empty($item['food']['image']) ? htmlspecialchars($item['food']['image']) : SITE_URL . '/assets/images/no-image.svg' ?>"
+                                        <img src="<?= !empty($item['food']['image']) 
+                                            ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($item['food']['image']) 
+                                            : SITE_URL . '/assets/images/no-image.svg' ?>"
                                             class="img-fluid rounded" alt="<?= htmlspecialchars($item['food']['name']) ?>"
                                             style="height: 80px; width: 80px; object-fit: cover;">
                                     </div>

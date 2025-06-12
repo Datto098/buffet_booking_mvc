@@ -96,7 +96,7 @@
                                     <!-- Map -->
                                     <div id="map" style="height: 300px; border-radius: 8px;"></div>
                                 </div>
-                                
+
                             </div>
                         </div>
 
@@ -242,7 +242,9 @@
                     <!-- Cart Items -->
                     <div class="order-items mb-3">
                         <?php foreach ($cartItems as $item): ?> <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
-                                <img src="<?= !empty($item['food']['image']) ? htmlspecialchars($item['food']['image']) : '/assets/images/no-image.jpg' ?>"
+                                <img src="<?= !empty($item['food']['image'])
+                                                ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($item['food']['image'])
+                                                : SITE_URL . '/assets/images/no-image.svg' ?>"
                                     class="rounded me-2"
                                     style="width: 40px; height: 40px; object-fit: cover;"
                                     alt="<?= htmlspecialchars($item['food']['name']) ?>">
@@ -296,7 +298,7 @@
                 </div>
             </div>
 
-          
+
         </div>
     </div>
 </div>
@@ -305,87 +307,88 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var lat = <?= isset($userInfo['lat']) && $userInfo['lat'] ? $userInfo['lat'] : 10.762622 ?>;
-    var lng = <?= isset($userInfo['lng']) && $userInfo['lng'] ? $userInfo['lng'] : 106.660172 ?>;
-    var map = L.map('map').setView([lat, lng], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    document.addEventListener('DOMContentLoaded', function() {
+        var lat = <?= isset($userInfo['lat']) && $userInfo['lat'] ? $userInfo['lat'] : 10.762622 ?>;
+        var lng = <?= isset($userInfo['lng']) && $userInfo['lng'] ? $userInfo['lng'] : 106.660172 ?>;
+        var map = L.map('map').setView([lat, lng], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-    var marker = null;
+        var marker = null;
 
-    function setMarker(lat, lng) {
-        if (marker) {
-            marker.setLatLng([lat, lng]);
-        } else {
-            marker = L.marker([lat, lng], {draggable:true}).addTo(map);
-            marker.on('dragend', function(e) {
-                var position = marker.getLatLng();
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data && data.display_name) {
-                            document.getElementById('delivery_address').value = data.display_name;
-                        }
-                    });
-            });
-        }
-        
-    }
-
-    // Tìm địa chỉ khi nhấn nút hoặc Enter
-    function searchAddress() {
-        var address = document.getElementById('delivery_address').value;
-        if (!address) return;
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.length > 0) {
-                    var lat = parseFloat(data[0].lat);
-                    var lon = parseFloat(data[0].lon);
-                    map.setView([lat, lon], 16);
-                    setMarker(lat, lon);
-                    // Lấy lại địa chỉ chuẩn
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+        function setMarker(lat, lng) {
+            if (marker) {
+                marker.setLatLng([lat, lng]);
+            } else {
+                marker = L.marker([lat, lng], {
+                    draggable: true
+                }).addTo(map);
+                marker.on('dragend', function(e) {
+                    var position = marker.getLatLng();
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}`)
                         .then(response => response.json())
-                        .then(data2 => {
-                            if (data2 && data2.display_name) {
-                                document.getElementById('delivery_address').value = data2.display_name;
+                        .then(data => {
+                            if (data && data.display_name) {
+                                document.getElementById('delivery_address').value = data.display_name;
                             }
                         });
-                } else {
-                    alert('Không tìm thấy địa chỉ!');
-                }
-            });
-    }
+                });
+            }
 
-    document.getElementById('btn_find_on_map').addEventListener('click', searchAddress);
-    document.getElementById('delivery_address').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            searchAddress();
         }
-    });
 
-    // Cho phép click lên bản đồ để tạo hoặc di chuyển marker
-    map.on('click', function(e) {
-        var lat = e.latlng.lat;
-        var lng = e.latlng.lng;
-        setMarker(lat, lng);
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.display_name) {
-                    document.getElementById('delivery_address').value = data.display_name;
-                }
-            });
+        // Tìm địa chỉ khi nhấn nút hoặc Enter
+        function searchAddress() {
+            var address = document.getElementById('delivery_address').value;
+            if (!address) return;
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        var lat = parseFloat(data[0].lat);
+                        var lon = parseFloat(data[0].lon);
+                        map.setView([lat, lon], 16);
+                        setMarker(lat, lon);
+                        // Lấy lại địa chỉ chuẩn
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                            .then(response => response.json())
+                            .then(data2 => {
+                                if (data2 && data2.display_name) {
+                                    document.getElementById('delivery_address').value = data2.display_name;
+                                }
+                            });
+                    } else {
+                        alert('Không tìm thấy địa chỉ!');
+                    }
+                });
+        }
+
+        document.getElementById('btn_find_on_map').addEventListener('click', searchAddress);
+        document.getElementById('delivery_address').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchAddress();
+            }
+        });
+
+        // Cho phép click lên bản đồ để tạo hoặc di chuyển marker
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+            setMarker(lat, lng);
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.display_name) {
+                        document.getElementById('delivery_address').value = data.display_name;
+                    }
+                });
+        });
     });
-});
 </script>
 
 <script>
-
     document.addEventListener('DOMContentLoaded', function() {
         const checkoutForm = document.getElementById('checkoutForm');
         const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
