@@ -1,140 +1,182 @@
-<?php require_once 'views/layouts/superadmin_header.php'; ?>
-<?php require_once 'views/layouts/superadmin_sidebar.php'; ?>
-
-<div class="main-content fade-in">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <?php require_once 'views/layouts/superadmin_header.php'; ?>
+    <title>Notification Management - Super Admin</title>
+</head>
+<body>
     <div class="container-fluid">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1>
-                    <i class="fas fa-bell"></i>
-                    Notifications
-                </h1>
-                <div class="btn-toolbar">
-                    <div class="btn-group me-2">
-                        <button type="button" class="btn btn-outline-primary" onclick="markAllAsRead()">
-                            <i class="fas fa-check-double"></i> Mark All Read
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="refreshNotifications()">
-                            <i class="fas fa-sync-alt"></i> Refresh
-                        </button>
+        <div class="row">
+            <?php require_once 'views/layouts/superadmin_sidebar.php'; ?>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">
+                            <i class="fas fa-bell me-2 text-info"></i>Notification Management
+                        </h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/superadmin/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Notifications</li>
+                            </ol>
+                        </nav>
                     </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-outline-danger" onclick="bulkDelete()" disabled id="bulkDeleteBtn">
-                            <i class="fas fa-trash"></i> Delete Selected
-                        </button>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-outline-primary" onclick="markAllAsRead()">
+                                <i class="fas fa-check-double me-1"></i>Mark All Read
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="refreshNotifications()">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-danger" onclick="bulkDelete()" disabled id="bulkDeleteBtn">
+                                <i class="fas fa-trash me-1"></i>Delete Selected
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Statistics Cards -->
-        <div class="row mb-4">
-            <div class="col-md-3 mb-3">
-                <div class="card stats-card">
+                <!-- Flash Messages -->
+                <?php
+                $flash = $_SESSION['flash'] ?? [];
+                foreach ($flash as $type => $message):
+                ?>
+                    <div class="alert alert-<?= $type === 'error' ? 'danger' : $type ?> alert-dismissible fade show" role="alert">
+                        <i class="fas fa-<?= $type === 'success' ? 'check-circle' : 'exclamation-triangle' ?> me-2"></i>
+                        <?= htmlspecialchars($message) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php
+                endforeach;
+                unset($_SESSION['flash']);
+                ?>                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Notifications</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['total_notifications'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-bell fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Unread</div>
+                                        <div class="h4 mb-0 font-weight-bold" id="unreadCount"><?= number_format($stats['unread_count'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-exclamation-circle fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Order Notifications</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['order_notifications'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-shopping-cart fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Booking Notifications</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['booking_notifications'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-calendar-check fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-light border-0">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-filter me-2 text-info"></i>Filters
+                        </h6>
+                    </div>
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-primary me-3">
-                                <i class="fas fa-bell"></i>
+                        <form method="GET" class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label for="type" class="form-label fw-bold">Notification Type</label>
+                                <select class="form-select" id="type" name="type" onchange="this.form.submit()">
+                                    <option value="">All Types</option>
+                                    <option value="new_order" <?php echo ($currentType === 'new_order') ? 'selected' : ''; ?>>New Orders</option>
+                                    <option value="new_booking" <?php echo ($currentType === 'new_booking') ? 'selected' : ''; ?>>New Bookings</option>
+                                    <option value="system" <?php echo ($currentType === 'system') ? 'selected' : ''; ?>>System</option>
+                                </select>
                             </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">
-                                    Total Notifications
+                            <div class="col-md-4">
+                                <div class="form-check form-switch pt-4">
+                                    <input class="form-check-input" type="checkbox" id="unread" name="unread" value="1"
+                                        <?php echo $unreadOnly ? 'checked' : ''; ?> onchange="this.form.submit()">
+                                    <label class="form-check-label fw-bold" for="unread">
+                                        <i class="fas fa-eye-slash me-1"></i>Show Unread Only
+                                    </label>
                                 </div>
-                                <div class="h4 mb-0 fw-bold text-dark">
-                                    <?php echo number_format($stats['total_notifications'] ?? 0); ?>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="<?= SITE_URL ?>/superadmin/notifications" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-times me-1"></i>Clear Filters
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Notifications List -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0 fw-bold">
+                                <i class="fas fa-bell me-2 text-info"></i>All Notifications
+                            </h6>
+                            <div class="d-flex align-items-center">
+                                <div class="form-check me-3">
+                                    <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleAllCheckboxes()">
+                                    <label class="form-check-label fw-bold" for="selectAll">
+                                        Select All
+                                    </label>
+                                </div>
+                                <div class="text-muted small">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <?php echo count($notifications ?? []); ?> notifications displayed
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <div class="card stats-card">
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-warning me-3">
-                                <i class="fas fa-exclamation-circle"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">
-                                    Unread
-                                </div>
-                                <div class="h4 mb-0 fw-bold text-dark" id="unreadCount">
-                                    <?php echo number_format($stats['unread_count'] ?? 0); ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-success me-3">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">
-                                    Order Notifications
-                                </div>
-                                <div class="h4 mb-0 fw-bold text-dark">
-                                    <?php echo number_format($stats['order_notifications'] ?? 0); ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-info me-3">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">
-                                    Booking Notifications
-                                </div>
-                                <div class="h4 mb-0 fw-bold text-dark">
-                                    <?php echo number_format($stats['booking_notifications'] ?? 0); ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filters -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <form method="GET" class="row g-3 align-items-end">
-                    <div class="col-md-3">
-                        <label for="type" class="form-label">Notification Type</label>
-                        <select class="form-select" id="type" name="type" onchange="this.form.submit()">
-                            <option value="">All Types</option>
-                            <option value="new_order" <?php echo ($currentType === 'new_order') ? 'selected' : ''; ?>>New Orders</option>
-                            <option value="new_booking" <?php echo ($currentType === 'new_booking') ? 'selected' : ''; ?>>New Bookings</option>
-                            <option value="system" <?php echo ($currentType === 'system') ? 'selected' : ''; ?>>System</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="unread" name="unread" value="1"
-                                <?php echo $unreadOnly ? 'checked' : ''; ?> onchange="this.form.submit()">
-                            <label class="form-check-label" for="unread">
-                                Show only unread
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
                             <i class="fas fa-times"></i> Clear Filters
                         </button>
                     </div>
@@ -574,3 +616,9 @@ window.addEventListener('beforeunload', function() {
     stopNotificationPolling();
 });
 </script>
+
+            </main>
+        </div>
+    </div>
+</body>
+</html>

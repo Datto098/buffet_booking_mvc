@@ -44,33 +44,57 @@ class AdminController extends BaseController
             'success' => true,
             'stats' => $stats
         ]);
-    }
-
-    public function users()
+    }    public function users()
     {
         $userModel = new User();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
+        // Get filter parameters
+        $search = $_GET['search'] ?? '';
+        $role = $_GET['role'] ?? '';
+        $status = $_GET['status'] ?? '';
+
         // Use getAllForAdmin() to get properly formatted user data
         $allUsers = $userModel->getAllForAdmin();
+
+        // Apply filters
+        if ($search) {
+            $allUsers = array_filter($allUsers, function($user) use ($search) {
+                return stripos($user['first_name'] . ' ' . $user['last_name'], $search) !== false ||
+                       stripos($user['email'], $search) !== false ||
+                       stripos($user['phone'], $search) !== false;
+            });
+        }
+
+        if ($role) {
+            $allUsers = array_filter($allUsers, function($user) use ($role) {
+                return $user['role'] === $role;
+            });
+        }
+
+        if ($status !== '') {
+            $allUsers = array_filter($allUsers, function($user) use ($status) {
+                return (string)$user['is_active'] === $status;
+            });
+        }
+
         $totalUsers = count($allUsers);
         $totalPages = ceil($totalUsers / $limit);
 
-        // Apply pagination to the transformed data
-        $users = array_slice($allUsers, $offset, $limit);
-
-        // Calculate statistics for the dashboard cards
-        $activeUsers = count(array_filter($allUsers, function ($user) {
+        // Apply pagination to the filtered data
+        $users = array_slice($allUsers, $offset, $limit);        // Calculate statistics for the dashboard cards (based on all users before filters)
+        $allUsersForStats = $userModel->getAllForAdmin();
+        $activeUsers = count(array_filter($allUsersForStats, function ($user) {
             return $user['is_active'] == 1;
         }));
 
-        $adminUsers = count(array_filter($allUsers, function ($user) {
+        $adminUsers = count(array_filter($allUsersForStats, function ($user) {
             return in_array($user['role'], ['manager', 'super_admin']);
         }));
 
-        $newToday = count(array_filter($allUsers, function ($user) {
+        $newToday = count(array_filter($allUsersForStats, function ($user) {
             return date('Y-m-d', strtotime($user['created_at'])) === date('Y-m-d');
         }));
         $data = [
@@ -217,8 +241,7 @@ class AdminController extends BaseController
         }
 
         $this->redirect('/admin/users');
-    }
-    public function foods()
+    }    public function foods()
     {
         $foodModel = new Food();
         $categoryModel = new Category();
@@ -227,21 +250,53 @@ class AdminController extends BaseController
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
-        // Use getAllForAdmin() to get properly formatted food data
-        $foods = $foodModel->getAllForAdmin($limit, $offset);
-        $allFoods = $foodModel->getAllForAdmin(); // Get all foods for statistics
-        $categories = $categoryModel->findAll();
-        $totalFoods = $foodModel->count();
+        // Get filter parameters
+        $search = $_GET['search'] ?? '';
+        $category = $_GET['category'] ?? '';
+        $status = $_GET['status'] ?? '';
+
+        // Get all foods for filtering
+        $allFoods = $foodModel->getAllForAdmin();
+
+        // Apply filters
+        if ($search) {
+            $allFoods = array_filter($allFoods, function($food) use ($search) {
+                return stripos($food['name'], $search) !== false ||
+                       stripos($food['description'], $search) !== false ||
+                       stripos($food['category_name'], $search) !== false;
+            });
+        }
+
+        if ($category) {
+            $allFoods = array_filter($allFoods, function($food) use ($category) {
+                return $food['category_id'] == $category;
+            });
+        }
+
+        if ($status !== '') {
+            $allFoods = array_filter($allFoods, function($food) use ($status) {
+                return ($status === 'available' && $food['is_available'] == 1) ||
+                       ($status === 'unavailable' && $food['is_available'] == 0);
+            });
+        }
+
+        $totalFoods = count($allFoods);
         $totalPages = ceil($totalFoods / $limit);
 
-        // Calculate statistics for the dashboard cards
-        $availableFoods = count(array_filter($allFoods, function ($food) {
+        // Apply pagination to filtered data
+        $foods = array_slice($allFoods, $offset, $limit);
+
+        // Get all foods and categories for statistics (unfiltered)
+        $allFoodsForStats = $foodModel->getAllForAdmin();
+        $categories = $categoryModel->findAll();        // Calculate statistics for the dashboard cards
+        $availableFoods = count(array_filter($allFoodsForStats, function ($food) {
             return $food['is_available'] == 1;
         }));
 
+        $totalFoodsCount = count($allFoodsForStats);
         $totalCategories = count($categories);
 
-        $popularToday = count(array_filter($allFoods, function ($food) {
+        $popularToday = count(array_filter($allFoodsForStats, function ($food) {
             // This is a simplified calculation - you can make it more sophisticated
             return $food['is_available'] == 1 && ($food['price'] ?? 0) > 10;
         }));
@@ -252,7 +307,7 @@ class AdminController extends BaseController
             'categories' => $categories,
             'currentPage' => $page,
             'totalPages' => $totalPages,
-            'totalFoods' => $totalFoods,
+            'totalFoods' => $totalFoodsCount,
             'availableFoods' => $availableFoods,
             'totalCategories' => $totalCategories,
             'popularToday' => $popularToday
@@ -411,22 +466,33 @@ class AdminController extends BaseController
         }
 
         $this->redirect('/admin/foods');
-    }
-    public function orders()
+    }    public function orders()
     {
         $orderModel = new Order();
 
         $page = (int)($_GET['page'] ?? 1);
-        $status = $_GET['status'] ?? '';
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
-        $orders = $orderModel->getAllOrders($limit, $offset, $status);
-        $totalOrders = $orderModel->count($status);
+        // Get filter parameters
+        $status = $_GET['status'] ?? '';
+        $search = $_GET['search'] ?? '';
+        $dateFrom = $_GET['date_from'] ?? '';
+        $dateTo = $_GET['date_to'] ?? '';
+
+        // Build filters array
+        $filters = [];
+        if ($status) $filters['status'] = $status;
+        if ($search) $filters['search'] = $search;
+        if ($dateFrom) $filters['date_from'] = $dateFrom;
+        if ($dateTo) $filters['date_to'] = $dateTo;
+
+        $orders = $orderModel->getFilteredOrders($filters, $limit, $offset);
+        $totalOrders = $orderModel->countFilteredOrders($filters);
         $totalPages = ceil($totalOrders / $limit);
 
-        // Calculate statistics for the dashboard cards
-        $allOrders = $orderModel->getAllOrders(); // Get all orders for statistics
+        // Calculate statistics for the dashboard cards (unfiltered)
+        $allOrders = $orderModel->getAllOrders();
 
         $completedOrders = count(array_filter($allOrders, function ($order) {
             return $order['status'] === 'completed';
@@ -444,14 +510,14 @@ class AdminController extends BaseController
                 return $order['total_amount'] ?? 0;
             }
             return 0;
-        }, $allOrders));
-        $data = [
+        }, $allOrders));        $data = [
             'title' => 'Order Management',
             'orders' => $orders,
             'currentPage' => $page,
             'totalPages' => $totalPages,
-            'totalOrders' => $totalOrders,
-            'statusFilter' => $status,
+            'totalOrders' => count($allOrders), // Total from unfiltered data
+            'filteredCount' => $totalOrders, // Count from filtered data
+            'filters' => $filters,
             'completedOrders' => $completedOrders,
             'pendingOrders' => $pendingOrders,
             'todayRevenue' => $todayRevenue,
@@ -518,36 +584,42 @@ class AdminController extends BaseController
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to update payment status.']);
         }
-    }
-
-    public function bookings()
+    }    public function bookings()
     {
         $bookingModel = new Booking();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
         $offset = ($page - 1) * $limit;
+
+        // Get filter parameters
         $status = $_GET['status'] ?? null;
         $search = $_GET['search'] ?? null;
+        $date = $_GET['date'] ?? null;
 
-        $bookings = $bookingModel->getAllForAdmin($limit, $offset, $status, $search);
+        $bookings = $bookingModel->getAllForAdmin($limit, $offset, $status, $search, $date);
         $totalBookings = $bookingModel->count($status);
         $totalPages = ceil($totalBookings / $limit);
 
         // Export functionality
         if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-            $allBookings = $bookingModel->getAllForAdmin(null, 0, $status, $search);
+            $allBookings = $bookingModel->getAllForAdmin(null, 0, $status, $search, $date);
             $this->exportBookingsCSV($allBookings);
             return;
         }
-        $data = [
+
+        // Calculate statistics (unfiltered)
+        $confirmedBookings = $bookingModel->count('confirmed');
+        $pendingBookings = $bookingModel->count('pending');
+        $todayBookings = $bookingModel->getTodayCount();        $data = [
             'title' => 'Booking Management',
             'bookings' => $bookings,
             'currentPage' => $page,
             'totalPages' => $totalPages,
-            'totalBookings' => $totalBookings,
-            'currentStatus' => $status,
-            'searchQuery' => $search,
-            'todayBookings' => $bookingModel->getTodayCount(),
+            'totalBookings' => $bookingModel->count(), // Total unfiltered
+            'filteredCount' => $totalBookings, // Filtered count
+            'confirmedBookings' => $confirmedBookings,
+            'pendingBookings' => $pendingBookings,
+            'todayBookings' => $todayBookings,
             'upcomingBookings' => count($bookingModel->getUpcomingBookings()),
             'csrf_token' => $this->generateCSRF()
         ];
@@ -940,50 +1012,70 @@ class AdminController extends BaseController
         $bookingStats = $bookingModel->getBookingStats();
 
         echo json_encode(['success' => true, 'stats' => $bookingStats]);
-    }
-    public function categories()
+    }    public function categories()
     {
         $categoryModel = new Category();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
-        // Get all categories for statistics
+        // Get filter parameters
+        $search = $_GET['search'] ?? '';
+        $status = $_GET['status'] ?? '';
+
+        // Get all categories for filtering
         $allCategories = $categoryModel->getAllWithStats();
+
+        // Apply filters
+        if ($search) {
+            $allCategories = array_filter($allCategories, function($category) use ($search) {
+                return stripos($category['name'], $search) !== false ||
+                       stripos($category['description'], $search) !== false;
+            });
+        }
+
+        if ($status !== '') {
+            $allCategories = array_filter($allCategories, function($category) use ($status) {
+                return ($status === 'active' && $category['is_active'] == 1) ||
+                       ($status === 'inactive' && $category['is_active'] == 0);
+            });
+        }
+
         $totalCategories = count($allCategories);
         $totalPages = ceil($totalCategories / $limit);
 
-        // Apply pagination to the data
+        // Apply pagination to filtered data
         $categories = array_slice($allCategories, $offset, $limit);
 
+        // Get unfiltered data for statistics
+        $allCategoriesForStats = $categoryModel->getAllWithStats();
         $stats = [
             'active_categories' => $categoryModel->count('active'),
-            'total_foods' => $this->getTotalFoodsInCategories($allCategories),
-            'empty_categories' => $this->getEmptyCategories($allCategories)
+            'total_foods' => $this->getTotalFoodsInCategories($allCategoriesForStats),
+            'empty_categories' => $this->getEmptyCategories($allCategoriesForStats)
         ];
 
         $popularCategories = $categoryModel->getPopularCategories(5);
 
         // Calculate statistics for the dashboard cards (based on all categories)
-        $activeCategories = count(array_filter($allCategories, function ($category) {
+        $activeCategories = count(array_filter($allCategoriesForStats, function ($category) {
             return $category['is_active'] == 1;
         }));
 
         $foodItems = $this->foodModel->count();
-        $popularToday = count(array_filter($allCategories, function ($category) {
+        $popularToday = count(array_filter($allCategoriesForStats, function ($category) {
             // This is a simplified calculation - you can make it more sophisticated
             return isset($category['food_count']) && $category['food_count'] > 0;
-        }));        // Ensure CSRF token exists
+        }));// Ensure CSRF token exists
         if (!isset($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }
-
-        $data = [
+        }        $data = [
             'title' => 'Category Management',
             'categories' => $categories,
             'stats' => $stats,
             'popularCategories' => $popularCategories,
-            'totalCategories' => $totalCategories,
+            'totalCategories' => count($allCategoriesForStats), // Total unfiltered
+            'filteredCount' => $totalCategories, // Total filtered
             'activeCategories' => $activeCategories,
             'foodItems' => $foodItems,
             'popularToday' => $popularToday,
@@ -1239,28 +1331,60 @@ class AdminController extends BaseController
         }
 
         $this->redirect('/admin/categories');
-    }
-
-    public function tables()
+    }    public function tables()
     {
         $tableModel = new Table();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
-        $tables = $tableModel->getAllTables($limit, $offset);
-        $totalTables = $tableModel->count();
+        // Get filter parameters
+        $search = $_GET['search'] ?? '';
+        $status = $_GET['status'] ?? '';
+        $location = $_GET['location'] ?? '';
+
+        // Get all tables for filtering
+        $allTables = $tableModel->getAllTables();
+
+        // Apply filters
+        if ($search) {
+            $allTables = array_filter($allTables, function($table) use ($search) {
+                return stripos($table['table_number'], $search) !== false ||
+                       stripos($table['location'], $search) !== false ||
+                       stripos($table['description'], $search) !== false;
+            });
+        }
+
+        if ($status !== '') {
+            $allTables = array_filter($allTables, function($table) use ($status) {
+                return ($status === 'available' && $table['is_available'] == 1) ||
+                       ($status === 'unavailable' && $table['is_available'] == 0);
+            });
+        }
+
+        if ($location) {
+            $allTables = array_filter($allTables, function($table) use ($location) {
+                return $table['location'] === $location;
+            });
+        }
+
+        $totalTables = count($allTables);
         $totalPages = ceil($totalTables / $limit);
+
+        // Apply pagination to filtered data
+        $tables = array_slice($allTables, $offset, $limit);
+
+        // Get unfiltered statistics
         $stats = $tableModel->getTableStats();
-        $locationStats = $tableModel->getTablesByLocation();
-        $data = [
+        $locationStats = $tableModel->getTablesByLocation();        $data = [
             'title' => 'Table Management',
             'tables' => $tables,
             'stats' => $stats,
             'locationStats' => $locationStats,
             'currentPage' => $page,
             'totalPages' => $totalPages,
-            'totalTables' => $totalTables
+            'totalTables' => $stats['total_tables'] ?? 0, // From unfiltered stats
+            'filteredCount' => $totalTables // From filtered data
         ];
 
         $this->loadAdminView('tables/index', $data);

@@ -134,29 +134,44 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </div>                </div>
 
-                <!-- Search and Actions Bar -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="fas fa-search"></i>
-                            </span>
-                            <input type="text" class="form-control" id="searchOrders" placeholder="Search by order ID, customer name, email...">
+                <!-- Filter Bar -->
+                <div class="filter-bar mb-4">
+                    <form action="<?= SITE_URL ?>/admin/orders" method="GET" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Search Orders</label>
+                            <div class="search-box">
+                                <input type="text" class="form-control" name="search" placeholder="Order ID, customer name, email..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleBulkActions()">
-                                <i class="fas fa-tasks"></i> Bulk Actions
-                            </button>
-                            <button type="button" class="btn btn-outline-info btn-sm" onclick="refreshOrders()">
-                                <i class="fas fa-sync-alt"></i> Refresh
-                            </button>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="">All Status</option>
+                                <option value="pending" <?= ($_GET['status'] ?? '') == 'pending' ? 'selected' : '' ?>>Pending</option>
+                                <option value="processing" <?= ($_GET['status'] ?? '') == 'processing' ? 'selected' : '' ?>>Processing</option>
+                                <option value="completed" <?= ($_GET['status'] ?? '') == 'completed' ? 'selected' : '' ?>>Completed</option>
+                                <option value="cancelled" <?= ($_GET['status'] ?? '') == 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                            </select>
                         </div>
-                    </div>
+                        <div class="col-md-2">
+                            <label class="form-label">From Date</label>
+                            <input type="date" class="form-control" name="date_from" value="<?= htmlspecialchars($_GET['date_from'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">To Date</label>
+                            <input type="date" class="form-control" name="date_to" value="<?= htmlspecialchars($_GET['date_to'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter me-1"></i>Filter
+                            </button>
+                            <a href="<?= SITE_URL ?>/admin/orders" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </a>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- Orders Table -->

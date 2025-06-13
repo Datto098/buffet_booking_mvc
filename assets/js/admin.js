@@ -23,9 +23,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	// Initialize DataTables
 	initializeDataTablesAdvanced();
-
-	// Initialize notifications if in admin area
-	if (window.location.pathname.includes('/admin')) {
+	// Initialize notifications if in admin or superadmin area
+	if (
+		window.location.pathname.includes('/admin') ||
+		window.location.pathname.includes('/superadmin')
+	) {
 		initializeNotifications();
 	}
 
@@ -38,6 +40,10 @@ function initializeAdmin() {
 
 	// Initialize tooltips
 	initializeTooltips();
+
+	// Initialize filters
+	initializeFilters();
+
 	// Initialize status updates
 	initializeStatusUpdates();
 
@@ -3360,4 +3366,92 @@ function formatDate(dateString) {
 	} catch (error) {
 		return 'Invalid Date';
 	}
+}
+
+// Filter management functions
+function initializeFilters() {
+	// Detect if filters are active
+	const filterForm = document.querySelector('.filter-bar form');
+	if (filterForm) {
+		const filterBar = document.querySelector('.filter-bar');
+		const hasActiveFilters = checkActiveFilters(filterForm);
+
+		if (hasActiveFilters) {
+			filterBar.classList.add('has-filters');
+		}
+
+		// Add filter toggle functionality
+		addFilterToggleHandler();
+	}
+}
+
+function checkActiveFilters(form) {
+	const inputs = form.querySelectorAll(
+		'input[type="text"], input[type="date"], select'
+	);
+	return Array.from(inputs).some((input) => {
+		if (input.type === 'text' || input.type === 'date') {
+			return input.value.trim() !== '';
+		} else if (input.tagName === 'SELECT') {
+			return input.value !== '';
+		}
+		return false;
+	});
+}
+
+function addFilterToggleHandler() {
+	// Auto-submit form when filters change (optional)
+	const filterInputs = document.querySelectorAll('.filter-bar select');
+	filterInputs.forEach((input) => {
+		input.addEventListener('change', function () {
+			// Optional: Auto-submit on select change
+			// this.form.submit();
+		});
+	});
+
+	// Handle clear button
+	const clearButton = document.querySelector(
+		'.filter-bar .btn-outline-secondary'
+	);
+	if (clearButton && clearButton.textContent.includes('Clear')) {
+		clearButton.addEventListener('click', function (e) {
+			e.preventDefault();
+			clearAllFilters();
+		});
+	}
+}
+
+function clearAllFilters() {
+	const filterForm = document.querySelector('.filter-bar form');
+	if (filterForm) {
+		// Clear all inputs
+		const inputs = filterForm.querySelectorAll(
+			'input[type="text"], input[type="date"]'
+		);
+		inputs.forEach((input) => (input.value = ''));
+
+		// Reset all selects to first option
+		const selects = filterForm.querySelectorAll('select');
+		selects.forEach((select) => (select.selectedIndex = 0));
+
+		// Submit the form to apply cleared filters
+		filterForm.submit();
+	}
+}
+
+// Add filter functionality to search inputs
+function addSearchFilters() {
+	const searchInputs = document.querySelectorAll(
+		'.filter-bar input[type="text"]'
+	);
+	searchInputs.forEach((input) => {
+		let timeout;
+		input.addEventListener('input', function () {
+			clearTimeout(timeout);
+			timeout = setTimeout(() => {
+				// Optional: Auto-submit after typing stops
+				// this.form.submit();
+			}, 1000);
+		});
+	});
 }

@@ -133,54 +133,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Search and Actions Bar -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="fas fa-search"></i>
-                            </span>
-                            <input type="text" class="form-control" id="searchUsers" placeholder="Search by name, email, or role...">
-                        </div>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleBulkActions()">
-                                <i class="fas fa-tasks"></i> Bulk Actions
-                            </button>
-                            <button type="button" class="btn btn-outline-info btn-sm" onclick="refreshUsers()">
-                                <i class="fas fa-sync-alt"></i> Refresh
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bulk Actions Bar (Hidden by default) -->
-                <div id="bulkActionsBar" class="row mb-3" style="display: none;">
-                    <div class="col-12">
-                        <div class="alert alert-light border">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <strong><span id="selectedCount">0</span> user(s) selected</strong>
-                                </div>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-success btn-sm" onclick="bulkUpdateStatus('active')">
-                                        <i class="fas fa-check"></i> Activate Selected
-                                    </button>
-                                    <button type="button" class="btn btn-warning btn-sm" onclick="bulkUpdateStatus('inactive')">
-                                        <i class="fas fa-ban"></i> Deactivate Selected
-                                    </button>
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearSelection()">
-                                        <i class="fas fa-times"></i> Clear Selection
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    </div>                </div>
 
                 <!-- Filter Bar -->
                 <div class="filter-bar">
