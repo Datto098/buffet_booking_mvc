@@ -169,6 +169,7 @@ class OrderController extends BaseController {
         $orderId = $this->orderModel->createOrder($orderData, $orderItems);
 
         if ($orderId) {
+            unset($_SESSION['cart']);
             // If VNPay payment method, redirect to payment
             if ($paymentMethod === 'vnpay') {
                 // Store order data in session for payment processing

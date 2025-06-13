@@ -329,11 +329,11 @@
                             <!-- Avatar trái -->
                             <div class="me-3 flex-shrink-0">
                                 <?php if (!empty($comment['avatar'])): ?>
-                                    <img src="<?= SITE_URL ?>/uploads/food_images/<?= htmlspecialchars($comment['avatar']) ?>"
+                                    <img src="<?= SITE_URL ?>/assets/images/<?= htmlspecialchars($comment['avatar']) ?>"
                                         alt="Profile Picture"
                                         class="rounded-circle border"
                                         width="56" height="56"
-                                        style="object-fit:cover; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                                        style="object-fit:contain;padding: 2px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                                 <?php else: ?>
                                     <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center"
                                         style="width:56px;height:56px;background:#f3f3f3;border:1px solid #eee;">

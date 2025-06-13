@@ -7,31 +7,21 @@ require_once 'BaseModel.php';
 
 class Booking extends BaseModel {
     protected $table = 'reservations';    public function createBooking($bookingData) {
-        $sql = "INSERT INTO {$this->table} (user_id, customer_name, phone_number, table_id, reservation_time, number_of_guests, status, notes)
-                VALUES (:user_id, :customer_name, :phone_number, :table_id, :reservation_time, :number_of_guests, :status, :notes)";
-
-        // Handle field name differences between controller and model
-        $phone = $bookingData['phone_number'] ?? $bookingData['customer_phone'] ?? null;
-        $resTime = $bookingData['reservation_time'] ?? $bookingData['booking_datetime'] ?? null;
-        $guests = $bookingData['number_of_guests'] ?? $bookingData['party_size'] ?? null;
-        $notes = $bookingData['notes'] ?? $bookingData['special_requests'] ?? null;        $stmt = $this->db->prepare($sql);
-        $result = $stmt->execute([
-            ':user_id' => $bookingData['user_id'] ?? null,
-            ':customer_name' => $bookingData['customer_name'],
-            ':phone_number' => $phone,
-            ':table_id' => $bookingData['table_id'] ?? null,
-            ':reservation_time' => $resTime,
-            ':number_of_guests' => $guests,
-            ':status' => $bookingData['status'] ?? 'pending',
-            ':notes' => $notes
-        ]);
-
-        if ($result) {
-            return $this->db->lastInsertId();
-        }
-
-        return false;
-    }
+        $sql = "INSERT INTO reservations 
+        (customer_name, customer_email, customer_phone, booking_date, booking_time, guest_count, special_requests, status, created_at, updated_at)
+        VALUES
+        (:customer_name, :customer_email, :customer_phone, :booking_date, :booking_time, :guest_count, :special_requests, :status, NOW(), NOW())";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(':customer_name', $bookingData['customer_name']);
+    $stmt->bindValue(':customer_email', $bookingData['customer_email']);
+    $stmt->bindValue(':customer_phone', $bookingData['customer_phone']);
+    $stmt->bindValue(':booking_date', $bookingData['booking_date']);
+    $stmt->bindValue(':booking_time', $bookingData['booking_time']);
+    $stmt->bindValue(':guest_count', $bookingData['party_size']); // <-- lấy từ form
+    $stmt->bindValue(':special_requests', $bookingData['special_requests'] ?? '');
+    $stmt->bindValue(':status', 'pending');
+    return $stmt->execute();
+}
 
     public function getBookingsByUser($userId, $limit = null) {
         $sql = "SELECT r.*, t.table_number, t.capacity
@@ -136,7 +126,6 @@ class Booking extends BaseModel {
         $stmt->execute();
         return $stmt->fetchAll();
     }    public function getAvailableTables($reservationTime, $numberOfGuests) {
-        // First check if tables table exists or has any data
         try {
             $checkSql = "SELECT COUNT(*) as count FROM tables";
             $checkStmt = $this->db->prepare($checkSql);
@@ -144,11 +133,9 @@ class Booking extends BaseModel {
             $result = $checkStmt->fetch();
 
             if ($result['count'] <= 0) {
-                // No tables in database, return empty array
                 return [];
             }
         } catch (PDOException $e) {
-            // Table likely doesn't exist or other DB error
             error_log("Error checking tables: " . $e->getMessage());
             return [];
         }
@@ -156,15 +143,13 @@ class Booking extends BaseModel {
         $sql = "SELECT t.*
                 FROM tables t
                 WHERE t.capacity >= :number_of_guests
+                AND t.is_available = 1
                 AND t.id NOT IN (
                     SELECT DISTINCT r.table_id
-                    FROM {$this->table} r
+                    FROM reservations r
                     WHERE r.table_id IS NOT NULL
                     AND r.status IN ('confirmed', 'pending')
-                    AND DATE(r.reservation_time) = DATE(:reservation_time)
-                    AND TIME(r.reservation_time) BETWEEN
-                        TIME(DATE_SUB(:reservation_time, INTERVAL 2 HOUR))
-                        AND TIME(DATE_ADD(:reservation_time, INTERVAL 2 HOUR))
+                    AND ABS(TIMESTAMPDIFF(MINUTE, r.reservation_time, :reservation_time)) < 120
                 )
                 ORDER BY t.capacity, t.table_number";
 
@@ -315,6 +300,7 @@ class Booking extends BaseModel {
      */
     public function checkAvailability($date, $time, $partySize) {
         $bookingDateTime = $date . ' ' . $time;
+       
 
         // Check if there are available tables for the party size
         try {
@@ -608,6 +594,24 @@ class Booking extends BaseModel {
 
         // Transform each booking for admin interface
         return array_map([$this, 'transformBookingData'], $bookings);
+    }
+
+    public function transformBookingForView($booking) {
+        if (!$booking) return $booking;
+
+        // Mapping cho view
+        $booking['customer_email'] = $booking['customer_email'] ?? ($booking['email'] ?? '');
+        $booking['customer_phone'] = $booking['customer_phone'] ?? ($booking['phone_number'] ?? '');
+        $booking['guest_count'] = $booking['guest_count'] ?? ($booking['number_of_guests'] ?? '');
+        // Tách ngày và giờ từ reservation_time nếu có
+        if (isset($booking['reservation_time'])) {
+            $booking['booking_date'] = date('Y-m-d', strtotime($booking['reservation_time']));
+            $booking['booking_time'] = date('H:i:s', strtotime($booking['reservation_time']));
+        } else {
+            $booking['booking_date'] = $booking['booking_date'] ?? '';
+            $booking['booking_time'] = $booking['booking_time'] ?? '';
+        }
+        return $booking;
     }
 }
 ?>

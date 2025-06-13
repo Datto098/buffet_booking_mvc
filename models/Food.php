@@ -220,38 +220,29 @@ class Food extends BaseModel {
      */
     public function getFoodWithFilters($whereClause, $params, $orderBy = 'name ASC', $limit = null, $offset = 0) {
         $sql = "SELECT f.*, c.name as category_name, sc.name as subcategory_name
-                FROM {$this->table} f
+                FROM food_items f
                 LEFT JOIN categories c ON f.category_id = c.id
-                LEFT JOIN sub_categories sc ON f.subcategory_id = sc.id";
+                LEFT JOIN sub_categories sc ON f.subcategory_id = sc.id"; 
 
         if (!empty($whereClause)) {
-            $sql .= " WHERE " . $whereClause;
+            $sql .= " WHERE $whereClause";
         }
-
-        $sql .= " ORDER BY " . $orderBy;
-
-        if ($limit) {
+        $sql .= " ORDER BY $orderBy";
+        if ($limit !== null) {
             $sql .= " LIMIT :limit OFFSET :offset";
         }
-
         $stmt = $this->db->prepare($sql);
-
-        // Bind named parameters
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
         }
-
-        // Bind limit and offset if provided
-        if ($limit) {
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        if ($limit !== null) {
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
         }
-
         $stmt->execute();
         return $stmt->fetchAll();
-    }    /**
-     * Count foods with complex filters
-     */
+    }
+
     public function countFoodWithFilters($whereClause, $params) {
         $sql = "SELECT COUNT(*) as count FROM {$this->table} f
                 LEFT JOIN categories c ON f.category_id = c.id
@@ -263,7 +254,6 @@ class Food extends BaseModel {
 
         $stmt = $this->db->prepare($sql);
 
-        // Bind named parameters
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
         }

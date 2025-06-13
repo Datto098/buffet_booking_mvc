@@ -71,7 +71,7 @@ class FoodController extends BaseController {
             }
         }
 
-        $whereClause = implode(' AND ', $conditions);        // Get sorting
+        $whereClause = implode(' AND ', $conditions);        
         switch ($sortBy) {
             case 'price_asc':
                 $orderBy = 'f.price ASC';
@@ -79,12 +79,10 @@ class FoodController extends BaseController {
             case 'price_desc':
                 $orderBy = 'f.price DESC';
                 break;
-            case 'name':
             default:
                 $orderBy = 'f.name ASC';
-                break;
         }
-
+       
         // Get foods with pagination
         $foods = $this->foodModel->getFoodWithFilters($whereClause, $params, $orderBy, $limit, $offset);
 
@@ -116,6 +114,8 @@ class FoodController extends BaseController {
                 'price_range' => $priceRange
             ]
         ];
+        // print_r($data);
+        // echo "</pre>";
 
         $this->loadView('customer/menu/index', $data);
     }    public function detail() {
@@ -300,4 +300,4 @@ class FoodController extends BaseController {
         }
     }
 }
-?>
+
