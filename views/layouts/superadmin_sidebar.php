@@ -50,15 +50,26 @@
                         </li>
                     </ul>
                 </div>
-            </li>
-
-            <li class="nav-item">
+            </li>            <li class="nav-item">
                 <a class="nav-link" href="<?= SITE_URL ?>/superadmin/tables">
                     <i class="fas fa-chair"></i>
                     Table Management
                 </a>
+            </li>            <li class="nav-item">
+                <a class="nav-link" href="<?= SITE_URL ?>/superadmin/reviews">
+                    <i class="fas fa-star"></i>
+                    Reviews Management
+                </a>
             </li>
-        </ul>        <div class="sidebar-heading">
+
+            <li class="nav-item">
+                <a class="nav-link" href="<?= SITE_URL ?>/superadmin/notifications">
+                    <i class="fas fa-bell"></i>
+                    Notifications
+                    <span class="badge bg-danger notification-badge" style="display: none; margin-left: 10px;"></span>
+                </a>
+            </li>
+        </ul><div class="sidebar-heading">
             Configuration
         </div>
 

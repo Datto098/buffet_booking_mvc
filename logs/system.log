@@ -1,0 +1,15 @@
+2024-12-15 08:30:15 [INFO] Server started on port 80
+2024-12-15 08:30:16 [INFO] Loading configuration from /etc/apache2/apache2.conf
+2024-12-15 08:35:22 [WARNING] Virtual host configuration deprecated syntax detected
+2024-12-15 08:40:10 [ERROR] Failed to load module mod_rewrite
+2024-12-15 08:40:11 [CRITICAL] Cannot start server without mod_rewrite
+2024-12-15 08:45:33 [INFO] mod_rewrite successfully loaded
+2024-12-15 08:50:18 [DEBUG] Processing request: GET /admin/dashboard
+2024-12-15 08:55:45 [WARNING] 404 Not Found: /favicon.ico
+2024-12-15 09:00:12 [INFO] SSL certificate loaded successfully
+2024-12-15 09:05:28 [ERROR] Connection refused from 192.168.1.100
+2024-12-15 09:10:33 [INFO] Client disconnected: 192.168.1.55
+2024-12-15 09:15:19 [WARNING] High CPU usage detected: 92%
+2024-12-15 09:20:44 [DEBUG] Memory usage: 456MB/1024MB
+2024-12-15 09:25:17 [INFO] Log rotation completed
+2024-12-15 09:30:22 [ERROR] Disk I/O error on /var/log/apache2/access.log

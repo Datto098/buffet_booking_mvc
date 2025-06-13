@@ -7,7 +7,7 @@
     --secondary-color: #ffc107;
     --dark-color: #343a40;
     --light-color: #f8f9fa;
-    --danger-color: #dc3545;
+    --danger-color: #ef4444;
     --warning-color: #ffc107;
     --info-color: #17a2b8;
     --success-color: #28a745;
@@ -190,7 +190,7 @@ footer {
 }
 
 .alert-danger {
-    background: rgba(220, 53, 69, 0.1);
+    background: rgba(239, 68, 68, 0.1);
     color: var(--danger-color);
 }
 

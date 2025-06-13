@@ -15,7 +15,7 @@ $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
                     <div class="profile-avatar mb-3">
                         <?php if (!empty($data['user']['avatar'])): ?>
                         <img src="<?= SITE_URL ?>/assets/images/<?= $data['user']['avatar'] ?>"
-                             alt="Profile Picture" class="rounded-circle" width="100" height="100">
+                             alt="Profile Picture" class="rounded-circle" width="100" height="100"  style="object-fit:contain;padding: 2px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
                         <?php else: ?>
                         <div class="avatar-placeholder rounded-circle mx-auto d-flex align-items-center justify-content-center">
                             <i class="fas fa-user fa-2x text-muted"></i>

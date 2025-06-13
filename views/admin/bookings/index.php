@@ -504,10 +504,9 @@
     </div>    <script>
         window.SITE_URL = '<?= SITE_URL ?>';
 
-        // Initialize booking management functionality when page loads
+        // Booking management is already initialized by admin.js for /admin/bookings pages
+        // Only initialize tooltips here to avoid duplicate event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            initializeBookingManagement();
-
             // Initialize tooltips
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {

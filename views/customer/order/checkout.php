@@ -96,7 +96,7 @@
                                     <!-- Map -->
                                     <div id="map" style="height: 300px; border-radius: 8px;"></div>
                                 </div>
-                                
+
                             </div>
                         </div>
 
@@ -136,8 +136,7 @@
                                         </div>
                                     </label>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
+                            </div>                            <div class="col-md-4">
                                 <div class="form-check payment-option">
                                     <input class="form-check-input"
                                         type="radio"
@@ -150,6 +149,23 @@
                                             <i class="fas fa-university fa-2x text-primary mb-2"></i>
                                             <h6>Chuyển khoản ngân hàng</h6>
                                             <small class="text-muted">Chuyển khoản qua ngân hàng</small>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check payment-option">
+                                    <input class="form-check-input"
+                                        type="radio"
+                                        name="payment_method"
+                                        id="vnpay"
+                                        value="vnpay"
+                                        <?= ($_SESSION['form_data']['payment_method'] ?? '') == 'vnpay' ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="vnpay">
+                                        <div class="payment-card">
+                                            <i class="fas fa-credit-card fa-2x text-success mb-2"></i>
+                                            <h6>Thanh toán VNPay</h6>
+                                            <small class="text-muted">Thanh toán online qua VNPay</small>
                                         </div>
                                     </label>
                                 </div>
@@ -171,9 +187,7 @@
                                     </label>
                                 </div>
                             </div> -->
-                        </div>
-
-                        <!-- Bank Transfer Details -->
+                        </div>                        <!-- Bank Transfer Details -->
                         <div id="bankTransferDetails" class="mt-3" style="display: none;">
                             <div class="alert alert-info">
                                 <h6><i class="fas fa-info-circle"></i> Thông tin chuyển khoản</h6>
@@ -181,6 +195,45 @@
                                 <p class="mb-2"><strong>Số tài khoản:</strong> 123-456-789</p>
                                 <p class="mb-2"><strong>Chủ tài khoản:</strong> Nhà hàng Buffet</p>
                                 <p class="mb-0"><strong>Nội dung:</strong> Thanh toan don hang [Mã đơn hàng]</p>
+                            </div>
+                        </div>
+
+                        <!-- VNPay Details -->
+                        <div id="vnpayDetails" class="mt-3" style="display: none;">
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-shield-alt"></i> Thanh toán VNPay</h6>
+                                <p class="mb-2">✓ Thanh toán an toàn và bảo mật</p>
+                                <p class="mb-2">✓ Hỗ trợ thẻ ATM, Internet Banking, QR Code</p>
+                                <p class="mb-0">✓ Xử lý giao dịch nhanh chóng</p>
+
+                                <div class="mt-3">
+                                    <label for="bank_code" class="form-label">Chọn ngân hàng (tùy chọn):</label>
+                                    <select class="form-select" id="bank_code" name="bank_code">
+                                        <option value="">Chọn cổng thanh toán</option>
+                                        <option value="NCB">Ngân hàng NCB</option>
+                                        <option value="AGRIBANK">Ngân hàng Agribank</option>
+                                        <option value="SCB">Ngân hàng SCB</option>
+                                        <option value="SACOMBANK">Ngân hàng SacomBank</option>
+                                        <option value="EXIMBANK">Ngân hàng EximBank</option>
+                                        <option value="MSBANK">Ngân hàng MSBANK</option>
+                                        <option value="NAMABANK">Ngân hàng NamABank</option>
+                                        <option value="VNMART">Ví VnMart</option>
+                                        <option value="VIETINBANK">Ngân hàng Vietinbank</option>
+                                        <option value="VIETCOMBANK">Ngân hàng VCB</option>
+                                        <option value="HDBANK">Ngân hàng HDBank</option>
+                                        <option value="DONGABANK">Ngân hàng Dong A</option>
+                                        <option value="TPBANK">Ngân hàng TPBank</option>
+                                        <option value="OJB">Ngân hàng OceanBank</option>
+                                        <option value="BIDV">Ngân hàng BIDV</option>
+                                        <option value="TECHCOMBANK">Ngân hàng Techcombank</option>
+                                        <option value="VPBANK">Ngân hàng VPBank</option>
+                                        <option value="MBBANK">Ngân hàng MBBank</option>
+                                        <option value="ACB">Ngân hàng ACB</option>
+                                        <option value="OCB">Ngân hàng OCB</option>
+                                        <option value="IVB">Ngân hàng IVB</option>
+                                        <option value="VISA">Thanh toán qua VISA/MASTER</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
@@ -242,7 +295,9 @@
                     <!-- Cart Items -->
                     <div class="order-items mb-3">
                         <?php foreach ($cartItems as $item): ?> <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
-                                <img src="<?= !empty($item['food']['image']) ? htmlspecialchars($item['food']['image']) : '/assets/images/no-image.jpg' ?>"
+                                <img src="<?= !empty($item['food']['image'])
+                                                ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($item['food']['image'])
+                                                : SITE_URL . '/assets/images/no-image.svg' ?>"
                                     class="rounded me-2"
                                     style="width: 40px; height: 40px; object-fit: cover;"
                                     alt="<?= htmlspecialchars($item['food']['name']) ?>">
@@ -296,7 +351,7 @@
                 </div>
             </div>
 
-          
+
         </div>
     </div>
 </div>
@@ -305,88 +360,84 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var lat = <?= isset($userInfo['lat']) && $userInfo['lat'] ? $userInfo['lat'] : 10.762622 ?>;
-    var lng = <?= isset($userInfo['lng']) && $userInfo['lng'] ? $userInfo['lng'] : 106.660172 ?>;
-    var map = L.map('map').setView([lat, lng], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    document.addEventListener('DOMContentLoaded', function() {
+        var lat = <?= isset($userInfo['lat']) && $userInfo['lat'] ? $userInfo['lat'] : 10.762622 ?>;
+        var lng = <?= isset($userInfo['lng']) && $userInfo['lng'] ? $userInfo['lng'] : 106.660172 ?>;
+        var map = L.map('map').setView([lat, lng], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-    var marker = null;
+        var marker = null;
 
-    function setMarker(lat, lng) {
-        if (marker) {
-            marker.setLatLng([lat, lng]);
-        } else {
-            marker = L.marker([lat, lng], {draggable:true}).addTo(map);
-            marker.on('dragend', function(e) {
-                var position = marker.getLatLng();
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data && data.display_name) {
-                            document.getElementById('delivery_address').value = data.display_name;
-                        }
-                    });
-            });
-        }
-        
-    }
-
-    // Tìm địa chỉ khi nhấn nút hoặc Enter
-    function searchAddress() {
-        var address = document.getElementById('delivery_address').value;
-        if (!address) return;
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.length > 0) {
-                    var lat = parseFloat(data[0].lat);
-                    var lon = parseFloat(data[0].lon);
-                    map.setView([lat, lon], 16);
-                    setMarker(lat, lon);
-                    // Lấy lại địa chỉ chuẩn
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+        function setMarker(lat, lng) {
+            if (marker) {
+                marker.setLatLng([lat, lng]);
+            } else {
+                marker = L.marker([lat, lng], {
+                    draggable: true
+                }).addTo(map);
+                marker.on('dragend', function(e) {
+                    var position = marker.getLatLng();
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}`)
                         .then(response => response.json())
-                        .then(data2 => {
-                            if (data2 && data2.display_name) {
-                                document.getElementById('delivery_address').value = data2.display_name;
+                        .then(data => {
+                            if (data && data.display_name) {
+                                document.getElementById('delivery_address').value = data.display_name;
                             }
                         });
-                } else {
-                    alert('Không tìm thấy địa chỉ!');
-                }
-            });
-    }
+                });
+            }
 
-    document.getElementById('btn_find_on_map').addEventListener('click', searchAddress);
-    document.getElementById('delivery_address').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            searchAddress();
         }
-    });
 
-    // Cho phép click lên bản đồ để tạo hoặc di chuyển marker
-    map.on('click', function(e) {
-        var lat = e.latlng.lat;
-        var lng = e.latlng.lng;
-        setMarker(lat, lng);
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.display_name) {
-                    document.getElementById('delivery_address').value = data.display_name;
-                }
-            });
-    });
-});
-</script>
+        // Tìm địa chỉ khi nhấn nút hoặc Enter
+        function searchAddress() {
+            var address = document.getElementById('delivery_address').value;
+            if (!address) return;
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        var lat = parseFloat(data[0].lat);
+                        var lon = parseFloat(data[0].lon);
+                        map.setView([lat, lon], 16);
+                        setMarker(lat, lon);
+                        // Lấy lại địa chỉ chuẩn
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                            .then(response => response.json())
+                            .then(data2 => {
+                                if (data2 && data2.display_name) {
+                                    document.getElementById('delivery_address').value = data2.display_name;
+                                }
+                            });
+                    } else {
+                        alert('Không tìm thấy địa chỉ!');
+                    }
+                });
+        }
 
-<script>
+        document.getElementById('btn_find_on_map').addEventListener('click', searchAddress);
+        document.getElementById('delivery_address').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchAddress();
+            }
+        });        // Cho phép click lên bản đồ để tạo hoặc di chuyển marker
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+            setMarker(lat, lng);
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.display_name) {
+                        document.getElementById('delivery_address').value = data.display_name;
+                    }
+                });
+        });
 
-    document.addEventListener('DOMContentLoaded', function() {
+        // === PAYMENT METHOD HANDLING ===
         const checkoutForm = document.getElementById('checkoutForm');
         const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
         const bankTransferDetails = document.getElementById('bankTransferDetails');
@@ -395,15 +446,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // Payment method change handler
         paymentMethods.forEach(method => {
             method.addEventListener('change', function() {
-                // Hide all payment details
+                console.log('Payment method changed to:', this.value); // Debug log
+
+                // Hide all payment details first
                 bankTransferDetails.style.display = 'none';
                 creditCardDetails.style.display = 'none';
+                const vnpayDetails = document.getElementById('vnpayDetails');
+                if (vnpayDetails) vnpayDetails.style.display = 'none';
 
-                // Show relevant details
+                // Show relevant details based on selection
                 if (this.value === 'bank_transfer') {
                     bankTransferDetails.style.display = 'block';
+                    console.log('Showing bank transfer details');
                 } else if (this.value === 'credit_card') {
                     creditCardDetails.style.display = 'block';
+                    console.log('Showing credit card details');
+                } else if (this.value === 'vnpay') {
+                    if (vnpayDetails) {
+                        vnpayDetails.style.display = 'block';
+                        console.log('Showing VNPay details');
+                    } else {
+                        console.error('VNPay details element not found');
+                    }
                 }
             });
         });
@@ -429,40 +493,31 @@ document.addEventListener('DOMContentLoaded', function() {
             e.target.value = value;
         });
 
-        // Initialize payment method display
+        // Initialize payment method display on page load
         const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
         if (selectedPayment) {
-            selectedPayment.dispatchEvent(new Event('change'));
+            // Trigger change event to show appropriate payment details
+            console.log('Initial payment method:', selectedPayment.value);
+            const event = new Event('change');
+            selectedPayment.dispatchEvent(event);
         }
 
-        document.getElementById('btn_find_on_map').addEventListener('click', function() {
-            var address = document.getElementById('search_address').value;
-            if (!address) return;
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        var lat = parseFloat(data[0].lat);
-                        var lon = parseFloat(data[0].lon);
-                        map.setView([lat, lon], 16);
-                        marker.setLatLng([lat, lon]);
-                        document.getElementById('lat').value = lat;
-                        document.getElementById('lng').value = lon;
-                        // Lấy lại địa chỉ chuẩn
-                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-                            .then(response => response.json())
-                            .then(data2 => {
-                                if (data2 && data2.display_name) {
-                                    document.getElementById('delivery_address').value = data2.display_name;
-                                }
-                            });
-                    } else {
-                        alert('Không tìm thấy địa chỉ!');
+        // Add click handlers to payment method labels to ensure proper selection
+        document.querySelectorAll('.payment-option label').forEach(label => {
+            label.addEventListener('click', function(e) {
+                // Small delay to ensure radio button is checked first
+                setTimeout(() => {
+                    const radio = this.querySelector('input[type="radio"]') ||
+                                 document.querySelector(`input[name="payment_method"][value="${this.getAttribute('for')}"]`);
+                    if (radio && radio.checked) {
+                        console.log('Label clicked, triggering change for:', radio.value);
+                        radio.dispatchEvent(new Event('change'));
                     }
-                });
-        });
-    });
+                }, 10);
+            });
+        });    });
 
+    // Validation functions
     function validateCheckoutForm() {
         const requiredFields = document.querySelectorAll('#checkoutForm [required]');
         let isValid = true;

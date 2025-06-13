@@ -104,6 +104,69 @@
 <!-- Promotional Foods Section - Main Focus -->
 <section class="section-luxury">
     <div class="container">
+        <!-- Active Promotions Summary -->
+        <?php if (!empty($activePromotions)): ?>
+            <div class="row mb-5">
+                <div class="col-12">
+                    <div class="promotions-summary">
+                        <h3 class="text-center mb-4">
+                            <i class="fas fa-fire text-warning"></i> Chương Trình Khuyến Mãi Đang Diễn Ra
+                        </h3>
+                        <div class="row g-3">
+                            <?php foreach ($activePromotions as $promotion): ?>
+                                <div class="col-md-4">
+                                    <div class="promotion-summary-card">
+                                        <div class="promotion-summary-header">
+                                            <h5><?= htmlspecialchars($promotion['name']) ?></h5>
+                                            <span class="promotion-summary-code"><?= htmlspecialchars($promotion['code']) ?></span>
+                                        </div>
+                                        <div class="promotion-summary-body">
+                                            <div class="promotion-discount">
+                                                <?php if ($promotion['type'] === 'percentage'): ?>
+                                                    <span class="discount-value"><?= $promotion['discount_value'] ?>%</span>
+                                                    <span class="discount-text">GIẢM</span>
+                                                <?php elseif ($promotion['type'] === 'fixed'): ?>
+                                                    <span class="discount-value"><?= number_format($promotion['discount_value'], 0, ',', '.') ?>đ</span>
+                                                    <span class="discount-text">GIẢM</span>
+                                                <?php else: ?>
+                                                    <span class="discount-value">1+1</span>
+                                                    <span class="discount-text">BOGO</span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="promotion-details">
+                                                <?php if (!empty($promotion['description'])): ?>
+                                                    <p class="promotion-desc"><?= htmlspecialchars($promotion['description']) ?></p>
+                                                <?php endif; ?>
+                                                <div class="promotion-validity">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    Đến <?= date('d/m/Y', strtotime($promotion['end_date'])) ?>
+                                                </div>
+                                                <div class="promotion-applies">
+                                                    <i class="fas fa-tag"></i>
+                                                    <?php
+                                                    switch($promotion['application_type']) {
+                                                        case 'specific_items':
+                                                            echo 'Áp dụng cho ' . count($promotion['food_items']) . ' món đã chọn';
+                                                            break;
+                                                        case 'categories':
+                                                            echo 'Áp dụng theo danh mục';
+                                                            break;
+                                                        default:
+                                                            echo 'Áp dụng toàn menu';
+                                                    }
+                                                    ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <div class="text-center mb-5 fade-in-up">
             <h2 class="section-title">
                 <span class="text-gold">Món Ăn</span> <span class="text-navy">Khuyến Mãi</span>
@@ -112,15 +175,24 @@
             <p class="section-subtitle">
                 Những món ăn tinh tế với mức giá ưu đãi đặc biệt. Thưởng thức đẳng cấp mà không cần lo chi phí.
             </p>
-        </div> <?php if (!empty($promotionalFoods)): ?>
+        </div><?php if (!empty($promotionalFoods)): ?>
             <div class="food-grid">
                 <?php foreach ($promotionalFoods as $index => $food): ?>
                     <?php
-                        // Tạo giá khuyến mãi giả lập (giảm 15-40%)
-                        $discountPercent = [15, 20, 25, 30, 35, 40][array_rand([15, 20, 25, 30, 35, 40])];
-                        $originalPrice = (int)$food['price'];
-                        $discountedPrice = $originalPrice * (100 - $discountPercent) / 100;
-                        $isHotDeal = $discountPercent >= 30;
+                        $discountPercent = (int)$food['discount_percent'];
+                        $originalPrice = (float)$food['original_price'];
+                        $discountedPrice = (float)$food['discounted_price'];
+                        $isHotDeal = $food['is_hot_deal'] ?? ($discountPercent >= 30);
+
+                        // Calculate end date for promotion display
+                        $endDate = $food['promotion_end_date'] ?? null;
+                        $daysLeft = null;
+                        if ($endDate) {
+                            $endDateTime = new DateTime($endDate);
+                            $now = new DateTime();
+                            $interval = $now->diff($endDateTime);
+                            $daysLeft = $interval->days;
+                        }
                     ?>
                     <div class="food-item promotion-food-item fade-in-up" style="animation-delay: <?php echo $index * 0.1; ?>s" data-delay="<?php echo $index * 0.1; ?>s">
                         <div class="food-image">
@@ -145,6 +217,13 @@
                                     <i class="fas fa-fire"></i> HOT
                                 </div>
                             <?php endif; ?>
+
+                            <!-- Promotion Type Badge -->
+                            <?php if (isset($food['promotion_type']) && $food['promotion_type'] === 'buy_one_get_one'): ?>
+                                <div class="food-badge bogo-badge" style="top: 60px; right: -10px; background: linear-gradient(135deg, #e67e22, #d35400);">
+                                    <i class="fas fa-plus"></i> BOGO
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <div class="food-content">
@@ -153,6 +232,16 @@
                             </div>
 
                             <h3 class="food-title"><?= htmlspecialchars($food['name']) ?></h3>
+
+                            <!-- Promotion Name -->
+                            <?php if (isset($food['promotion_name'])): ?>
+                                <div class="promotion-tag mb-2">
+                                    <i class="fas fa-tag"></i> <?= htmlspecialchars($food['promotion_name']) ?>
+                                    <?php if (isset($food['promotion_code'])): ?>
+                                        <span class="promotion-code"><?= htmlspecialchars($food['promotion_code']) ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
 
                             <p class="food-description">
                                 <?= !empty($food['description'])
@@ -167,19 +256,22 @@
                                 </span>
                                 <span class="price-current">
                                     <?= number_format($discountedPrice, 0, ',', '.') ?>đ
-                                </span>                                <div class="savings-text">
+                                </span>
+                                <div class="savings-text">
                                     <i class="fas fa-piggy-bank"></i>
                                     Tiết kiệm: <?= number_format($originalPrice - $discountedPrice, 0, ',', '.') ?>đ
                                 </div>
-                            </div>
-
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-luxury add-to-cart flex-grow-1"
+                            </div>                            <div class="d-flex gap-2">
+                                <button class="btn btn-luxury add-to-cart-btn flex-grow-1"
                                     data-food-id="<?= $food['id'] ?>"
                                     data-food-name="<?= htmlspecialchars($food['name']) ?>"
                                     data-food-price="<?= $discountedPrice ?>"
                                     data-original-price="<?= $originalPrice ?>">
                                     <i class="fas fa-cart-plus"></i> Thêm vào giỏ
+                                </button>
+                                <button class="btn btn-outline-luxury favorite-btn"
+                                    data-food-id="<?= $food['id'] ?>">
+                                    <i class="far fa-heart"></i>
                                 </button>
                                 <a href="<?= SITE_URL ?>/food/detail/<?= $food['id'] ?>"
                                     class="btn btn-outline-luxury">
@@ -189,7 +281,12 @@
 
                             <!-- Limited Time Notice -->
                             <div class="limited-time">
-                                Ưu đãi có hạn - Còn lại: <span class="text-danger fw-bold">2 ngày</span>                            </div>
+                                <?php if ($daysLeft !== null): ?>
+                                    Ưu đãi có hạn - Còn lại: <span class="text-danger fw-bold"><?= $daysLeft ?> ngày</span>
+                                <?php else: ?>
+                                    Ưu đãi có hạn - Đừng bỏ lỡ!
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -220,22 +317,22 @@
 <!-- Special Offers Banner -->
 <section class="section-luxury bg-light-luxury">
     <div class="container">
-        <div class="luxury-grid-3">
-            <div class="feature-card text-center fade-in-up" data-delay="0">
+        <div class="luxury-grid-3" >
+            <div class="feature-card text-center fade-in-up" style="" data-delay="0">
                 <div class="feature-icon bg-gradient-primary">
                     <i class="fas fa-shipping-fast"></i>
                 </div>
                 <h5 class="feature-title">Miễn Phí Giao Hàng</h5>
                 <p class="feature-text">Đơn hàng từ 500.000₫</p>
             </div>
-            <div class="feature-card text-center fade-in-up" data-delay="100">
+            <div class="feature-card text-center fade-in-up" style="" data-delay="100">
                 <div class="feature-icon bg-gradient-success">
                     <i class="fas fa-gift"></i>
                 </div>
                 <h5 class="feature-title">Tặng Kèm Quà</h5>
                 <p class="feature-text">Với mỗi đơn hàng</p>
             </div>
-            <div class="feature-card text-center fade-in-up" data-delay="200">
+            <div class="feature-card text-center fade-in-up" style="" data-delay="200">
                 <div class="feature-icon bg-gradient-info">
                     <i class="fas fa-headset"></i>
                 </div>
@@ -628,6 +725,128 @@
     .empty-state {
         padding: 3rem;
         text-align: center;
+    }
+
+    /* Promotion Tags and BOGO Badges */
+    .promotion-tag {
+        background: linear-gradient(135deg, var(--primary-gold), var(--accent-copper));
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+    }
+
+    .promotion-code {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.5rem;
+        font-size: 0.7rem;
+        margin-left: 0.5rem;
+    }
+
+    .bogo-badge {
+        font-size: 0.7rem;
+        animation: pulse-bogo 2s infinite;
+    }
+
+    @keyframes pulse-bogo {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    /* CSS for Promotion Summary Cards */
+    .promotions-summary {
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(27, 41, 81, 0.05));
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .promotion-summary-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .promotion-summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .promotion-summary-header {
+        background: linear-gradient(135deg, var(--primary-navy), var(--primary-gold));
+        color: white;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .promotion-summary-header h5 {
+        margin: 0 0 0.5rem 0;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .promotion-summary-code {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .promotion-summary-body {
+        padding: 1.5rem;
+    }
+
+    .promotion-discount {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .discount-value {
+        display: block;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent-rose);
+        line-height: 1;
+    }
+
+    .discount-text {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .promotion-details {
+        font-size: 0.85rem;
+    }
+
+    .promotion-desc {
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
+    }
+
+    .promotion-validity, .promotion-applies {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+    }
+
+    .promotion-validity i, .promotion-applies i {
+        color: var(--primary-gold);
+        width: 12px;
     }
 
     /* Responsive Design */

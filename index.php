@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 /**
  * Main index file - Front Controller
@@ -168,13 +171,15 @@ function handleAdminRoute($segments)
             break;
         case 'categories':
             handleAdminCategoriesRoute($controller, $action, $param);
-            break;
-        case 'orders':
+            break;        case 'orders':
             handleAdminOrdersRoute($controller, $action, $param);
+            break;
+        case 'payments':
+            handleAdminPaymentsRoute($controller, $action, $param);
             break;
         case 'bookings':
             handleAdminBookingsRoute($controller, $action, $param);
-            break;        case 'tables':
+            break;case 'tables':
             handleAdminTablesRoute($controller, $action, $param);
             break;
         case 'news':
@@ -246,9 +251,13 @@ function handleSuperAdminRoute($segments)
             break;
         case 'restaurant':
             handleSuperAdminRestaurantRoute($controller, $action, $param);
-            break;
-        case 'promotions':
+            break;        case 'promotions':
             handleSuperAdminPromotionsRoute($controller, $action, $param);
+            break;        case 'reviews':
+            handleSuperAdminReviewsRoute($controller, $action, $param);
+            break;
+        case 'notifications':
+            handleSuperAdminNotificationsRoute($controller, $action, $param);
             break;
         case 'statistics':
             $controller->statistics();
@@ -352,6 +361,9 @@ function handleSuperAdminPromotionsRoute($controller, $action, $param)
         case 'create':
             $controller->createPromotion();
             break;
+        case 'get':
+            $controller->getPromotion($param);
+            break;
         case 'edit':
             $controller->editPromotion($param);
             break;
@@ -363,6 +375,60 @@ function handleSuperAdminPromotionsRoute($controller, $action, $param)
             break;
         default:
             $controller->promotions();
+    }
+}
+
+function handleSuperAdminReviewsRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'details':
+            $controller->reviewDetails($param);
+            break;
+        case 'approve':
+            $controller->approveReview($param);
+            break;
+        case 'reject':
+            $controller->rejectReview($param);
+            break;
+        case 'verify':
+            $controller->verifyReview($param);
+            break;
+        case 'delete':
+            $controller->deleteReview($param);
+            break;
+        case 'bulk-action':
+            $controller->reviewsBulkAction();
+            break;
+        case 'stats':
+            $controller->reviewStats();
+            break;        default:
+            $controller->reviews();
+    }
+}
+
+function handleSuperAdminNotificationsRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'unread-count':
+            $controller->getUnreadCount();
+            break;
+        case 'recent':
+            $controller->getRecentNotifications();
+            break;
+        case 'mark-read':
+            $controller->markNotificationRead($param);
+            break;
+        case 'mark-all-read':
+            $controller->markAllNotificationsRead();
+            break;
+        case 'delete':
+            $controller->deleteNotification($param);
+            break;
+        case 'bulk-action':
+            $controller->notificationsBulkAction();
+            break;
+        default:
+            $controller->notifications();
     }
 }
 
@@ -401,8 +467,7 @@ function handleAdminFoodsRoute($controller, $action, $param)
 }
 
 function handleAdminCategoriesRoute($controller, $action, $param)
-{
-    switch ($action) {
+{    switch ($action) {
         case 'create':
             $controller->createCategory();
             break;
@@ -415,6 +480,11 @@ function handleAdminCategoriesRoute($controller, $action, $param)
             $controller->updateCategory($param);
             break;        case 'delete': // Added case for delete
             $controller->deleteCategory($param);
+            break;        case 'bulk-update-status':
+            $controller->bulkUpdateCategoryStatus();
+            break;
+        case 'export':
+            $controller->exportCategories();
             break;
         case 'subcategories':
             $controller->getSubcategories($param);
@@ -455,9 +525,25 @@ function handleAdminOrdersRoute($controller, $action, $param)
             break;
         case 'delete':
             $controller->deleteOrder($param);
+            break;        default:
+            $controller->orders();
+    }
+}
+
+function handleAdminPaymentsRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'details':
+            $controller->paymentDetails($param);
+            break;
+        case 'cancel':
+            $controller->cancelPayment($param);
+            break;
+        case 'export':
+            $controller->exportPayments();
             break;
         default:
-            $controller->orders();
+            $controller->payments();
     }
 }
 
@@ -720,13 +806,14 @@ function handleCustomerRoute($page, $action, $param)
         'about' => 'controllers/HomeController.php',
         'promotions' => 'controllers/HomeController.php',
         'menu' => 'controllers/FoodController.php',
-        'food' => 'controllers/FoodController.php',
-        'cart' => 'controllers/CartController.php',
+        'food' => 'controllers/FoodController.php',        'cart' => 'controllers/CartController.php',
         'order' => 'controllers/OrderController.php',
+        'payment' => 'controllers/PaymentController.php',
         'booking' => 'controllers/BookingController.php',
         'user' => 'controllers/UserController.php',
         'auth' => 'controllers/AuthController.php',
-        'news' => 'controllers/NewsController.php'
+        'news' => 'controllers/NewsController.php',
+         'review' => 'controllers/ReviewController.php'
     ];
 
     if (!isset($routes[$page])) {

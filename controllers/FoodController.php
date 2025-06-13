@@ -6,14 +6,20 @@
 require_once 'BaseController.php';
 require_once __DIR__ . '/../models/Food.php';
 require_once __DIR__ . '/../models/Category.php';
+require_once __DIR__ . '/../models/Review.php';
+require_once __DIR__ . '/../models/Order.php';
 
 class FoodController extends BaseController {
     private $foodModel;
     private $categoryModel;
+    protected $orderModel;
+    protected $reviewModel;
 
     public function __construct() {
         $this->foodModel = new Food();
         $this->categoryModel = new Category();
+        $this->orderModel = new Order();
+        $this->reviewModel = new Review();
     }
 
     public function index() {
@@ -65,7 +71,7 @@ class FoodController extends BaseController {
             }
         }
 
-        $whereClause = implode(' AND ', $conditions);        // Get sorting
+        $whereClause = implode(' AND ', $conditions);        
         switch ($sortBy) {
             case 'price_asc':
                 $orderBy = 'f.price ASC';
@@ -73,12 +79,10 @@ class FoodController extends BaseController {
             case 'price_desc':
                 $orderBy = 'f.price DESC';
                 break;
-            case 'name':
             default:
                 $orderBy = 'f.name ASC';
-                break;
         }
-
+       
         // Get foods with pagination
         $foods = $this->foodModel->getFoodWithFilters($whereClause, $params, $orderBy, $limit, $offset);
 
@@ -110,6 +114,8 @@ class FoodController extends BaseController {
                 'price_range' => $priceRange
             ]
         ];
+        // print_r($data);
+        // echo "</pre>";
 
         $this->loadView('customer/menu/index', $data);
     }    public function detail() {
@@ -136,13 +142,34 @@ class FoodController extends BaseController {
         $relatedFoods = $this->foodModel->getFoodByCategory($food['category_id'], 6, $id);
 
         // Get food category info
-        $category = $this->categoryModel->findById($food['category_id']);
+        $category = $this->categoryModel->findById($food['category_id']);        $userOrdered = false;
+        if (isset($_SESSION['user_id'])) {
+            $userOrdered = $this->orderModel->hasUserOrderedFood($_SESSION['user_id'], $food['id']);
+        }
+          $comments = $this->reviewModel->getReviewsByFood($food['id']);
+        $avgRating = $this->reviewModel->getAverageRating($food['id']);
+        $totalRating = $this->reviewModel->getTotalRating($food['id']);
+        $isReviewed = false;
+        if (isset($_SESSION['user_id'])) {
+            $isReviewed = $this->reviewModel->hasUserReviewedFood($_SESSION['user_id'], $food['id']);
+        }        // Add liked status for each comment
+        foreach ($comments as &$comment) {
+            $comment['liked'] = false;
+            if (isset($_SESSION['user_id'])) {
+                $comment['liked'] = $this->reviewModel->hasUserLiked($_SESSION['user_id'], $comment['id']);
+            }
+        }
 
         $data = [
             'title' => $food['name'] . ' - ' . SITE_NAME,
             'food' => $food,
             'category' => $category,
-            'relatedFoods' => $relatedFoods
+            'relatedFoods' => $relatedFoods,
+            'userOrdered' => $userOrdered,
+            'comments' => $comments,
+            'avgRating' => $avgRating,
+            'totalRating' => $totalRating,
+            'isReviewed' => $isReviewed
         ];
 
         $this->loadView('customer/menu/detail', $data);
@@ -237,5 +264,40 @@ class FoodController extends BaseController {
 
         $this->jsonResponse(['food' => $food]);
     }
+
+    public function comment($foodId) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user'])) {
+
+
+            $userId = $_SESSION['user']['id'];
+            $rating = intval($_POST['rate'] ?? 0);
+            $comment = trim($_POST['content'] ?? '');
+            $photos = [];
+
+
+
+            // Xử lý upload ảnh (nếu có)
+            if (!empty($_FILES['photo']['name'][0])) {
+                foreach ($_FILES['photo']['tmp_name'] as $idx => $tmpName) {
+                    if ($_FILES['photo']['error'][$idx] === UPLOAD_ERR_OK) {
+                        $ext = pathinfo($_FILES['photo']['name'][$idx], PATHINFO_EXTENSION);
+                        $fileName = uniqid('review_', true) . '.' . $ext;
+                        move_uploaded_file($tmpName, __DIR__ . '/../assets/images/' . $fileName);
+                        $photos[] = $fileName;
+                    }
+                }
+            }
+
+            // Lấy orderId của đơn hàng completed gần nhất có món này
+            $orderId = $this->orderModel->getCompletedOrderIdByUserAndFood($userId, $foodId);
+
+            // Lưu vào DB
+            $this->reviewModel->addReview($userId, $orderId, $foodId, $rating, $comment, $photos);
+
+            // Redirect về trang chi tiết món ăn
+            header('Location: ' . SITE_URL . '/food/detail/' . $foodId);
+            exit;
+        }
+    }
 }
-?>
+

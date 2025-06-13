@@ -8,7 +8,7 @@
 
     <!-- Meta Tags for SEO -->
     <meta name="description" content="<?php echo $meta_description ?? 'Nhà hàng buffet sang trọng với không gian đẳng cấp và thực đơn phong phú'; ?>">
-    <meta name="keywords" content="nhà hàng buffet, buffet cao cấp, ẩm thực, đặt bàn, khuyến mãi"> <!-- Bootstrap CSS -->
+    <meta name="keywords" content="nhà hàng buffet, buffet cao cấp, ẩm thực, đặt bàn, khuyến mãi">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -44,7 +44,7 @@
             <!-- Collapsible Content -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 <!-- Main Navigation -->
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav me-auto" style="padding-left: 50px;">
                     <li class="nav-item">
                         <a class="nav-link" href="<?php echo SITE_URL; ?>">
                             <i class="fas fa-home"></i>
@@ -84,21 +84,16 @@
 
                 <!-- Right Side Actions -->
                 <ul class="navbar-nav navbar-actions">
-                    <!-- Search -->
-                    <li class="nav-item">
-                        <button class="nav-link btn-search" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
-                            <i class="fas fa-search"></i>
-                            <span class="nav-text d-lg-none">Tìm Kiếm</span>
-                        </button>
-                    </li>
-
                     <!-- Cart -->
                     <li class="nav-item">
                         <a class="nav-link position-relative" href="<?php echo SITE_URL; ?>/cart">
                             <i class="fas fa-shopping-cart"></i>
                             <span class="nav-text d-lg-none">Giỏ Hàng</span>
                             <span id="cart-count" class="cart-badge">
-                                <?php echo $_SESSION['cart_count'] ?? 0; ?>
+                                <?php
+                                $_SESSION['cart_count'] = array_sum($_SESSION['cart'] ?? []);
+                                echo $_SESSION['cart_count'];
+                                ?>
                             </span>
                         </a>
                     </li>

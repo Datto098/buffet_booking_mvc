@@ -640,14 +640,29 @@ class AdminController extends BaseController
         } else {
             echo json_encode(['success' => false, 'message' => 'Booking not found']);
         }
-    }
-    public function getCategory($id)
+    }    public function getCategory($id)
     {
         header('Content-Type: application/json');
-        $category = $this->categoryModel->findById((int)$id);
+
+        $categoryModel = new Category();
+        $foodModel = new Food();
+
+        $category = $categoryModel->findById((int)$id);
         if ($category) {
+            // Get additional statistics
+            $category['food_count'] = $foodModel->countByCategory($id);
+
             // Transform data for frontend compatibility
             $category['status'] = $category['is_active'] == 1 ? 'active' : 'inactive';
+
+            // Format dates for display
+            if (isset($category['created_at'])) {
+                $category['created_at'] = date('Y-m-d H:i:s', strtotime($category['created_at']));
+            }
+            if (isset($category['updated_at'])) {
+                $category['updated_at'] = date('Y-m-d H:i:s', strtotime($category['updated_at']));
+            }
+
             echo json_encode(['success' => true, 'category' => $category]);
         } else {
             http_response_code(404);
@@ -1144,16 +1159,28 @@ class AdminController extends BaseController
         ];
 
         $this->loadAdminView('categories/edit', $data);
-    }
-    public function deleteCategory($id = null)
+    }    public function deleteCategory($id = null)
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        // Support both POST (form submission) and DELETE (AJAX) methods
+        $isAjax = $_SERVER['REQUEST_METHOD'] === 'DELETE' ||
+                  (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+                   strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'DELETE') {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+                return;
+            }
             $this->setFlash('error', 'Method not allowed.');
             $this->redirect('/admin/categories');
             return;
         }
 
         if (!$this->validateCSRF()) {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+                return;
+            }
             $this->setFlash('error', 'Invalid security token.');
             $this->redirect('/admin/categories');
             return;
@@ -1163,6 +1190,10 @@ class AdminController extends BaseController
         $categoryId = (int)($id ?? $_POST['category_id'] ?? 0);
 
         if ($categoryId <= 0) {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Invalid category ID'], 400);
+                return;
+            }
             $this->setFlash('error', 'Invalid category ID.');
             $this->redirect('/admin/categories');
             return;
@@ -1174,6 +1205,10 @@ class AdminController extends BaseController
         // Check if category exists
         $category = $categoryModel->findById($categoryId);
         if (!$category) {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Category not found'], 404);
+                return;
+            }
             $this->setFlash('error', 'Category not found.');
             $this->redirect('/admin/categories');
             return;
@@ -1182,14 +1217,24 @@ class AdminController extends BaseController
         // Check if category has foods
         $foodCount = $foodModel->countByCategory($categoryId);
         if ($foodCount > 0) {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Cannot delete category that contains food items'], 400);
+                return;
+            }
             $this->setFlash('error', 'Cannot delete category that contains food items.');
             $this->redirect('/admin/categories');
             return;
-        }
-
-        if ($categoryModel->delete($categoryId)) {
+        }        if ($categoryModel->delete($categoryId)) {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => true, 'message' => 'Category deleted successfully']);
+                return;
+            }
             $this->setFlash('success', 'Category deleted successfully.');
         } else {
+            if ($isAjax) {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to delete category'], 500);
+                return;
+            }
             $this->setFlash('error', 'Failed to delete category.');
         }
 
@@ -1567,6 +1612,305 @@ class AdminController extends BaseController
         fclose($output);
     }
 
+    public function exportCategories()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            return;
+        }
+
+        $categoryModel = new Category();
+        $foodModel = new Food();
+
+        // Get all categories with stats
+        $categories = $categoryModel->getAllWithStats();
+
+        // Add food count for each category
+        foreach ($categories as &$category) {
+            $category['food_count'] = $foodModel->countByCategory($category['id']);
+        }
+
+        // Set headers for CSV download
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="categories_export_' . date('Y-m-d') . '.csv"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        // Create file pointer for output
+        $output = fopen('php://output', 'w');
+
+        // Add CSV header
+        fputcsv($output, [
+            'ID',
+            'Name',
+            'Description',
+            'Status',
+            'Sort Order',
+            'Food Items',
+            'Created Date',
+            'Updated Date'
+        ]);
+
+        // Add data rows
+        foreach ($categories as $category) {
+            fputcsv($output, [
+                $category['id'],
+                $category['name'],
+                $category['description'] ?? '',
+                ($category['is_active'] ?? 0) == 1 ? 'Active' : 'Inactive',
+                $category['sort_order'] ?? 0,
+                $category['food_count'] ?? 0,
+                isset($category['created_at']) ? date('Y-m-d H:i:s', strtotime($category['created_at'])) : '',
+                isset($category['updated_at']) ? date('Y-m-d H:i:s', strtotime($category['updated_at'])) : ''
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    // PAYMENT MANAGEMENT
+    public function payments() {
+        require_once __DIR__ . '/../models/Payment.php';
+        $paymentModel = new Payment();
+
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        // Get filters
+        $filters = [
+            'status' => $_GET['status'] ?? '',
+            'payment_method' => $_GET['payment_method'] ?? '',
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to' => $_GET['date_to'] ?? '',
+            'search' => $_GET['search'] ?? ''
+        ];
+
+        // Get payments with pagination
+        $payments = $paymentModel->getAllPaymentsWithOrders($limit, $offset, $filters);
+        $totalPayments = $paymentModel->countPayments($filters);
+        $totalPages = ceil($totalPayments / $limit);
+
+        // Get payment statistics
+        $stats = $paymentModel->getPaymentStats();
+
+        $data = [
+            'title' => 'Payment Management',
+            'payments' => $payments,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'totalPayments' => $totalPayments,
+            'stats' => $stats,
+            'filters' => $filters,
+            'csrf_token' => $this->generateCSRF()
+        ];
+
+        $this->loadAdminView('payments/index', $data);
+    }
+
+    public function paymentDetails($id) {
+        require_once __DIR__ . '/../models/Payment.php';
+        $paymentModel = new Payment();
+
+        $payment = $paymentModel->findById($id);
+        if (!$payment) {
+            $this->jsonResponse(['success' => false, 'message' => 'Payment not found'], 404);
+            return;
+        }
+
+        // Get order details
+        $orderModel = new Order();
+        $order = $orderModel->findById($payment['order_id']);
+
+        $html = $this->renderPaymentDetailsHtml($payment, $order);
+
+        $this->jsonResponse(['success' => true, 'html' => $html]);
+    }
+
+    private function renderPaymentDetailsHtml($payment, $order) {
+        ob_start();
+        ?>
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Thông Tin Thanh Toán</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>ID Thanh Toán:</strong></td>
+                        <td><?= $payment['id'] ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mã Giao Dịch VNPay:</strong></td>
+                        <td><?= htmlspecialchars($payment['vnp_txn_ref']) ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mã Giao Dịch Ngân Hàng:</strong></td>
+                        <td><?= htmlspecialchars($payment['vnp_transaction_no'] ?? 'N/A') ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Số Tiền:</strong></td>
+                        <td><strong><?= number_format(($payment['vnp_amount'] ?? 0) / 100, 0, ',', '.') ?>đ</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ngân Hàng:</strong></td>
+                        <td><?= htmlspecialchars($payment['vnp_bank_code'] ?? 'N/A') ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trạng Thái:</strong></td>
+                        <td>
+                            <?php
+                            $statusClass = [
+                                'pending' => 'warning',
+                                'completed' => 'success',
+                                'failed' => 'danger',
+                                'cancelled' => 'secondary'
+                            ];
+                            $status = $payment['payment_status'] ?? 'pending';
+                            ?>
+                            <span class="badge bg-<?= $statusClass[$status] ?? 'secondary' ?>">
+                                <?= ucfirst($status) ?>
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Thông Tin Đơn Hàng</h6>
+                <?php if ($order): ?>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>Mã Đơn Hàng:</strong></td>
+                        <td>#<?= $order['order_number'] ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Khách Hàng:</strong></td>
+                        <td><?= htmlspecialchars($order['customer_name']) ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Email:</strong></td>
+                        <td><?= htmlspecialchars($order['customer_email']) ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Điện Thoại:</strong></td>
+                        <td><?= htmlspecialchars($order['customer_phone']) ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tổng Tiền Đơn Hàng:</strong></td>
+                        <td><strong><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trạng Thái Đơn Hàng:</strong></td>
+                        <td><?= ucfirst($order['status']) ?></td>
+                    </tr>
+                </table>
+                <?php else: ?>
+                <p class="text-muted">Không tìm thấy thông tin đơn hàng</p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php if (!empty($payment['payment_data'])): ?>
+        <div class="mt-3">
+            <h6>Dữ Liệu Raw VNPay</h6>
+            <pre class="bg-light p-3 rounded small"><?= htmlspecialchars(json_encode(json_decode($payment['payment_data']), JSON_PRETTY_PRINT)) ?></pre>
+        </div>
+        <?php endif; ?>
+        <?php
+        return ob_get_clean();
+    }
+
+    public function cancelPayment($id) {
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        require_once __DIR__ . '/../models/Payment.php';
+        $paymentModel = new Payment();
+
+        $payment = $paymentModel->findById($id);
+        if (!$payment) {
+            $this->jsonResponse(['success' => false, 'message' => 'Payment not found'], 404);
+            return;
+        }
+
+        if (!in_array($payment['payment_status'], ['pending', 'failed'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Cannot cancel this payment'], 400);
+            return;
+        }
+
+        if ($paymentModel->update($id, ['payment_status' => 'cancelled'])) {
+            $this->jsonResponse(['success' => true, 'message' => 'Payment cancelled successfully']);
+        } else {
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to cancel payment'], 500);
+        }
+    }
+
+    public function exportPayments() {
+        require_once __DIR__ . '/../models/Payment.php';
+        $paymentModel = new Payment();
+
+        // Get filters from request
+        $filters = [
+            'status' => $_GET['status'] ?? '',
+            'payment_method' => $_GET['payment_method'] ?? '',
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to' => $_GET['date_to'] ?? '',
+            'search' => $_GET['search'] ?? ''
+        ];
+
+        // Get all payments with filters (no limit for export)
+        $payments = $paymentModel->getAllPaymentsWithOrders(999999, 0, $filters);
+
+        // Set headers for CSV download
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=payments_export_' . date('Y-m-d_H-i-s') . '.csv');
+
+        // Create output stream
+        $output = fopen('php://output', 'w');
+
+        // Add BOM for UTF-8
+        fputs($output, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+
+        // Add CSV headers
+        fputcsv($output, [
+            'ID',
+            'Mã Đơn Hàng',
+            'Khách Hàng',
+            'Email',
+            'Điện Thoại',
+            'Mã GD VNPay',
+            'Mã GD Ngân Hàng',
+            'Số Tiền (VND)',
+            'Phương Thức',
+            'Trạng Thái',
+            'Ngân Hàng',
+            'Ngày Tạo',
+            'Ngày Hoàn Thành'
+        ]);
+
+        // Add data rows
+        foreach ($payments as $payment) {
+            fputcsv($output, [
+                $payment['id'],
+                $payment['order_number'] ?? 'N/A',
+                $payment['customer_name'] ?? 'N/A',
+                $payment['customer_email'] ?? 'N/A',
+                $payment['customer_phone'] ?? 'N/A',
+                $payment['vnp_txn_ref'],
+                $payment['vnp_transaction_no'] ?? 'N/A',
+                number_format(($payment['vnp_amount'] ?? 0) / 100, 0, ',', '.'),
+                strtoupper($payment['payment_method']),
+                ucfirst($payment['payment_status']),
+                $payment['vnp_bank_code'] ?? 'N/A',
+                date('d/m/Y H:i:s', strtotime($payment['created_at'])),
+                $payment['completed_at'] ? date('d/m/Y H:i:s', strtotime($payment['completed_at'])) : 'N/A'
+            ]);
+        }
+
+        fclose($output);
+    }
+
     private function getTotalFoodsInCategories($categories)
     {
         return array_sum(array_column($categories, 'food_count'));
@@ -1595,7 +1939,7 @@ class AdminController extends BaseController
         $pendingBookings = $bookingModel->count('pending');
         $cancelledBookings = $bookingModel->count('cancelled');
         $activeBookings = $confirmedBookings + $pendingBookings;        // Get revenue data
-        $orderStats = $orderModel->getDashboardStats();
+        $orderStats = $orderModel->getOrderStats();
         $monthlyRevenue = $orderModel->getMonthlyRevenue();
         $monthlyRevenueData = $orderModel->getMonthlyRevenueData();
         // Get recent data
@@ -2453,5 +2797,61 @@ class AdminController extends BaseController
         });
 
         return array_slice($allEntries, 0, $limit);
+    }
+
+    public function bulkUpdateCategoryStatus()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+            return;
+        }
+
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        // Get input data
+        $input = json_decode(file_get_contents('php://input'), true);
+        $categoryIds = $input['category_ids'] ?? [];
+        $status = $input['status'] ?? '';
+
+        if (empty($categoryIds) || !is_array($categoryIds)) {
+            $this->jsonResponse(['success' => false, 'message' => 'No categories selected'], 400);
+            return;
+        }
+
+        if (!in_array($status, ['active', 'inactive'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid status'], 400);
+            return;
+        }
+
+        $categoryModel = new Category();
+        $isActive = $status === 'active' ? 1 : 0;
+        $updatedCount = 0;
+
+        foreach ($categoryIds as $categoryId) {
+            $categoryId = (int)$categoryId;
+            if ($categoryId > 0) {
+                $updateData = [
+                    'is_active' => $isActive,
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+
+                if ($categoryModel->update($categoryId, $updateData)) {
+                    $updatedCount++;
+                }
+            }
+        }
+
+        if ($updatedCount > 0) {
+            $statusText = $status === 'active' ? 'activated' : 'deactivated';
+            $this->jsonResponse([
+                'success' => true,
+                'message' => "$updatedCount categories $statusText successfully"
+            ]);
+        } else {
+            $this->jsonResponse(['success' => false, 'message' => 'No categories were updated'], 500);
+        }
     }
 }
