@@ -33,20 +33,26 @@ class BookingController extends BaseController {
     }
 
     public function checkAvailability() {
-        header('Content-Type: application/json');
+        // Lấy dữ liệu từ POST
         $date = $_POST['booking_date'] ?? '';
         $time = $_POST['booking_time'] ?? '';
-        $partySize = $_POST['party_size'] ?? 1;
+        $partySize = $_POST['party_size'] ?? '';
 
-        // Kiểm tra logic ở đây...
-        $available = true; // hoặc false nếu không còn bàn
-        $message = $available ? 'Bàn còn trống!' : 'Hết bàn vào thời gian này.';
+        // Validate dữ liệu
+        if (!$date || !$time || !$partySize) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'available' => false,
+                'message' => 'Vui lòng chọn đầy đủ ngày, giờ và số lượng khách.'
+            ]);
+            exit;
+        }
+        
+        // Gọi model để kiểm tra bàn trống
+        $result = $this->bookingModel->checkAvailability($date, $time, $partySize);
 
-        echo json_encode([
-            'available' => $available,
-            'message' => $message,
-            'suggestedTimes' => [] // hoặc gợi ý giờ khác nếu muốn
-        ]);
+        header('Content-Type: application/json');
+        echo json_encode($result);
         exit;
     }
 
@@ -73,7 +79,9 @@ class BookingController extends BaseController {
             redirect('/index.php?page=booking&action=myBookings');
         }
 
-        $booking = $this->bookingModel->findById($bookingId);
+        $userId = $_SESSION['user_id'];
+        $booking = $this->bookingModel->getBookingDetails($bookingId, $userId ?? null);
+        $booking = $this->bookingModel->transformBookingForView($booking);
 
         // Check if booking belongs to current user (unless admin)
         if (!$booking || ($booking['user_id'] != $_SESSION['user_id'] && !isAdmin() && !isManager())) {
