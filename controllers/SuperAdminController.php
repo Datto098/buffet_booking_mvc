@@ -264,19 +264,32 @@ class SuperAdminController extends BaseController
     // ==========================================
     // ORDER MANAGEMENT
     // ==========================================
-
     public function orders()
     {
         $page = (int)($_GET['page'] ?? 1);
-        $status = $_GET['status'] ?? '';
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
-        $orders = $this->orderModel->getAllOrdersWithCustomer($limit, $offset, $status);
-        $totalOrders = $this->orderModel->count($status);
+        // Get filter parameters
+        $status = $_GET['status'] ?? '';
+        $search = $_GET['search'] ?? '';
+        $dateFrom = $_GET['date_from'] ?? '';
+        $dateTo = $_GET['date_to'] ?? '';
+
+        // Use filtered method if available, otherwise fallback
+        if (method_exists($this->orderModel, 'getFilteredOrders')) {
+            $filters = compact('status', 'search', 'dateFrom', 'dateTo');
+            $orders = $this->orderModel->getFilteredOrders($filters, $limit, $offset);
+            $totalOrders = $this->orderModel->countFilteredOrders($filters);
+        } else {
+            // Fallback to original method
+            $orders = $this->orderModel->getAllOrdersWithCustomer($limit, $offset, $status);
+            $totalOrders = $this->orderModel->count($status);
+        }
+
         $totalPages = ceil($totalOrders / $limit);
 
-        // Calculate statistics
+        // Calculate statistics from unfiltered data
         $allOrders = $this->orderModel->getAllOrdersWithCustomer();
         $pendingOrders = count(array_filter($allOrders, function($order) {
             return $order['status'] === 'pending';
@@ -288,19 +301,18 @@ class SuperAdminController extends BaseController
 
         $todayOrders = count(array_filter($allOrders, function($order) {
             return date('Y-m-d', strtotime($order['created_at'])) === date('Y-m-d');
-        }));       $totalRevenue = array_sum(array_column($allOrders, 'total_amount'));
+        }));$totalRevenue = array_sum(array_column($allOrders, 'total_amount'));
         $completedOrders = count(array_filter($allOrders, function($order) {
             return in_array($order['status'], ['completed', 'delivered']);
-        }));
-
-        $data = [
+        }));        $data = [
             'title' => 'Order Management',
             'orders' => $orders,
             'currentPage' => $page,
             'totalPages' => $totalPages,
-            'totalOrders' => $totalOrders,
+            'totalOrders' => count($allOrders), // Total unfiltered
+            'filteredCount' => $totalOrders, // Filtered count
             'stats' => [
-                'total_orders' => $totalOrders,
+                'total_orders' => count($allOrders),
                 'pending_orders' => $pendingOrders,
                 'processing_orders' => $processingOrders,
                 'completed_orders' => $completedOrders,
@@ -476,42 +488,77 @@ class SuperAdminController extends BaseController
     // ==========================================
     // TABLE MANAGEMENT
     // ==========================================
-
     public function tables()
     {
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
-        $tables = $this->tableModel->getAllTables($limit, $offset);
-        $totalTables = $this->tableModel->count();
-        $totalPages = ceil($totalTables / $limit);        // Calculate statistics
+        // Get filter parameters
+        $search = $_GET['search'] ?? '';
+        $status = $_GET['status'] ?? '';
+        $location = $_GET['location'] ?? '';
+
+        // Get all tables for filtering
         $allTables = $this->tableModel->getAllTables();
-        $availableTables = count(array_filter($allTables, function($table) {
+
+        // Apply filters
+        if ($search) {
+            $allTables = array_filter($allTables, function($table) use ($search) {
+                return stripos($table['table_number'], $search) !== false ||
+                       stripos($table['location'], $search) !== false ||
+                       stripos($table['description'], $search) !== false;
+            });
+        }
+
+        if ($status !== '') {
+            $allTables = array_filter($allTables, function($table) use ($status) {
+                return ($status === 'available' && $table['is_available'] == 1) ||
+                       ($status === 'unavailable' && $table['is_available'] == 0);
+            });
+        }
+
+        if ($location) {
+            $allTables = array_filter($allTables, function($table) use ($location) {
+                return $table['location'] === $location;
+            });
+        }
+
+        $totalTables = count($allTables);
+        $totalPages = ceil($totalTables / $limit);
+
+        // Apply pagination to filtered data
+        $tables = array_slice($allTables, $offset, $limit);
+
+        // Calculate statistics from unfiltered data
+        $allTablesForStats = $this->tableModel->getAllTables();
+        $availableTables = count(array_filter($allTablesForStats, function($table) {
             return ($table['is_available'] ?? 1) == 1;
         }));
 
-        $totalCapacity = array_sum(array_column($allTables, 'capacity'));
-
-        $data = [
+        $totalCapacity = array_sum(array_column($allTablesForStats, 'capacity'));
+        $locationStats = $this->tableModel->getTablesByLocation();        $data = [
             'title' => 'Table Management',
             'tables' => $tables,
             'stats' => [
-                'total_tables' => $totalTables,
+                'total_tables' => count($allTablesForStats),
                 'available_tables' => $availableTables,
-                'occupied_tables' => $totalTables - $availableTables,
+                'occupied_tables' => count($allTablesForStats) - $availableTables,
                 'total_capacity' => $totalCapacity
             ],
+            'locationStats' => $locationStats,
             'currentPage' => $page,
             'totalPages' => $totalPages,
-            'totalTables' => $totalTables,
+            'totalTables' => count($allTablesForStats),            'filteredCount' => $totalTables,
             'availableTables' => $availableTables,
             'totalCapacity' => $totalCapacity,
             'csrf_token' => $this->generateCSRF()
         ];
 
         $this->loadSuperAdminView('tables/index', $data);
-    }    public function createTable()
+    }
+
+    public function createTable()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Check if it's an AJAX request - skip CSRF for AJAX

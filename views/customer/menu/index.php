@@ -25,7 +25,6 @@ $SITE_URL = defined('SITE_URL') ? SITE_URL : 'http://localhost/buffet_booking_mv
 </section>
 
 <div class="container-fluid section-luxury">
-
     <div class="row">
         <!-- Filters Sidebar -->
         <div class="col-lg-3 mb-4">
@@ -34,13 +33,13 @@ $SITE_URL = defined('SITE_URL') ? SITE_URL : 'http://localhost/buffet_booking_mv
                     <h5 class="mb-0" style="color: #fff !important"><i class="fas fa-filter text-gold"></i> Bộ Lọc</h5>
                 </div>
                 <div class="card-body-luxury">
-                    <form method="GET" action="<?= SITE_URL ?>/menu" id="filterForm">
-                        <!-- Search -->
+                    <form method="GET" action="<?= SITE_URL ?>/menu" id="filterForm"> <!-- Search -->
                         <div class="mb-3">
                             <label class="form-label text-luxury">Tìm kiếm</label>
                             <input type="text" class="form-control form-control-luxury" name="search"
-                                value="<?= htmlspecialchars($filters['search']) ?>"
-                                placeholder="Tên món ăn...">
+                                value="<?= htmlspecialchars($filters['search'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                placeholder="Tên món ăn..."
+                                accept-charset="UTF-8">
                         </div>
 
                         <!-- Category Filter -->
@@ -152,7 +151,8 @@ $SITE_URL = defined('SITE_URL') ? SITE_URL : 'http://localhost/buffet_booking_mv
             <?php else: ?>
                 <div class="food-grid" id="foodGrid">
                     <?php foreach ($foods as $index => $food): ?>
-                        <div class="food-item" style="animation-delay: <?php echo ($index % 12) * 0.1; ?>s">                            <div class="food-image">
+                        <div class="food-item" style="animation-delay: <?php echo ($index % 12) * 0.1; ?>s">
+                            <div class="food-image">
                                 <img src="<?= !empty($food['image']) ? $SITE_URL . "/uploads/food_images/" . htmlspecialchars($food['image']) : $SITE_URL . '/assets/images/food-placeholder.svg' ?>"
                                     alt="<?= htmlspecialchars($food['name']) ?>"
                                     class="card-img-luxury">
@@ -174,7 +174,7 @@ $SITE_URL = defined('SITE_URL') ? SITE_URL : 'http://localhost/buffet_booking_mv
                                         <?= number_format($food['price'], 0, ',', '.') ?>đ
                                     </span>
                                 </div>
-                                <div class="d-flex gap-2">                                    <button class="btn btn-luxury add-to-cart-btn flex-grow-1"
+                                <div class="d-flex gap-2"> <button class="btn btn-luxury add-to-cart-btn flex-grow-1"
                                         data-food-id="<?= $food['id'] ?>"
                                         data-food-name="<?= htmlspecialchars($food['name']) ?>"
                                         data-food-price="<?= $food['price'] ?>"
@@ -265,11 +265,7 @@ $SITE_URL = defined('SITE_URL') ? SITE_URL : 'http://localhost/buffet_booking_mv
         </div>
     </div>
 </div>
-</button>
-</div>
-</div>
-</div>
-</div>
+
 
 <?php
 // Helper function for pagination URLs

@@ -30,26 +30,40 @@ class BookingController extends BaseController {
         } else {
             $this->index();
         }
-    }
+    }    public function checkAvailability() {
+        error_log("BookingController - checkAvailability called");
+        error_log("BookingController - POST data: " . json_encode($_POST));
 
-    public function checkAvailability() {
         // Lấy dữ liệu từ POST
         $date = $_POST['booking_date'] ?? '';
         $time = $_POST['booking_time'] ?? '';
         $partySize = $_POST['party_size'] ?? '';
 
+        error_log("BookingController - Extracted: date=$date, time=$time, partySize=$partySize");
+
         // Validate dữ liệu
         if (!$date || !$time || !$partySize) {
-            header('Content-Type: application/json');
-            echo json_encode([
+            $response = [
                 'available' => false,
                 'message' => 'Vui lòng chọn đầy đủ ngày, giờ và số lượng khách.'
-            ]);
+            ];
+            error_log("BookingController - Validation failed: " . json_encode($response));
+            header('Content-Type: application/json');
+            echo json_encode($response);
             exit;
         }
-        
+
         // Gọi model để kiểm tra bàn trống
-        $result = $this->bookingModel->checkAvailability($date, $time, $partySize);
+        try {
+            $result = $this->bookingModel->checkAvailability($date, $time, $partySize);
+            error_log("BookingController - Result from model: " . json_encode($result));
+        } catch (Exception $e) {
+            error_log("BookingController - Exception: " . $e->getMessage());
+            $result = [
+                'available' => false,
+                'message' => 'Có lỗi xảy ra khi kiểm tra bàn trống.'
+            ];
+        }
 
         header('Content-Type: application/json');
         echo json_encode($result);
@@ -253,6 +267,16 @@ class BookingController extends BaseController {
         $availableSlots = $this->bookingModel->getAvailableTimeSlots($date, $partySize);
 
         $this->jsonResponse(['slots' => $availableSlots]);
+    }
+
+    public function clearFormData() {
+        if (isset($_SESSION['form_data'])) {
+            unset($_SESSION['form_data']);
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true]);
+        exit;
     }
 }
 ?>

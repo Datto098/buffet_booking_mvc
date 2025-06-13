@@ -1,151 +1,193 @@
-<?php require_once 'views/layouts/superadmin_header.php'; ?>
-<?php require_once 'views/layouts/superadmin_sidebar.php'; ?>
-
-<div class="main-content fade-in">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <?php require_once 'views/layouts/superadmin_header.php'; ?>
+    <title>Order Management - Super Admin</title>
+</head>
+<body>
     <div class="container-fluid">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1>
-                    <i class="fas fa-shopping-cart"></i>
-                    Order Management
-                </h1>
-                <div class="btn-toolbar">
-                    <button type="button" class="btn btn-outline-primary" onclick="refreshOrders()">
-                        <i class="fas fa-sync-alt"></i> Refresh Data
-                    </button>
-                </div>
-            </div>
-        </div>
+        <div class="row">
+            <?php require_once 'views/layouts/superadmin_sidebar.php'; ?>
 
-        <!-- Order Statistics -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-primary me-3">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Total Orders</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['total_orders'] ?? 0; ?></div>
-                            </div>
-                        </div>
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">
+                            <i class="fas fa-shopping-cart me-2 text-success"></i>Order Management
+                        </h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/superadmin/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Orders</li>
+                            </ol>
+                        </nav>
                     </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-warning me-3">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Pending Orders</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['pending_orders'] ?? 0; ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-success me-3">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Completed Orders</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['completed_orders'] ?? 0; ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-info me-3">
-                                <i class="fas fa-dollar-sign"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Revenue</div>
-                                <div class="h4 mb-0 fw-bold text-dark">$<?php echo number_format($stats['total_revenue'] ?? 0, 2); ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filters -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <form method="GET" class="row g-3">
-                    <div class="col-md-3">
-                        <label for="status" class="form-label">Status</label>
-                        <select class="form-select" id="status" name="status">
-                            <option value="">All Status</option>
-                            <option value="pending" <?php echo (isset($_GET['status']) && $_GET['status'] == 'pending') ? 'selected' : ''; ?>>Pending</option>
-                            <option value="confirmed" <?php echo (isset($_GET['status']) && $_GET['status'] == 'confirmed') ? 'selected' : ''; ?>>Confirmed</option>
-                            <option value="preparing" <?php echo (isset($_GET['status']) && $_GET['status'] == 'preparing') ? 'selected' : ''; ?>>Preparing</option>
-                            <option value="ready" <?php echo (isset($_GET['status']) && $_GET['status'] == 'ready') ? 'selected' : ''; ?>>Ready</option>
-                            <option value="delivered" <?php echo (isset($_GET['status']) && $_GET['status'] == 'delivered') ? 'selected' : ''; ?>>Delivered</option>
-                            <option value="completed" <?php echo (isset($_GET['status']) && $_GET['status'] == 'completed') ? 'selected' : ''; ?>>Completed</option>
-                            <option value="cancelled" <?php echo (isset($_GET['status']) && $_GET['status'] == 'cancelled') ? 'selected' : ''; ?>>Cancelled</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="date_from" class="form-label">Date From</label>
-                        <input type="date" class="form-control" id="date_from" name="date_from"
-                            value="<?php echo htmlspecialchars($_GET['date_from'] ?? ''); ?>">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="date_to" class="form-label">Date To</label>
-                        <input type="date" class="form-control" id="date_to" name="date_to"
-                            value="<?php echo htmlspecialchars($_GET['date_to'] ?? ''); ?>">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="search" class="form-label">Search</label>
-                        <input type="text" class="form-control" id="search" name="search"
-                            placeholder="Order ID, Customer..."
-                            value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
-                    </div>                    <div class="col-12">
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-search"></i> Filter
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-outline-primary" onclick="refreshOrders()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh Data
                         </button>
-                        <a href="<?= SITE_URL ?>/superadmin/orders" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Clear
-                        </a>
                     </div>
-                </form>
-            </div>
-        </div>
+                </div>
 
-        <!-- Orders Table -->
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-danger">
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Customer</th>
-                                <th>Items</th>
-                                <th>Total Amount</th>
-                                <th>Status</th>
-                                <th>Order Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                <!-- Flash Messages -->
+                <?php
+                $flash = $_SESSION['flash'] ?? [];
+                foreach ($flash as $type => $message):
+                ?>
+                    <div class="alert alert-<?= $type === 'error' ? 'danger' : $type ?> alert-dismissible fade show" role="alert">
+                        <i class="fas fa-<?= $type === 'success' ? 'check-circle' : 'exclamation-triangle' ?> me-2"></i>
+                        <?= htmlspecialchars($message) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php
+                endforeach;
+                unset($_SESSION['flash']);
+                ?>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Orders</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['total_orders'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-shopping-cart fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Pending Orders</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['pending_orders'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Completed Orders</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['completed_orders'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Revenue</div>
+                                        <div class="h4 mb-0 font-weight-bold">$<?= number_format($stats['total_revenue'] ?? 0, 2) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                </div>
+
+                <!-- Filter Bar -->
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-light border-0">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-filter me-2 text-success"></i>Filters
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" action="<?= SITE_URL ?>/superadmin/orders" class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Search Orders</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-search text-muted"></i></span>
+                                    <input type="text" class="form-control" name="search" placeholder="Order ID, Customer..." value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="">All Status</option>
+                                    <option value="pending" <?php echo (isset($_GET['status']) && $_GET['status'] == 'pending') ? 'selected' : ''; ?>>Pending</option>
+                                    <option value="confirmed" <?php echo (isset($_GET['status']) && $_GET['status'] == 'confirmed') ? 'selected' : ''; ?>>Confirmed</option>
+                                    <option value="preparing" <?php echo (isset($_GET['status']) && $_GET['status'] == 'preparing') ? 'selected' : ''; ?>>Preparing</option>
+                                    <option value="ready" <?php echo (isset($_GET['status']) && $_GET['status'] == 'ready') ? 'selected' : ''; ?>>Ready</option>
+                                    <option value="delivered" <?php echo (isset($_GET['status']) && $_GET['status'] == 'delivered') ? 'selected' : ''; ?>>Delivered</option>
+                                    <option value="completed" <?php echo (isset($_GET['status']) && $_GET['status'] == 'completed') ? 'selected' : ''; ?>>Completed</option>
+                                    <option value="cancelled" <?php echo (isset($_GET['status']) && $_GET['status'] == 'cancelled') ? 'selected' : ''; ?>>Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold">From Date</label>
+                                <input type="date" class="form-control" name="date_from" value="<?php echo htmlspecialchars($_GET['date_from'] ?? ''); ?>">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold">To Date</label>
+                                <input type="date" class="form-control" name="date_to" value="<?php echo htmlspecialchars($_GET['date_to'] ?? ''); ?>">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100 mb-2">
+                                    <i class="fas fa-filter me-1"></i>Filter
+                                </button>
+                                <a href="<?= SITE_URL ?>/superadmin/orders" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-times me-1"></i>Clear
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Orders Table -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0 fw-bold">
+                                <i class="fas fa-shopping-cart me-2 text-success"></i>All Orders
+                            </h6>
+                            <div class="text-muted small">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <?php echo count($orders ?? []); ?> orders displayed
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="border-0 fw-bold">Order ID</th>
+                                        <th class="border-0 fw-bold">Customer</th>
+                                        <th class="border-0 fw-bold">Items</th>
+                                        <th class="border-0 fw-bold">Total Amount</th>
+                                        <th class="border-0 fw-bold">Status</th>
+                                        <th class="border-0 fw-bold">Order Date</th>
+                                        <th class="border-0 fw-bold text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                             <?php if (!empty($orders)): ?>
                                 <?php foreach ($orders as $order): ?>
                                     <tr>
@@ -179,10 +221,9 @@
                                             <span class="badge bg-<?php echo getStatusBadgeColor($order['status']); ?>">
                                                 <?php echo ucfirst($order['status']); ?>
                                             </span>
-                                        </td>
-                                        <td>
-                                            <div><?php echo date('M d, Y', strtotime($order['order_date'])); ?></div>
-                                            <div class="small text-muted"><?php echo date('H:i', strtotime($order['order_date'])); ?></div>
+                                        </td>                                        <td>
+                                            <div><?php echo date('M d, Y', strtotime($order['created_at'] ?? $order['order_date'] ?? 'now')); ?></div>
+                                            <div class="small text-muted"><?php echo date('H:i', strtotime($order['created_at'] ?? $order['order_date'] ?? 'now')); ?></div>
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
@@ -395,6 +436,20 @@ function getStatusBadgeColor($status)
             return 'danger';
         default:
             return 'secondary';
+    }
+}
+
+// Helper function for order status icons
+function getStatusIcon($status) {
+    switch($status) {
+        case 'pending': return 'clock';
+        case 'confirmed': return 'check';
+        case 'preparing': return 'utensils';
+        case 'ready': return 'bell';
+        case 'delivered': return 'truck';
+        case 'completed': return 'check-circle';
+        case 'cancelled': return 'times';
+        default: return 'question';
     }
 }
 ?>

@@ -238,7 +238,7 @@
                 <div class="card">
                     <div class="card-body text-center">
                         <h6>Quản lý đặt bàn</h6>
-                        <a href="/index.php?page=booking&action=myBookings" class="btn btn-outline-primary">
+                        <a href="<?= SITE_URL ?>/index.php?page=booking&action=myBookings" class="btn btn-outline-primary">
                             <i class="fas fa-list"></i> Xem lịch sử đặt bàn
                         </a>
                     </div>
@@ -321,7 +321,7 @@
                 availabilityResult.className = 'alert alert-info';
                 availabilityResult.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang kiểm tra tình trạng bàn...';
 
-                fetch('/index.php?page=booking&action=checkAvailability', {
+                fetch('<?= SITE_URL ?>/index.php?page=booking&action=checkAvailability', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -403,12 +403,10 @@
         });
 
         // Set minimum date to today
-        bookingDateInput.min = new Date().toISOString().split('T')[0];
-
-        // Clear form data from session after display
+        bookingDateInput.min = new Date().toISOString().split('T')[0];        // Clear form data from session after display
         <?php if (isset($_SESSION['form_data'])): ?>
             // Clear form data from session
-            fetch('/index.php?page=booking&action=clearFormData', {
+            fetch('<?= SITE_URL ?>/index.php?page=booking&action=clearFormData', {
                 method: 'POST'
             });
         <?php endif; ?>

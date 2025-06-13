@@ -1,151 +1,192 @@
-<?php require_once 'views/layouts/superadmin_header.php'; ?>
-<?php require_once 'views/layouts/superadmin_sidebar.php'; ?>
-
-<!-- CSRF Token for AJAX requests -->
-<meta name="csrf-token" content="<?= $csrf_token ?? '' ?>">
-
-<div class="main-content fade-in">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <?php require_once 'views/layouts/superadmin_header.php'; ?>
+    <title>User Management - Super Admin</title>
+</head>
+<body>
     <div class="container-fluid">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1>
-                    <i class="fas fa-users"></i>
-                    User Management
-                </h1>
-                <div class="btn-toolbar">
-                    <a href="<?= SITE_URL ?>/superadmin/users/create" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add New User
-                    </a>
-                </div>
-            </div>
-        </div>
+        <div class="row">
+            <?php require_once 'views/layouts/superadmin_sidebar.php'; ?>
 
-        <!-- User Statistics -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card stats-card">
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">
+                            <i class="fas fa-users me-2 text-primary"></i>User Management
+                        </h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/superadmin/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Users</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-outline-primary me-2" onclick="refreshPage()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                        <a href="<?= SITE_URL ?>/superadmin/users/create" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Add New User
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                <?php
+                $flash = $_SESSION['flash'] ?? [];
+                foreach ($flash as $type => $message):
+                ?>
+                    <div class="alert alert-<?= $type === 'error' ? 'danger' : $type ?> alert-dismissible fade show" role="alert">
+                        <i class="fas fa-<?= $type === 'success' ? 'check-circle' : 'exclamation-triangle' ?> me-2"></i>
+                        <?= htmlspecialchars($message) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php
+                endforeach;
+                unset($_SESSION['flash']);
+                ?>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Customers</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['customers'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-user fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Managers</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['managers'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-user-tie fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Super Admins</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['super_admins'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-crown fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Users</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['total'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-users fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                </div>
+
+                <!-- Filter Bar -->
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-light border-0">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-filter me-2 text-primary"></i>Filters
+                        </h6>
+                    </div>
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-success me-3">
-                                <i class="fas fa-user"></i>
+                        <form method="GET" action="<?= SITE_URL ?>/superadmin/users" class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Search Users</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-search text-muted"></i></span>
+                                    <input type="text" class="form-control" name="search" placeholder="Name, email, phone..." value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
+                                </div>
                             </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Customers</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['customers'] ?? 0; ?></div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Role</label>
+                                <select class="form-select" name="role">
+                                    <option value="">All Roles</option>
+                                    <option value="customer" <?php echo (isset($_GET['role']) && $_GET['role'] == 'customer') ? 'selected' : ''; ?>>Customer</option>
+                                    <option value="manager" <?php echo (isset($_GET['role']) && $_GET['role'] == 'manager') ? 'selected' : ''; ?>>Manager</option>
+                                    <option value="super_admin" <?php echo (isset($_GET['role']) && $_GET['role'] == 'super_admin') ? 'selected' : ''; ?>>Super Admin</option>
+                                </select>
                             </div>
-                        </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="">All Status</option>
+                                    <option value="1" <?php echo (isset($_GET['status']) && $_GET['status'] == '1') ? 'selected' : ''; ?>>Active</option>
+                                    <option value="0" <?php echo (isset($_GET['status']) && $_GET['status'] == '0') ? 'selected' : ''; ?>>Inactive</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100 mb-2">
+                                    <i class="fas fa-filter me-1"></i>Filter
+                                </button>
+                                <a href="<?= SITE_URL ?>/superadmin/users" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-times me-1"></i>Clear
+                                </a>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-info me-3">
-                                <i class="fas fa-user-tie"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Managers</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['managers'] ?? 0; ?></div>
+                <!-- Users Table -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0 fw-bold">
+                                <i class="fas fa-users me-2 text-primary"></i>All Users
+                            </h6>
+                            <div class="text-muted small">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <?php echo count($users ?? []); ?> users displayed
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-warning me-3">
-                                <i class="fas fa-crown"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Super Admins</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['super_admins'] ?? 0; ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-primary me-3">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Total Users</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['total'] ?? 0; ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filters -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <form method="GET" class="row g-3">
-                    <div class="col-md-3">
-                        <label for="role" class="form-label">Role</label>
-                        <select class="form-select" id="role" name="role">
-                            <option value="">All Roles</option>
-                            <option value="customer" <?php echo (isset($_GET['role']) && $_GET['role'] == 'customer') ? 'selected' : ''; ?>>Customer</option>
-                            <option value="manager" <?php echo (isset($_GET['role']) && $_GET['role'] == 'manager') ? 'selected' : ''; ?>>Manager</option>
-                            <option value="super_admin" <?php echo (isset($_GET['role']) && $_GET['role'] == 'super_admin') ? 'selected' : ''; ?>>Super Admin</option>
-                        </select>
-                    </div>                    <div class="col-md-3">
-                        <label for="status" class="form-label">Status</label>
-                        <select class="form-select" id="status" name="status">
-                            <option value="">All Status</option>
-                            <option value="1" <?php echo (isset($_GET['status']) && $_GET['status'] == '1') ? 'selected' : ''; ?>>Active</option>
-                            <option value="0" <?php echo (isset($_GET['status']) && $_GET['status'] == '0') ? 'selected' : ''; ?>>Inactive</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="search" class="form-label">Search</label>
-                        <input type="text" class="form-control" id="search" name="search"
-                            placeholder="Name, email, phone..."
-                            value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">&nbsp;</label>                        <div>
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-search"></i> Filter
-                            </button>
-                            <a href="<?= SITE_URL ?>/superadmin/users" class="btn btn-secondary">
-                                <i class="fas fa-times"></i>
-                            </a>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Users Table -->
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-danger">
-                            <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <div class="card-body p-0">                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="border-0 fw-bold">ID</th>
+                                        <th class="border-0 fw-bold">User</th>
+                                        <th class="border-0 fw-bold">Contact</th>
+                                        <th class="border-0 fw-bold">Role</th>
+                                        <th class="border-0 fw-bold">Status</th>
+                                        <th class="border-0 fw-bold">Created</th>
+                                        <th class="border-0 fw-bold text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                             <?php if (!empty($users)): ?>
                                 <?php foreach ($users as $user): ?>
                                     <tr>
@@ -266,17 +307,22 @@
 </script>
 
 <?php
-function getRoleBadgeColor($role)
-{
-    switch ($role) {
-        case 'super_admin':
-            return 'danger';
-        case 'manager':
-            return 'warning';
-        case 'customer':
-            return 'success';
-        default:
-            return 'secondary';
+// Helper functions for user management
+function getRoleIcon($role) {
+    switch($role) {
+        case 'super_admin': return 'crown';
+        case 'manager': return 'user-tie';
+        case 'customer': return 'user';
+        default: return 'user';
+    }
+}
+
+function getRoleBadgeColor($role) {
+    switch($role) {
+        case 'super_admin': return 'warning';
+        case 'manager': return 'info';
+        case 'customer': return 'success';
+        default: return 'secondary';
     }
 }
 ?>

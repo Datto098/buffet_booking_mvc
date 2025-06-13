@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <?php require_once 'views/layouts/superadmin_header.php'; ?>
     <title>Reviews Management - Super Admin</title>
 </head>
+
 <body>
     <div class="container-fluid">
         <div class="row">
@@ -29,7 +31,7 @@
                             <i class="fas fa-sync-alt me-1"></i>Refresh
                         </button>
                     </div>
-                </div>                <!-- Flash Messages -->
+                </div> <!-- Flash Messages -->
                 <?php
                 $flash = $_SESSION['flash'] ?? [];
                 foreach ($flash as $type => $message):
@@ -145,8 +147,8 @@
                             <div class="col-md-4">
                                 <label for="search" class="form-label">Search</label>
                                 <input type="text" class="form-control" id="search" name="search"
-                                       value="<?= htmlspecialchars($filters['search'] ?? '') ?>"
-                                       placeholder="Search reviews, users, or food items...">
+                                    value="<?= htmlspecialchars($filters['search'] ?? '') ?>"
+                                    placeholder="Search reviews, users, or food items...">
                             </div>
                             <div class="col-md-2 d-flex align-items-end">
                                 <button type="submit" class="btn btn-primary me-2">
@@ -198,7 +200,7 @@
                                             <tr>
                                                 <td>
                                                     <input type="checkbox" class="form-check-input review-checkbox"
-                                                           value="<?= $review['id'] ?>">
+                                                        value="<?= $review['id'] ?>">
                                                 </td>
                                                 <td>
                                                     <div class="review-content">
@@ -242,10 +244,10 @@
                                                     <div class="d-flex align-items-center">
                                                         <?php if (!empty($review['food_image'])): ?>
                                                             <img src="<?= SITE_URL ?>/uploads/food_images/<?= $review['food_image'] ?>"
-                                                                 alt="Food" class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                                alt="Food" class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
                                                         <?php else: ?>
                                                             <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center"
-                                                                 style="width: 40px; height: 40px;">
+                                                                style="width: 40px; height: 40px;">
                                                                 <i class="fas fa-utensils text-muted"></i>
                                                             </div>
                                                         <?php endif; ?>
@@ -278,31 +280,31 @@
                                                 <td>
                                                     <div class="btn-group" role="group">
                                                         <button type="button" class="btn btn-outline-info btn-sm"
-                                                                onclick="viewReview(<?= $review['id'] ?>)" title="View Details">
+                                                            onclick="viewReview(<?= $review['id'] ?>)" title="View Details">
                                                             <i class="fas fa-eye"></i>
                                                         </button>
 
                                                         <?php if (!$review['is_approved']): ?>
                                                             <button type="button" class="btn btn-outline-success btn-sm"
-                                                                    onclick="approveReview(<?= $review['id'] ?>)" title="Approve">
+                                                                onclick="approveReview(<?= $review['id'] ?>)" title="Approve">
                                                                 <i class="fas fa-check"></i>
                                                             </button>
                                                         <?php else: ?>
                                                             <button type="button" class="btn btn-outline-warning btn-sm"
-                                                                    onclick="rejectReview(<?= $review['id'] ?>)" title="Unapprove">
+                                                                onclick="rejectReview(<?= $review['id'] ?>)" title="Unapprove">
                                                                 <i class="fas fa-times"></i>
                                                             </button>
                                                         <?php endif; ?>
 
                                                         <?php if (!$review['is_verified']): ?>
                                                             <button type="button" class="btn btn-outline-primary btn-sm"
-                                                                    onclick="verifyReview(<?= $review['id'] ?>)" title="Verify">
+                                                                onclick="verifyReview(<?= $review['id'] ?>)" title="Verify">
                                                                 <i class="fas fa-shield-alt"></i>
                                                             </button>
                                                         <?php endif; ?>
 
                                                         <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                onclick="deleteReview(<?= $review['id'] ?>)" title="Delete">
+                                                            onclick="deleteReview(<?= $review['id'] ?>)" title="Delete">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </div>
@@ -424,96 +426,96 @@
         function approveReview(id) {
             if (confirm('Are you sure you want to approve this review?')) {
                 fetch(`<?= SITE_URL ?>/superadmin/reviews/approve/${id}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('Review approved successfully', 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showAlert(data.message || 'Failed to approve review', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('An error occurred', 'error');
-                });
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showAlert('Review approved successfully', 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showAlert(data.message || 'Failed to approve review', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('An error occurred', 'error');
+                    });
             }
         }
 
         function rejectReview(id) {
             if (confirm('Are you sure you want to reject this review?')) {
                 fetch(`<?= SITE_URL ?>/superadmin/reviews/reject/${id}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('Review rejected successfully', 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showAlert(data.message || 'Failed to reject review', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('An error occurred', 'error');
-                });
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showAlert('Review rejected successfully', 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showAlert(data.message || 'Failed to reject review', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('An error occurred', 'error');
+                    });
             }
         }
 
         function verifyReview(id) {
             if (confirm('Are you sure you want to verify this review?')) {
                 fetch(`<?= SITE_URL ?>/superadmin/reviews/verify/${id}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('Review verified successfully', 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showAlert(data.message || 'Failed to verify review', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('An error occurred', 'error');
-                });
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showAlert('Review verified successfully', 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showAlert(data.message || 'Failed to verify review', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('An error occurred', 'error');
+                    });
             }
         }
 
         function deleteReview(id) {
             if (confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
                 fetch(`<?= SITE_URL ?>/superadmin/reviews/delete/${id}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('Review deleted successfully', 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showAlert(data.message || 'Failed to delete review', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('An error occurred', 'error');
-                });
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showAlert('Review deleted successfully', 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showAlert(data.message || 'Failed to delete review', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('An error occurred', 'error');
+                    });
             }
         }
 
@@ -533,22 +535,22 @@
                 reviewIds.forEach(id => formData.append('review_ids[]', id));
 
                 fetch(`<?= SITE_URL ?>/superadmin/reviews/bulk-action`, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert(data.message, 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showAlert(data.message || `Failed to ${actionText} reviews`, 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('An error occurred', 'error');
-                });
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showAlert(data.message, 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showAlert(data.message || `Failed to ${actionText} reviews`, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('An error occurred', 'error');
+                    });
             }
         }
 
@@ -574,4 +576,5 @@
         }
     </script>
 </body>
+
 </html>

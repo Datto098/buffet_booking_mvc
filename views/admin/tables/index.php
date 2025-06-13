@@ -164,25 +164,56 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </div>                </div>
                 <?php endif; ?>
+
+                <!-- Filter Bar -->
+                <div class="filter-bar mb-4">
+                    <form action="<?= SITE_URL ?>/admin/tables" method="GET" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">Search Tables</label>
+                            <div class="search-box">
+                                <input type="text" class="form-control" name="search" placeholder="Table number, location, description..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="">All Status</option>
+                                <option value="available" <?= ($_GET['status'] ?? '') == 'available' ? 'selected' : '' ?>>Available</option>
+                                <option value="unavailable" <?= ($_GET['status'] ?? '') == 'unavailable' ? 'selected' : '' ?>>Unavailable</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Location</label>
+                            <select class="form-select" name="location">
+                                <option value="">All Locations</option>
+                                <?php foreach ($data['locationStats'] as $locationStat): ?>
+                                    <option value="<?= htmlspecialchars($locationStat['location']) ?>" <?= ($_GET['location'] ?? '') == $locationStat['location'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($locationStat['location'] ?: 'Main Area') ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter me-1"></i>Filter
+                            </button>
+                            <a href="<?= SITE_URL ?>/admin/tables" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
 
                 <!-- Tables Table -->
                 <div class="card shadow">
                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">All Tables</h6>
-                        <div class="card-tools">
-                            <div class="input-group input-group-sm" style="width: 250px;">
-                                <input type="text" name="search" class="form-control float-right"
-                                       placeholder="Search tables..." id="searchInput"
-                                       value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-default" onclick="searchTables()">
-                                        <i class="fas fa-search"></i>
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="d-flex gap-2">
+                            <span class="badge bg-primary">
+                                <?php echo count($data['tables'] ?? []); ?> showing
+                            </span>
                         </div>
                     </div>
                     <div class="card-body">
