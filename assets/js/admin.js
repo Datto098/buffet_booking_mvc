@@ -665,6 +665,59 @@ function showAlert(type, message, duration = 5000) {
 	}
 }
 
+// Show loading overlay
+function showLoadingOverlay() {
+	// Remove existing overlay if any
+	hideLoadingOverlay();
+
+	const overlay = document.createElement('div');
+	overlay.id = 'loading-overlay';
+	overlay.className = 'loading-overlay';
+	overlay.innerHTML = `
+		<div class="loading-spinner">
+			<div class="spinner-border text-primary" role="status">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+			<div class="mt-2">Please wait...</div>
+		</div>
+	`;
+
+	// Add overlay styles if not already added
+	if (!document.getElementById('loading-overlay-styles')) {
+		const style = document.createElement('style');
+		style.id = 'loading-overlay-styles';
+		style.textContent = `
+			.loading-overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(255, 255, 255, 0.8);
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				z-index: 9999;
+			}
+			.loading-spinner {
+				text-align: center;
+				color: #4e73df;
+			}
+		`;
+		document.head.appendChild(style);
+	}
+
+	document.body.appendChild(overlay);
+}
+
+// Hide loading overlay
+function hideLoadingOverlay() {
+	const overlay = document.getElementById('loading-overlay');
+	if (overlay) {
+		overlay.remove();
+	}
+}
+
 // Confirm delete actions
 document.addEventListener('click', function (e) {
 	if (
@@ -3050,3 +3103,261 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Initialize selected count
 	updateSelectedCount();
 });
+
+// =============================================================================
+// CATEGORY MANAGEMENT FUNCTIONS - MAIN ACTIONS
+// =============================================================================
+
+/**
+ * Edit category - redirect to edit page
+ * @param {number} categoryId - Category ID to edit
+ */
+function editCategory(categoryId) {
+	if (!categoryId) {
+		console.error('Category ID is required');
+		return;
+	}
+	window.location.href = `${window.SITE_URL}/admin/categories/edit/${categoryId}`;
+}
+
+/**
+ * View category details
+ * @param {number} categoryId - Category ID to view
+ */
+function viewCategory(categoryId) {
+	if (!categoryId) {
+		console.error('Category ID is required');
+		return;
+	}
+
+	// Show loading overlay
+	showLoadingOverlay();
+
+	// Fetch category details
+	fetch(`${window.SITE_URL}/admin/categories/get/${categoryId}`, {
+		method: 'GET',
+		headers: {
+			'X-Requested-With': 'XMLHttpRequest',
+			'Content-Type': 'application/json',
+		},
+	})
+		.then((response) => response.json())
+		.then((data) => {
+			hideLoadingOverlay();
+
+			if (data.success && data.category) {
+				showCategoryDetailsModal(data.category);
+			} else {
+				showAlert('Failed to load category details', 'error');
+			}
+		})
+		.catch((error) => {
+			hideLoadingOverlay();
+			console.error('Error:', error);
+			showAlert('Failed to load category details', 'error');
+		});
+}
+
+/**
+ * Delete category with confirmation
+ * @param {number} categoryId - Category ID to delete
+ */
+function deleteCategory(categoryId) {
+	if (!categoryId) {
+		console.error('Category ID is required');
+		return;
+	}
+
+	// Show confirmation dialog
+	if (
+		!confirm(
+			'Are you sure you want to delete this category? This action cannot be undone.'
+		)
+	) {
+		return;
+	}
+
+	// Show loading overlay
+	showLoadingOverlay();
+
+	// Get CSRF token
+	const csrfToken =
+		document
+			.querySelector('meta[name="csrf-token"]')
+			?.getAttribute('content') || '';
+
+	// Send delete request
+	fetch(`${window.SITE_URL}/admin/categories/delete/${categoryId}`, {
+		method: 'DELETE',
+		headers: {
+			'X-Requested-With': 'XMLHttpRequest',
+			'Content-Type': 'application/json',
+			'X-CSRF-Token': csrfToken,
+		},
+		body: JSON.stringify({
+			csrf_token: csrfToken,
+		}),
+	})
+		.then((response) => response.json())
+		.then((data) => {
+			hideLoadingOverlay();
+
+			if (data.success) {
+				showAlert('Category deleted successfully', 'success');
+				// Reload the page after a short delay
+				setTimeout(() => {
+					window.location.reload();
+				}, 1500);
+			} else {
+				showAlert(data.message || 'Failed to delete category', 'error');
+			}
+		})
+		.catch((error) => {
+			hideLoadingOverlay();
+			console.error('Error:', error);
+			showAlert('Failed to delete category', 'error');
+		});
+}
+
+/**
+ * Show category details in a modal
+ * @param {Object} category - Category data
+ */
+function showCategoryDetailsModal(category) {
+	// Create modal HTML
+	const modalHtml = `
+		<div class="modal fade" id="categoryDetailsModal" tabindex="-1">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">
+							<i class="fas fa-tag"></i> Category Details
+						</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body">
+						<div class="row">
+							<div class="col-md-8">
+								<h4>${escapeHtml(category.name)}</h4>
+								<p class="text-muted">${escapeHtml(
+									category.description || 'No description'
+								)}</p>
+
+								<div class="row mb-3">
+									<div class="col-sm-6">
+										<strong>Status:</strong>
+										<span class="badge bg-${
+											category.is_active == 1
+												? 'success'
+												: 'secondary'
+										} ms-1">
+											${category.is_active == 1 ? 'Active' : 'Inactive'}
+										</span>
+									</div>
+									<div class="col-sm-6">
+										<strong>Sort Order:</strong> ${category.sort_order || 0}
+									</div>
+								</div>
+
+								<div class="row mb-3">
+									<div class="col-sm-6">
+										<strong>Food Items:</strong> ${category.food_count || 0}
+									</div>
+									<div class="col-sm-6">
+										<strong>Created:</strong> ${formatDate(category.created_at)}
+									</div>
+								</div>
+							</div>
+							<div class="col-md-4 text-center">
+								${
+									category.icon
+										? `<i class="${escapeHtml(
+												category.icon
+										  )} fa-4x" style="color: ${escapeHtml(
+												category.color || '#007bff'
+										  )}"></i>`
+										: '<i class="fas fa-tag fa-4x text-muted"></i>'
+								}
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+						<button type="button" class="btn btn-primary" onclick="editCategory(${
+							category.id
+						}); bootstrap.Modal.getInstance(document.getElementById('categoryDetailsModal')).hide();">
+							<i class="fas fa-edit"></i> Edit Category
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	`;
+
+	// Remove existing modal if any
+	const existingModal = document.getElementById('categoryDetailsModal');
+	if (existingModal) {
+		existingModal.remove();
+	}
+
+	// Add modal to body
+	document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+	// Show modal
+	const modal = new bootstrap.Modal(
+		document.getElementById('categoryDetailsModal')
+	);
+	modal.show();
+
+	// Clean up when modal is hidden
+	document
+		.getElementById('categoryDetailsModal')
+		.addEventListener('hidden.bs.modal', function () {
+			this.remove();
+		});
+}
+
+/**
+ * Export categories data
+ */
+function exportCategories() {
+	window.location.href = `${window.SITE_URL}/admin/categories/export`;
+}
+
+/**
+ * Refresh categories page
+ */
+function refreshCategories() {
+	window.location.reload();
+}
+
+/**
+ * Helper function to escape HTML
+ * @param {string} text - Text to escape
+ * @returns {string} - Escaped text
+ */
+function escapeHtml(text) {
+	if (!text) return '';
+	const div = document.createElement('div');
+	div.textContent = text;
+	return div.innerHTML;
+}
+
+/**
+ * Helper function to format date
+ * @param {string} dateString - Date string to format
+ * @returns {string} - Formatted date
+ */
+function formatDate(dateString) {
+	if (!dateString) return 'N/A';
+	try {
+		const date = new Date(dateString);
+		return date.toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+		});
+	} catch (error) {
+		return 'Invalid Date';
+	}
+}

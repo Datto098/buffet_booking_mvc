@@ -1,0 +1,15 @@
+[2024-12-15 09:15:32] ERROR: Undefined variable: user_id in /var/www/controllers/AdminController.php:245
+[2024-12-15 09:20:18] WARNING: Trying to access array offset on value of type null in /var/www/models/Order.php:156
+[2024-12-15 09:25:44] ERROR: Call to undefined method User::getInvalidMethod() in /var/www/controllers/UserController.php:89
+[2024-12-15 09:30:12] NOTICE: Undefined index: csrf_token in /var/www/controllers/BookingController.php:234
+[2024-12-15 09:35:28] ERROR: Maximum execution time of 30 seconds exceeded in /var/www/models/Food.php:178
+[2024-12-15 09:40:55] WARNING: Invalid argument supplied for foreach() in /var/www/views/admin/dashboard.php:67
+[2024-12-15 09:45:13] ERROR: Cannot redeclare function sanitize() in /var/www/helpers/functions.php:45
+[2024-12-15 09:50:29] NOTICE: Use of undefined constant DB_HOST in /var/www/config/database.php:12
+[2024-12-15 09:55:44] ERROR: Class 'PDO' not found in /var/www/models/BaseModel.php:23
+[2024-12-15 10:00:17] WARNING: Division by zero in /var/www/controllers/AdminController.php:567
+[2024-12-15 10:05:33] ERROR: Failed to open stream: No such file or directory in /var/www/views/layouts/header.php:15
+[2024-12-15 10:10:48] NOTICE: Undefined variable: config in /var/www/index.php:78
+[2024-12-15 10:15:22] ERROR: Uncaught TypeError: count(): Parameter must be an array in /var/www/models/Category.php:134
+[2024-12-15 10:20:19] WARNING: array_slice() expects parameter 1 to be array, null given in /var/www/controllers/FoodController.php:203
+[2024-12-15 10:25:44] ERROR: Fatal error: Out of memory (allocated 134217728) in /var/www/models/Order.php:299

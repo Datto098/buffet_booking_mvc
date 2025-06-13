@@ -1219,7 +1219,7 @@ class SuperAdminController extends BaseController
         $totalTables = $this->tableModel->count();
 
         // Get revenue data
-        $orderStats = $this->orderModel->getDashboardStats();
+        $orderStats = $this->orderModel->getOrderStats();
         $monthlyRevenue = $this->orderModel->getMonthlyRevenue();
 
         // Get recent data
@@ -1287,62 +1287,47 @@ class SuperAdminController extends BaseController
      */
     public function reviewDetails($id)
     {
-        $reviewData = $this->reviewModel->getReviewById($id);
+        $reviewData = $this->reviewModel->getReviewDetails($id);
 
         if (!$reviewData) {
-            $this->jsonResponse([
-                'success' => false,
-                'message' => 'Review not found'
-            ], 404);
+            http_response_code(404);
+            echo '<div class="alert alert-danger">Review not found</div>';
             return;
-        }
-
-        // Capture the HTML output
-        ob_start();
-        $this->view('superadmin/reviews/details', ['reviewData' => $reviewData], false);
-        $html = ob_get_clean();
-
-        $this->jsonResponse([
-            'success' => true,
-            'html' => $html
-        ]);
-    }/**
+        }        // Load the details view
+        $this->loadSuperAdminView('reviews/details', ['reviewData' => $reviewData]);
+    }    /**
      * Approve review
      */
     public function approveReview($id)
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $result = $this->reviewModel->updateApprovalStatus($id, 1);
+            $result = $this->reviewModel->approveReview($id);
 
             $this->jsonResponse([
                 'success' => $result,
                 'message' => $result ? 'Review approved successfully' : 'Failed to approve review'
             ]);
         }
-    }
-
-    /**
+    }    /**
      * Reject/Unapprove review
      */
     public function rejectReview($id)
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $result = $this->reviewModel->updateApprovalStatus($id, 0);
+            $result = $this->reviewModel->rejectReview($id);
 
             $this->jsonResponse([
                 'success' => $result,
                 'message' => $result ? 'Review rejected successfully' : 'Failed to reject review'
             ]);
         }
-    }
-
-    /**
+    }    /**
      * Verify review
      */
     public function verifyReview($id)
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $result = $this->reviewModel->updateVerifiedStatus($id, 1);
+            $result = $this->reviewModel->verifyReview($id);
 
             $this->jsonResponse([
                 'success' => $result,
@@ -1384,15 +1369,13 @@ class SuperAdminController extends BaseController
             }
 
             $result = false;
-            $message = '';
-
-            switch ($action) {
+            $message = '';            switch ($action) {
                 case 'approve':
-                    $result = $this->reviewModel->bulkApprove($reviewIds);
+                    $result = $this->reviewModel->bulkApproveReviews($reviewIds);
                     $message = $result ? 'Reviews approved successfully' : 'Failed to approve reviews';
                     break;
                 case 'delete':
-                    $result = $this->reviewModel->bulkDelete($reviewIds);
+                    $result = $this->reviewModel->bulkDeleteReviews($reviewIds);
                     $message = $result ? 'Reviews deleted successfully' : 'Failed to delete reviews';
                     break;
                 default:

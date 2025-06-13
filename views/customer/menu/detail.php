@@ -329,7 +329,7 @@
                             <!-- Avatar trái -->
                             <div class="me-3 flex-shrink-0">
                                 <?php if (!empty($comment['avatar'])): ?>
-                                    <img src="<?= SITE_URL ?>/assets/images/<?= htmlspecialchars($comment['avatar']) ?>"
+                                    <img src="<?= SITE_URL ?>/uploads/food_images/<?= htmlspecialchars($comment['avatar']) ?>"
                                         alt="Profile Picture"
                                         class="rounded-circle border"
                                         width="56" height="56"

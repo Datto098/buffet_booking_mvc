@@ -70,7 +70,7 @@ class SuperAdminController extends BaseController
 
         // Get all users with filters
         $allUsers = $this->userModel->getAllForAdmin();
-        
+
         // Apply filters
         if ($search) {
             $allUsers = array_filter($allUsers, function($user) use ($search) {
@@ -270,7 +270,7 @@ class SuperAdminController extends BaseController
     }
 
     // ==========================================
-    // ORDER MANAGEMENT 
+    // ORDER MANAGEMENT
     // ==========================================
 
     public function orders()
@@ -299,7 +299,7 @@ class SuperAdminController extends BaseController
         }));
 
         $todayRevenue = array_sum(array_map(function($order) {
-            if (date('Y-m-d', strtotime($order['created_at'])) === date('Y-m-d') && 
+            if (date('Y-m-d', strtotime($order['created_at'])) === date('Y-m-d') &&
                 $order['status'] === 'completed') {
                 return $order['total_amount'];
             }
@@ -528,20 +528,20 @@ class SuperAdminController extends BaseController
 
             // Update or create restaurant info
             $db = Database::getInstance()->getConnection();
-            
+
             $stmt = $db->prepare("SELECT COUNT(*) FROM restaurant_info WHERE id = 1");
             $stmt->execute();
             $exists = $stmt->fetchColumn() > 0;
 
             if ($exists) {
                 $stmt = $db->prepare("
-                    UPDATE restaurant_info 
+                    UPDATE restaurant_info
                     SET restaurant_name = ?, address = ?, phone = ?, email = ?, description = ?, opening_hours = ?, capacity = ?, updated_at = NOW()
                     WHERE id = 1
                 ");
             } else {
                 $stmt = $db->prepare("
-                    INSERT INTO restaurant_info (id, restaurant_name, address, phone, email, description, opening_hours, capacity) 
+                    INSERT INTO restaurant_info (id, restaurant_name, address, phone, email, description, opening_hours, capacity)
                     VALUES (1, ?, ?, ?, ?, ?, ?, ?)
                 ");
             }
@@ -608,11 +608,11 @@ class SuperAdminController extends BaseController
 
         // Get promotions with filters
         $db = Database::getInstance()->getConnection();
-        
+
         // Build filter conditions
         $whereConditions = [];
         $params = [];
-        
+
         if (!empty($_GET['status'])) {
             switch ($_GET['status']) {
                 case 'active':
@@ -626,21 +626,21 @@ class SuperAdminController extends BaseController
                     break;
             }
         }
-        
+
         if (!empty($_GET['type'])) {
             $whereConditions[] = "type = ?";
             $params[] = $_GET['type'];
         }
-        
+
         if (!empty($_GET['search'])) {
             $whereConditions[] = "(name LIKE ? OR code LIKE ?)";
             $searchTerm = '%' . $_GET['search'] . '%';
             $params[] = $searchTerm;
             $params[] = $searchTerm;
         }
-        
+
         $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
-        
+
         // Get promotions
         $sql = "SELECT * FROM promotions $whereClause ORDER BY created_at DESC LIMIT ? OFFSET ?";
         $params[] = $limit;
@@ -683,7 +683,7 @@ class SuperAdminController extends BaseController
             }
 
             $db = Database::getInstance()->getConnection();
-            
+
             $promotionData = [
                 'name' => $this->sanitize($_POST['name']),
                 'code' => strtoupper($this->sanitize($_POST['code'])),
@@ -697,7 +697,7 @@ class SuperAdminController extends BaseController
             ];
 
             // Validate required fields
-            if (empty($promotionData['name']) || empty($promotionData['code']) || 
+            if (empty($promotionData['name']) || empty($promotionData['code']) ||
                 empty($promotionData['type']) || $promotionData['discount_value'] <= 0) {
                 $this->jsonResponse(['success' => false, 'message' => 'Please fill in all required fields correctly.'], 400);
                 return;
@@ -713,7 +713,7 @@ class SuperAdminController extends BaseController
 
             // Insert promotion
             $stmt = $db->prepare("
-                INSERT INTO promotions (name, code, description, type, discount_value, start_date, end_date, usage_limit, minimum_amount) 
+                INSERT INTO promotions (name, code, description, type, discount_value, start_date, end_date, usage_limit, minimum_amount)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
@@ -744,7 +744,7 @@ class SuperAdminController extends BaseController
             }
 
             $db = Database::getInstance()->getConnection();
-            
+
             $promotionData = [
                 'name' => $this->sanitize($_POST['name']),
                 'code' => strtoupper($this->sanitize($_POST['code'])),
@@ -758,7 +758,7 @@ class SuperAdminController extends BaseController
             ];
 
             // Validate required fields
-            if (empty($promotionData['name']) || empty($promotionData['code']) || 
+            if (empty($promotionData['name']) || empty($promotionData['code']) ||
                 empty($promotionData['type']) || $promotionData['discount_value'] <= 0) {
                 $this->jsonResponse(['success' => false, 'message' => 'Please fill in all required fields correctly.'], 400);
                 return;
@@ -774,8 +774,8 @@ class SuperAdminController extends BaseController
 
             // Update promotion
             $stmt = $db->prepare("
-                UPDATE promotions 
-                SET name = ?, code = ?, description = ?, type = ?, discount_value = ?, 
+                UPDATE promotions
+                SET name = ?, code = ?, description = ?, type = ?, discount_value = ?,
                     start_date = ?, end_date = ?, usage_limit = ?, minimum_amount = ?, updated_at = NOW()
                 WHERE id = ?
             ");
@@ -820,7 +820,7 @@ class SuperAdminController extends BaseController
             }
 
             $db = Database::getInstance()->getConnection();
-            
+
             $stmt = $db->prepare("DELETE FROM promotions WHERE id = ?");
             if ($stmt->execute([$id])) {
                 $this->jsonResponse(['success' => true, 'message' => 'Promotion deleted successfully.']);
@@ -834,7 +834,7 @@ class SuperAdminController extends BaseController
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db = Database::getInstance()->getConnection();
-            
+
             // Get current status
             $stmt = $db->prepare("SELECT is_active FROM promotions WHERE id = ?");
             $stmt->execute([$id]);
@@ -843,7 +843,7 @@ class SuperAdminController extends BaseController
             if ($currentStatus !== false) {
                 $newStatus = $currentStatus ? 0 : 1;
                 $stmt = $db->prepare("UPDATE promotions SET is_active = ? WHERE id = ?");
-                
+
                 if ($stmt->execute([$newStatus, $id])) {
                     $this->jsonResponse(['success' => true, 'is_active' => $newStatus]);
                 } else {
@@ -858,28 +858,28 @@ class SuperAdminController extends BaseController
     private function getPromotionStats()
     {
         $db = Database::getInstance()->getConnection();
-        
+
         $stats = [];
-        
+
         // Total promotions
         $stats['total_promotions'] = $db->query("SELECT COUNT(*) FROM promotions")->fetchColumn();
-        
+
         // Active promotions
         $stats['active_promotions'] = $db->query("
-            SELECT COUNT(*) FROM promotions 
+            SELECT COUNT(*) FROM promotions
             WHERE is_active = 1 AND start_date <= CURDATE() AND end_date >= CURDATE()
         ")->fetchColumn();
-        
+
         // Expired promotions
         $stats['expired_promotions'] = $db->query("
             SELECT COUNT(*) FROM promotions WHERE end_date < CURDATE()
         ")->fetchColumn();
-        
+
         // Total usage (if you track promotion usage)
         $stats['used_promotions'] = $db->query("
             SELECT COALESCE(SUM(used_count), 0) FROM promotions
         ")->fetchColumn();
-        
+
         return $stats;
     }
 
@@ -891,7 +891,7 @@ class SuperAdminController extends BaseController
     {
         // Get comprehensive statistics
         $stats = $this->getDashboardStats();
-        
+
         // Additional statistics for super admin
         $stats['monthly_revenue'] = $this->orderModel->getMonthlyRevenue();
         $stats['popular_foods'] = $this->foodModel->getPopularFoods(10);
@@ -919,7 +919,7 @@ class SuperAdminController extends BaseController
         $totalTables = $this->tableModel->count();
 
         // Get revenue data
-        $orderStats = $this->orderModel->getDashboardStats();
+        $orderStats = $this->orderModel->getOrderStats();
         $monthlyRevenue = $this->orderModel->getMonthlyRevenue();
 
         // Get recent data
