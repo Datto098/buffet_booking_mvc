@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1:3306
--- Thời gian đã tạo: Th6 13, 2025 lúc 09:29 AM
+-- Thời gian đã tạo: Th6 13, 2025 lúc 10:08 AM
 -- Phiên bản máy phục vụ: 9.1.0
 -- Phiên bản PHP: 8.3.14
 
@@ -567,7 +567,7 @@ INSERT INTO `reviews` (`id`, `user_id`, `order_id`, `food_item_id`, `rating`, `t
 (4, 5, NULL, 13, 5, 'Bánh flan hoàn hảo', 'Bánh flan mềm mượt, vị caramel đậm đà nhưng không quá ngọt. Món tráng miệng lý tưởng!', 0, 1, 6, '2025-06-09 12:15:00', '2025-06-13 05:28:14'),
 (5, 1, NULL, 2, 3, 'Buffet bình thường', 'Standard Buffet có đủ món nhưng không có gì đặc biệt. Phù hợp với ngân sách nhưng không có điểm nhấn.', 0, 1, 3, '2025-06-10 05:00:00', '2025-06-13 05:28:14'),
 (6, 7, NULL, 8, 4, 'Gimbap Hàn Quốc authentic', 'Gimbap làm khá giống với bên Hàn Quốc, nhân đầy đủ và cơm nêm vừa miệng. Chỉ tiếc là hơi nhỏ.', 1, 1, 9, '2025-06-10 06:30:00', '2025-06-13 05:28:14'),
-(7, 5, NULL, 14, 5, 'Trà đào cam sả tuyệt vời', 'Nước uống rất thơm và mát, vị chua ngọt hài hòa. Rất phù hợp với thời tiết nóng bức ở Sài Gòn.', 1, 1, 11, '2025-06-10 08:45:00', '2025-06-13 05:28:14'),
+(7, 5, NULL, 14, 5, 'Trà đào cam sả tuyệt vời', 'Nước uống rất thơm và mát, vị chua ngọt hài hòa. Rất phù hợp với thời tiết nóng bức ở Sài Gòn.', 1, 1, 12, '2025-06-10 08:45:00', '2025-06-13 10:06:04'),
 (8, 1, NULL, 6, 4, 'Sườn bò non tuyệt', 'Sườn non nướng vừa tái vừa chín, ướp gia vị đậm đà. Thịt mềm và rất thơm, giá hơi cao nhưng xứng đáng.', 0, 1, 7, '2025-06-10 11:20:00', '2025-06-13 05:28:14'),
 (9, 7, NULL, 9, 3, 'Tempura tôm cần cải thiện', 'Vỏ bột hơi dày, tôm tươi nhưng chiên hơi kỹ. Cần cải thiện kỹ thuật chiên để giữ độ giòn.', 1, 1, 2, '2025-06-10 13:00:00', '2025-06-13 05:49:21'),
 (10, 5, NULL, 11, 4, 'Cơm chiên Nhật ngon', 'Cơm chiên không bị khô, trứng và rau củ tươi ngon. Phần ăn vừa phải, phù hợp cho bữa trưa nhẹ.', 1, 1, 5, '2025-06-11 04:30:00', '2025-06-13 05:28:14'),
@@ -579,8 +579,34 @@ INSERT INTO `reviews` (`id`, `user_id`, `order_id`, `food_item_id`, `rating`, `t
 (16, 5, NULL, 1, 5, 'Lần thứ hai vẫn tuyệt!', 'Quay lại lần thứ hai vẫn rất hài lòng với Deluxe Buffet. Chất lượng đồ ăn ổn định, dịch vụ tốt.', 1, 1, 10, '2025-06-11 13:30:00', '2025-06-13 05:28:14'),
 (17, 1, NULL, 7, 5, 'Sushi chuẩn Nhật', 'Sushi cá hồi ở đây làm rất chuẩn, cơm nêm vừa phải, cá tươi ngon. Một trong những món phải thử!', 1, 1, 14, '2025-06-11 14:00:00', '2025-06-13 05:28:14'),
 (18, 7, NULL, 5, 5, 'Ba chỉ bò xuất sắc', 'Thịt bò Mỹ nướng hoàn hảo, ướp gia vị đậm đà, mềm và juicy. Đây là lý do tôi quay lại nhà hàng!', 1, 1, 16, '2025-06-11 14:45:00', '2025-06-13 05:28:14'),
-(19, 5, NULL, 14, 4, 'Thức uống tốt', 'Trà đào cam sả rất ngon, hương vị tự nhiên không bị ngọt gắt. Rất thích hợp cho mùa hè.', 0, 1, 3, '2025-06-11 15:15:00', '2025-06-13 05:42:09'),
+(19, 5, NULL, 14, 4, 'Thức uống tốt', 'Trà đào cam sả rất ngon, hương vị tự nhiên không bị ngọt gắt. Rất thích hợp cho mùa hè.', 0, 1, 4, '2025-06-11 15:15:00', '2025-06-13 10:06:04'),
 (20, 1, NULL, 13, 5, 'Tráng miệng hoàn hảo', 'Bánh flan ở đây ngon nhất từ trước đến nay. Mềm mượt, ngọt vừa phải, caramel thơm lừng.', 1, 1, 9, '2025-06-11 15:30:00', '2025-06-13 05:28:14');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `review_likes`
+--
+
+DROP TABLE IF EXISTS `review_likes`;
+CREATE TABLE IF NOT EXISTS `review_likes` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `review_id` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_review_like` (`user_id`,`review_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_review_id` (`review_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `review_likes`
+--
+
+INSERT INTO `review_likes` (`id`, `user_id`, `review_id`, `created_at`) VALUES
+(1, 4, 7, '2025-06-13 10:06:04'),
+(2, 4, 19, '2025-06-13 10:06:04');
 
 -- --------------------------------------------------------
 
