@@ -5,7 +5,7 @@ class Review extends BaseModel
     protected $table = 'reviews';
     /**
      * Get reviews for a food item
-     * 
+     *
      * @param int $foodItemId
      * @param int $limit
      * @return array
@@ -148,5 +148,243 @@ class Review extends BaseModel
         $stmt->execute([$foodId]);
         $row = $stmt->fetch();
         return $row ? intval($row['total']) : 0;
+    }
+
+    /**
+     * Get all reviews with pagination and filters for admin management
+     * @param int $limit
+     * @param int $offset
+     * @param array $filters
+     * @return array
+     */    public function getAllReviews($limit = 20, $offset = 0, $filters = [])
+    {
+        $sql = "SELECT r.*,
+                       u.first_name, u.last_name, u.email as user_email, u.avatar,
+                       u.phone as user_phone, u.created_at as user_created_at,
+                       f.name as food_name, f.image as food_image,
+                       c.name as category_name
+                FROM reviews r
+                LEFT JOIN users u ON r.user_id = u.id
+                LEFT JOIN food_items f ON r.food_item_id = f.id
+                LEFT JOIN categories c ON f.category_id = c.id
+                WHERE 1=1";
+
+        $params = [];
+
+        // Apply filters
+        if (!empty($filters['status'])) {
+            if ($filters['status'] === 'approved') {
+                $sql .= " AND r.is_approved = 1";
+            } elseif ($filters['status'] === 'pending') {
+                $sql .= " AND r.is_approved = 0";
+            } elseif ($filters['status'] === 'verified') {
+                $sql .= " AND r.is_verified = 1";
+            }
+        }
+
+        if (!empty($filters['rating'])) {
+            $sql .= " AND r.rating = :rating";
+            $params[':rating'] = (int)$filters['rating'];
+        }
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (r.title LIKE :search OR r.comment LIKE :search OR u.first_name LIKE :search OR u.last_name LIKE :search OR f.name LIKE :search)";
+            $params[':search'] = '%' . $filters['search'] . '%';
+        }
+
+        $sql .= " ORDER BY r.created_at DESC LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->db->prepare($sql);
+
+        // Bind parameters
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Count reviews with filters
+     * @param array $filters
+     * @return int
+     */
+    public function countReviews($filters = [])
+    {
+        $sql = "SELECT COUNT(*) FROM reviews r
+                LEFT JOIN users u ON r.user_id = u.id
+                LEFT JOIN food_items f ON r.food_item_id = f.id
+                WHERE 1=1";
+
+        $params = [];
+
+        // Apply same filters as getAllReviews
+        if (!empty($filters['status'])) {
+            if ($filters['status'] === 'approved') {
+                $sql .= " AND r.is_approved = 1";
+            } elseif ($filters['status'] === 'pending') {
+                $sql .= " AND r.is_approved = 0";
+            } elseif ($filters['status'] === 'verified') {
+                $sql .= " AND r.is_verified = 1";
+            }
+        }
+
+        if (!empty($filters['rating'])) {
+            $sql .= " AND r.rating = :rating";
+            $params[':rating'] = (int)$filters['rating'];
+        }
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (r.title LIKE :search OR r.comment LIKE :search OR u.first_name LIKE :search OR u.last_name LIKE :search OR f.name LIKE :search)";
+            $params[':search'] = '%' . $filters['search'] . '%';
+        }
+
+        $stmt = $this->db->prepare($sql);
+
+        // Bind parameters
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Get review statistics for admin dashboard
+     * @return array
+     */
+    public function getReviewStats()
+    {
+        $stats = [];
+
+        // Total reviews
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM reviews");
+        $stmt->execute();
+        $stats['total_reviews'] = (int)$stmt->fetchColumn();
+
+        // Approved reviews
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM reviews WHERE is_approved = 1");
+        $stmt->execute();
+        $stats['approved_reviews'] = (int)$stmt->fetchColumn();
+
+        // Pending reviews
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM reviews WHERE is_approved = 0");
+        $stmt->execute();
+        $stats['pending_reviews'] = (int)$stmt->fetchColumn();
+
+        // Verified reviews
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM reviews WHERE is_verified = 1");
+        $stmt->execute();
+        $stats['verified_reviews'] = (int)$stmt->fetchColumn();
+
+        // Average rating
+        $stmt = $this->db->prepare("SELECT AVG(rating) FROM reviews WHERE is_approved = 1");
+        $stmt->execute();
+        $stats['average_rating'] = (float)$stmt->fetchColumn() ?: 0;
+
+        return $stats;
+    }
+
+    /**
+     * Approve a review
+     * @param int $reviewId
+     * @return bool
+     */
+    public function approveReview($reviewId)
+    {
+        $stmt = $this->db->prepare("UPDATE reviews SET is_approved = 1, updated_at = NOW() WHERE id = :id");
+        $stmt->bindValue(':id', $reviewId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    /**
+     * Reject a review
+     * @param int $reviewId
+     * @return bool
+     */
+    public function rejectReview($reviewId)
+    {
+        $stmt = $this->db->prepare("UPDATE reviews SET is_approved = 0, updated_at = NOW() WHERE id = :id");
+        $stmt->bindValue(':id', $reviewId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    /**
+     * Verify a review
+     * @param int $reviewId
+     * @return bool
+     */
+    public function verifyReview($reviewId)
+    {
+        $stmt = $this->db->prepare("UPDATE reviews SET is_verified = 1, updated_at = NOW() WHERE id = :id");
+        $stmt->bindValue(':id', $reviewId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    /**
+     * Get review details with related data
+     * @param int $reviewId
+     * @return array|false
+     */    public function getReviewDetails($reviewId)
+    {
+        $sql = "SELECT r.*,
+                       u.first_name, u.last_name, u.email as user_email, u.avatar,
+                       u.phone as user_phone, u.created_at as user_created_at,
+                       f.name as food_name, f.image as food_image, f.price as food_price,
+                       c.name as category_name,
+                       o.id as order_id, o.created_at as order_date
+                FROM reviews r
+                LEFT JOIN users u ON r.user_id = u.id
+                LEFT JOIN food_items f ON r.food_item_id = f.id
+                LEFT JOIN categories c ON f.category_id = c.id
+                LEFT JOIN orders o ON r.order_id = o.id
+                WHERE r.id = :id";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $reviewId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Bulk approve reviews
+     * @param array $reviewIds
+     * @return bool
+     */
+    public function bulkApproveReviews($reviewIds)
+    {
+        if (empty($reviewIds)) {
+            return false;
+        }
+
+        $placeholders = str_repeat('?,', count($reviewIds) - 1) . '?';
+        $sql = "UPDATE reviews SET is_approved = 1, updated_at = NOW() WHERE id IN ($placeholders)";
+
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute($reviewIds);
+    }
+
+    /**
+     * Bulk delete reviews
+     * @param array $reviewIds
+     * @return bool
+     */
+    public function bulkDeleteReviews($reviewIds)
+    {
+        if (empty($reviewIds)) {
+            return false;
+        }
+
+        $placeholders = str_repeat('?,', count($reviewIds) - 1) . '?';
+        $sql = "DELETE FROM reviews WHERE id IN ($placeholders)";
+
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute($reviewIds);
     }
 }

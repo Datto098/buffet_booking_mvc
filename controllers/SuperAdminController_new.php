@@ -753,7 +753,7 @@ class SuperAdminController extends BaseController
         $totalTables = $this->tableModel->count();
 
         // Get revenue data
-        $orderStats = $this->orderModel->getDashboardStats();
+        $orderStats = $this->orderModel->getOrderStats();
         $monthlyRevenue = $this->orderModel->getMonthlyRevenue();
 
         // Get recent data

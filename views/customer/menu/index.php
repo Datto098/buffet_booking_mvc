@@ -296,11 +296,13 @@ function buildPaginationUrl($page, $filters)
                 const foodId = this.dataset.foodId;
                 const foodName = this.dataset.foodName;
                 const foodPrice = this.dataset.foodPrice;
+                const foodImage = this.dataset.foodImage;
 
                 // Show quick add modal
                 document.getElementById('modalFoodName').textContent = foodName;
                 document.getElementById('modalFoodPrice').textContent = formatPrice(foodPrice);
                 document.getElementById('modalTotal').textContent = formatPrice(foodPrice);
+                document.getElementById('modalFoodImage').src = foodImage;
 
                 // Set food data
                 document.getElementById('confirmAddToCart').dataset.foodId = foodId;

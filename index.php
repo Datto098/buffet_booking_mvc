@@ -168,13 +168,15 @@ function handleAdminRoute($segments)
             break;
         case 'categories':
             handleAdminCategoriesRoute($controller, $action, $param);
-            break;
-        case 'orders':
+            break;        case 'orders':
             handleAdminOrdersRoute($controller, $action, $param);
+            break;
+        case 'payments':
+            handleAdminPaymentsRoute($controller, $action, $param);
             break;
         case 'bookings':
             handleAdminBookingsRoute($controller, $action, $param);
-            break;        case 'tables':
+            break;case 'tables':
             handleAdminTablesRoute($controller, $action, $param);
             break;
         case 'news':
@@ -520,9 +522,25 @@ function handleAdminOrdersRoute($controller, $action, $param)
             break;
         case 'delete':
             $controller->deleteOrder($param);
+            break;        default:
+            $controller->orders();
+    }
+}
+
+function handleAdminPaymentsRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'details':
+            $controller->paymentDetails($param);
+            break;
+        case 'cancel':
+            $controller->cancelPayment($param);
+            break;
+        case 'export':
+            $controller->exportPayments();
             break;
         default:
-            $controller->orders();
+            $controller->payments();
     }
 }
 
@@ -785,9 +803,9 @@ function handleCustomerRoute($page, $action, $param)
         'about' => 'controllers/HomeController.php',
         'promotions' => 'controllers/HomeController.php',
         'menu' => 'controllers/FoodController.php',
-        'food' => 'controllers/FoodController.php',
-        'cart' => 'controllers/CartController.php',
+        'food' => 'controllers/FoodController.php',        'cart' => 'controllers/CartController.php',
         'order' => 'controllers/OrderController.php',
+        'payment' => 'controllers/PaymentController.php',
         'booking' => 'controllers/BookingController.php',
         'user' => 'controllers/UserController.php',
         'auth' => 'controllers/AuthController.php',

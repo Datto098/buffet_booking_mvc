@@ -67,7 +67,7 @@ class OrderController extends BaseController {
     }
 
     public function create() {
-      
+
         $this->requireLogin();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('/index.php?page=order&action=checkout');
@@ -90,7 +90,7 @@ class OrderController extends BaseController {
         $orderNotes = sanitizeInput($_POST['order_notes'] ?? '');
         $paymentMethod = $_POST['payment_method'] ?? 'cod';
 
-   
+
 
         // Validation
         $errors = [];
@@ -109,9 +109,7 @@ class OrderController extends BaseController {
 
         if (empty($deliveryAddress)) {
             $errors[] = 'Vui lòng nhập địa chỉ giao hàng';
-        }
-
-        if (!in_array($paymentMethod, ['cod', 'bank_transfer', 'credit_card'])) {
+        }        if (!in_array($paymentMethod, ['cod', 'bank_transfer', 'credit_card', 'vnpay'])) {
             $errors[] = 'Phương thức thanh toán không hợp lệ';
         }
 
@@ -123,7 +121,7 @@ class OrderController extends BaseController {
 
         // Prepare cart items and calculate totals
         $orderItems = [];
-        $subtotal = 0;       
+        $subtotal = 0;
          foreach ($cart as $foodId => $quantity) {
             $food = $this->foodModel->getFoodDetails($foodId);
             if ($food && $food['is_available']) {
@@ -167,20 +165,27 @@ class OrderController extends BaseController {
         // Add user ID if logged in
         if (isLoggedIn()) {
             $orderData['user_id'] = $_SESSION['user_id'];
-        }
-
-        // Create order
+        }        // Create order
         $orderId = $this->orderModel->createOrder($orderData, $orderItems);
 
         if ($orderId) {
-            // Clear cart
-            unset($_SESSION['cart']);
+            // If VNPay payment method, redirect to payment
+            if ($paymentMethod === 'vnpay') {
+                // Store order data in session for payment processing
+                $_SESSION['vnpay_order'] = [
+                    'order_id' => $orderId,
+                    'amount' => $totalAmount,
+                    'bank_code' => $_POST['bank_code'] ?? ''
+                ];
 
-            $_SESSION['success'] = 'Đặt hàng thành công! Mã đơn hàng: ' . $orderId;
-
-            // TODO: Send order confirmation email
-
-            redirect('/index.php?page=order&action=detail&id=' . $orderId);
+                // Don't clear cart yet - will clear after successful payment
+                redirect('/index.php?page=payment&action=confirm_vnpay');
+            } else {
+                // For other payment methods, proceed normally
+                unset($_SESSION['cart']);
+                $_SESSION['success'] = 'Đặt hàng thành công! Mã đơn hàng: ' . $orderId;
+                redirect('/index.php?page=order&action=detail&id=' . $orderId);
+            }
         } else {
             $_SESSION['error'] = 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.';
             $_SESSION['form_data'] = $_POST;
@@ -246,7 +251,7 @@ class OrderController extends BaseController {
             }
         }
 
-  
+
         $data = [
             'title' => 'Chi Tiết Đơn Hàng #' . $orderId . ' - ' . SITE_NAME,
             'order' => $order
@@ -329,7 +334,7 @@ class OrderController extends BaseController {
     //         'order' => $order,
     //         'orderHistory' => $orderHistory
     //     ];
-        
+
 
     //     //  $this->loadView('/index.php?page=order&action=history', $data);
     //     $this->loadView('/customer/order/history', $data);

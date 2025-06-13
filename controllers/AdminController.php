@@ -1669,7 +1669,247 @@ class AdminController extends BaseController
         exit;
     }
 
-    // ...existing code...
+    // PAYMENT MANAGEMENT
+    public function payments() {
+        require_once __DIR__ . '/../models/Payment.php';
+        $paymentModel = new Payment();
+
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        // Get filters
+        $filters = [
+            'status' => $_GET['status'] ?? '',
+            'payment_method' => $_GET['payment_method'] ?? '',
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to' => $_GET['date_to'] ?? '',
+            'search' => $_GET['search'] ?? ''
+        ];
+
+        // Get payments with pagination
+        $payments = $paymentModel->getAllPaymentsWithOrders($limit, $offset, $filters);
+        $totalPayments = $paymentModel->countPayments($filters);
+        $totalPages = ceil($totalPayments / $limit);
+
+        // Get payment statistics
+        $stats = $paymentModel->getPaymentStats();
+
+        $data = [
+            'title' => 'Payment Management',
+            'payments' => $payments,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'totalPayments' => $totalPayments,
+            'stats' => $stats,
+            'filters' => $filters,
+            'csrf_token' => $this->generateCSRF()
+        ];
+
+        $this->loadAdminView('payments/index', $data);
+    }
+
+    public function paymentDetails($id) {
+        require_once __DIR__ . '/../models/Payment.php';
+        $paymentModel = new Payment();
+
+        $payment = $paymentModel->findById($id);
+        if (!$payment) {
+            $this->jsonResponse(['success' => false, 'message' => 'Payment not found'], 404);
+            return;
+        }
+
+        // Get order details
+        $orderModel = new Order();
+        $order = $orderModel->findById($payment['order_id']);
+
+        $html = $this->renderPaymentDetailsHtml($payment, $order);
+
+        $this->jsonResponse(['success' => true, 'html' => $html]);
+    }
+
+    private function renderPaymentDetailsHtml($payment, $order) {
+        ob_start();
+        ?>
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Thông Tin Thanh Toán</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>ID Thanh Toán:</strong></td>
+                        <td><?= $payment['id'] ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mã Giao Dịch VNPay:</strong></td>
+                        <td><?= htmlspecialchars($payment['vnp_txn_ref']) ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mã Giao Dịch Ngân Hàng:</strong></td>
+                        <td><?= htmlspecialchars($payment['vnp_transaction_no'] ?? 'N/A') ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Số Tiền:</strong></td>
+                        <td><strong><?= number_format(($payment['vnp_amount'] ?? 0) / 100, 0, ',', '.') ?>đ</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ngân Hàng:</strong></td>
+                        <td><?= htmlspecialchars($payment['vnp_bank_code'] ?? 'N/A') ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trạng Thái:</strong></td>
+                        <td>
+                            <?php
+                            $statusClass = [
+                                'pending' => 'warning',
+                                'completed' => 'success',
+                                'failed' => 'danger',
+                                'cancelled' => 'secondary'
+                            ];
+                            $status = $payment['payment_status'] ?? 'pending';
+                            ?>
+                            <span class="badge bg-<?= $statusClass[$status] ?? 'secondary' ?>">
+                                <?= ucfirst($status) ?>
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Thông Tin Đơn Hàng</h6>
+                <?php if ($order): ?>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>Mã Đơn Hàng:</strong></td>
+                        <td>#<?= $order['order_number'] ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Khách Hàng:</strong></td>
+                        <td><?= htmlspecialchars($order['customer_name']) ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Email:</strong></td>
+                        <td><?= htmlspecialchars($order['customer_email']) ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Điện Thoại:</strong></td>
+                        <td><?= htmlspecialchars($order['customer_phone']) ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tổng Tiền Đơn Hàng:</strong></td>
+                        <td><strong><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trạng Thái Đơn Hàng:</strong></td>
+                        <td><?= ucfirst($order['status']) ?></td>
+                    </tr>
+                </table>
+                <?php else: ?>
+                <p class="text-muted">Không tìm thấy thông tin đơn hàng</p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php if (!empty($payment['payment_data'])): ?>
+        <div class="mt-3">
+            <h6>Dữ Liệu Raw VNPay</h6>
+            <pre class="bg-light p-3 rounded small"><?= htmlspecialchars(json_encode(json_decode($payment['payment_data']), JSON_PRETTY_PRINT)) ?></pre>
+        </div>
+        <?php endif; ?>
+        <?php
+        return ob_get_clean();
+    }
+
+    public function cancelPayment($id) {
+        if (!$this->validateCSRF()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
+            return;
+        }
+
+        require_once __DIR__ . '/../models/Payment.php';
+        $paymentModel = new Payment();
+
+        $payment = $paymentModel->findById($id);
+        if (!$payment) {
+            $this->jsonResponse(['success' => false, 'message' => 'Payment not found'], 404);
+            return;
+        }
+
+        if (!in_array($payment['payment_status'], ['pending', 'failed'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Cannot cancel this payment'], 400);
+            return;
+        }
+
+        if ($paymentModel->update($id, ['payment_status' => 'cancelled'])) {
+            $this->jsonResponse(['success' => true, 'message' => 'Payment cancelled successfully']);
+        } else {
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to cancel payment'], 500);
+        }
+    }
+
+    public function exportPayments() {
+        require_once __DIR__ . '/../models/Payment.php';
+        $paymentModel = new Payment();
+
+        // Get filters from request
+        $filters = [
+            'status' => $_GET['status'] ?? '',
+            'payment_method' => $_GET['payment_method'] ?? '',
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to' => $_GET['date_to'] ?? '',
+            'search' => $_GET['search'] ?? ''
+        ];
+
+        // Get all payments with filters (no limit for export)
+        $payments = $paymentModel->getAllPaymentsWithOrders(999999, 0, $filters);
+
+        // Set headers for CSV download
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=payments_export_' . date('Y-m-d_H-i-s') . '.csv');
+
+        // Create output stream
+        $output = fopen('php://output', 'w');
+
+        // Add BOM for UTF-8
+        fputs($output, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+
+        // Add CSV headers
+        fputcsv($output, [
+            'ID',
+            'Mã Đơn Hàng',
+            'Khách Hàng',
+            'Email',
+            'Điện Thoại',
+            'Mã GD VNPay',
+            'Mã GD Ngân Hàng',
+            'Số Tiền (VND)',
+            'Phương Thức',
+            'Trạng Thái',
+            'Ngân Hàng',
+            'Ngày Tạo',
+            'Ngày Hoàn Thành'
+        ]);
+
+        // Add data rows
+        foreach ($payments as $payment) {
+            fputcsv($output, [
+                $payment['id'],
+                $payment['order_number'] ?? 'N/A',
+                $payment['customer_name'] ?? 'N/A',
+                $payment['customer_email'] ?? 'N/A',
+                $payment['customer_phone'] ?? 'N/A',
+                $payment['vnp_txn_ref'],
+                $payment['vnp_transaction_no'] ?? 'N/A',
+                number_format(($payment['vnp_amount'] ?? 0) / 100, 0, ',', '.'),
+                strtoupper($payment['payment_method']),
+                ucfirst($payment['payment_status']),
+                $payment['vnp_bank_code'] ?? 'N/A',
+                date('d/m/Y H:i:s', strtotime($payment['created_at'])),
+                $payment['completed_at'] ? date('d/m/Y H:i:s', strtotime($payment['completed_at'])) : 'N/A'
+            ]);
+        }
+
+        fclose($output);
+    }
 
     private function getTotalFoodsInCategories($categories)
     {
@@ -1699,7 +1939,7 @@ class AdminController extends BaseController
         $pendingBookings = $bookingModel->count('pending');
         $cancelledBookings = $bookingModel->count('cancelled');
         $activeBookings = $confirmedBookings + $pendingBookings;        // Get revenue data
-        $orderStats = $orderModel->getDashboardStats();
+        $orderStats = $orderModel->getOrderStats();
         $monthlyRevenue = $orderModel->getMonthlyRevenue();
         $monthlyRevenueData = $orderModel->getMonthlyRevenueData();
         // Get recent data

@@ -834,5 +834,50 @@ class Order extends BaseModel
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ? $row['id'] : null;
     }
-}
 
+    /**
+     * Delete an order and its related order items
+     * @param int $orderId Order ID to delete
+     * @return bool True if deletion was successful, false otherwise
+     */
+    public function deleteOrder($orderId)
+    {
+        try {
+            $this->db->beginTransaction();
+
+            // First delete order items
+            $sql = "DELETE FROM order_items WHERE order_id = :order_id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':order_id' => $orderId]);
+
+            // Then delete the order
+            $result = $this->delete($orderId);
+
+            if ($result) {
+                $this->db->commit();
+                return true;
+            } else {
+                $this->db->rollBack();
+                return false;
+            }
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("Error deleting order: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get total revenue from all completed orders
+     * @return float Total revenue
+     */
+    public function getTotalRevenue()
+    {
+        $sql = "SELECT SUM(total_amount) as total_revenue FROM {$this->table}
+                WHERE status IN ('completed', 'delivered')";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        return $result['total_revenue'] ?? 0;
+    }
+}

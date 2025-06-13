@@ -128,10 +128,9 @@ if (!isset($reviewData) || !$reviewData) {
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
                         <img src="<?= !empty($reviewData['user_avatar']) ? SITE_URL . '/uploads/user_avatars/' . $reviewData['user_avatar'] : SITE_URL . '/assets/images/default-avatar.png' ?>"
-                             alt="Avatar" class="rounded-circle me-2" width="40" height="40">
-                        <div>
-                            <h6 class="mb-0"><?= htmlspecialchars($reviewData['user_name']) ?></h6>
-                            <small class="text-muted"><?= htmlspecialchars($reviewData['user_email']) ?></small>
+                             alt="Avatar" class="rounded-circle me-2" width="40" height="40">                        <div>
+                            <h6 class="mb-0"><?= htmlspecialchars(($reviewData['first_name'] ?? '') . ' ' . ($reviewData['last_name'] ?? '')) ?></h6>
+                            <small class="text-muted"><?= htmlspecialchars($reviewData['user_email'] ?? 'N/A') ?></small>
                         </div>
                     </div>
                     <div class="mb-2">
@@ -141,7 +140,7 @@ if (!isset($reviewData) || !$reviewData) {
                     </div>
                     <div>
                         <small class="text-muted">
-                            <i class="fas fa-calendar me-1"></i>Member since <?= date('M Y', strtotime($reviewData['user_created_at'])) ?>
+                            <i class="fas fa-calendar me-1"></i>Member since <?= !empty($reviewData['user_created_at']) ? date('M Y', strtotime($reviewData['user_created_at'])) : 'N/A' ?>
                         </small>
                     </div>
                 </div>
