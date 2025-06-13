@@ -142,21 +142,24 @@ class FoodController extends BaseController {
         $relatedFoods = $this->foodModel->getFoodByCategory($food['category_id'], 6, $id);
 
         // Get food category info
-        $category = $this->categoryModel->findById($food['category_id']);
-
-        $userOrdered = false;
-        if (isset($_SESSION['user'])) {
+        $category = $this->categoryModel->findById($food['category_id']);        $userOrdered = false;
+        if (isset($_SESSION['user_id'])) {
             $userOrdered = $this->orderModel->hasUserOrderedFood($_SESSION['user_id'], $food['id']);
         }
-        // print_r($userOrdered);
-        // echo "</pre>";
-        $comments = $this->reviewModel->getReviewsByFood($food['id']);
+          $comments = $this->reviewModel->getReviewsByFood($food['id']);
         $avgRating = $this->reviewModel->getAverageRating($food['id']);
         $totalRating = $this->reviewModel->getTotalRating($food['id']);
         $isReviewed = false;
         if (isset($_SESSION['user_id'])) {
             $isReviewed = $this->reviewModel->hasUserReviewedFood($_SESSION['user_id'], $food['id']);
+        }        // Add liked status for each comment
+        foreach ($comments as &$comment) {
+            $comment['liked'] = false;
+            if (isset($_SESSION['user_id'])) {
+                $comment['liked'] = $this->reviewModel->hasUserLiked($_SESSION['user_id'], $comment['id']);
+            }
         }
+
         $data = [
             'title' => $food['name'] . ' - ' . SITE_NAME,
             'food' => $food,
@@ -264,14 +267,14 @@ class FoodController extends BaseController {
 
     public function comment($foodId) {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user'])) {
-           
+
 
             $userId = $_SESSION['user']['id'];
             $rating = intval($_POST['rate'] ?? 0);
             $comment = trim($_POST['content'] ?? '');
             $photos = [];
 
-           
+
 
             // Xử lý upload ảnh (nếu có)
             if (!empty($_FILES['photo']['name'][0])) {

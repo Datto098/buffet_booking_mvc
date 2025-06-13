@@ -393,13 +393,9 @@
                                         data-rating="<?= $comment['rating'] ?>"
                                         data-photos='<?= htmlspecialchars($comment['photos'] ?? "[]", ENT_QUOTES) ?>'>
                                         <i class="fas fa-edit"></i> Sửa
-                                    </a>
-                                <?php endif; ?>
+                                    </a>                                <?php endif; ?>
                                 <?php
-                                $liked = false;
-                                if (isset($_SESSION['user_id'])) {
-                                    $liked = $this->reviewModel->hasUserLiked($_SESSION['user_id'], $comment['id']);
-                                }
+                                $liked = $comment['liked'] ?? false;
                                 ?>
                                 <button type="button"
                                     class="btn btn-outline-primary btn-sm like-btn<?= $liked ? ' active' : '' ?>"
