@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Booking Controller
  */
@@ -6,17 +7,22 @@
 require_once 'BaseController.php';
 require_once __DIR__ . '/../models/Booking.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../helpers/mail_helper.php';
+require_once __DIR__ . '/../helpers/pdf_helper.php';
 
-class BookingController extends BaseController {
+class BookingController extends BaseController
+{
     private $bookingModel;
     private $userModel;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->bookingModel = new Booking();
         $this->userModel = new User();
     }
 
-    public function index() {
+    public function index()
+    {
         $data = [
             'title' => 'Đặt Bàn - ' . SITE_NAME
         ];
@@ -24,13 +30,16 @@ class BookingController extends BaseController {
         $this->loadView('customer/booking/index', $data);
     }
 
-    public function create() {
+    public function create()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->handleBookingSubmission();
         } else {
             $this->index();
         }
-    }    public function checkAvailability() {
+    }
+    public function checkAvailability()
+    {
         error_log("BookingController - checkAvailability called");
         error_log("BookingController - POST data: " . json_encode($_POST));
 
@@ -70,7 +79,8 @@ class BookingController extends BaseController {
         exit;
     }
 
-    public function myBookings() {
+    public function myBookings()
+    {
         $this->requireLogin();
 
         $userId = $_SESSION['user_id'];
@@ -84,7 +94,8 @@ class BookingController extends BaseController {
         $this->loadView('customer/booking/my_bookings', $data);
     }
 
-    public function detail() {
+    public function detail()
+    {
         $this->requireLogin();
 
         $bookingId = intval($_GET['id'] ?? 0);
@@ -110,7 +121,8 @@ class BookingController extends BaseController {
         $this->loadView('customer/booking/detail', $data);
     }
 
-    public function cancel() {
+    public function cancel()
+    {
         $this->requireLogin();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -158,7 +170,8 @@ class BookingController extends BaseController {
         redirect('/index.php?page=booking&action=myBookings');
     }
 
-    private function handleBookingSubmission() {
+    private function handleBookingSubmission()
+    {
         $this->validateCSRF();
 
         // Get form data
@@ -240,9 +253,36 @@ class BookingController extends BaseController {
         if ($bookingId) {
             $_SESSION['success'] = 'Đặt bàn thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất để xác nhận.';
 
-            // TODO: Send confirmation email
+            // Tạo subject và message cho email xác nhận đặt bàn
+            $subject = "Đặt bàn thành công tại Buffet Booking";
+            $message = "
+                <h2>Xin chào $customerName,</h2>
+                <p>Bạn đã đặt bàn thành công tại <b>Buffet Booking</b>!</p>
+                <ul>
+                    <li><b>Ngày:</b> $bookingDate</li>
+                    <li><b>Giờ:</b> $bookingTime</li>
+                    <li><b>Số lượng khách:</b> $partySize</li>
+                    <li><b>Số điện thoại:</b> $customerPhone</li>
+                </ul>
+                <p>Chúng tôi sẽ liên hệ lại để xác nhận đặt bàn của bạn trong thời gian sớm nhất.</p>
+                <p>Trạng thái: <b>Chờ xác nhận</b></p>
+                <p>Cảm ơn bạn đã sử dụng dịch vụ!</p>
+            ";
 
-            // Redirect to booking detail if logged in, otherwise to home
+            // Gửi email xác nhận đã nhận phiếu đặt bàn
+            sendResetMail($customerEmail, $subject, $message);
+
+            // Lấy lại thông tin booking vừa tạo
+            $booking = $this->bookingModel->getBookingDetails($bookingId);
+
+            // Truyền biến $booking vào view PDF
+            ob_start();
+            include __DIR__ . '/../views/customer/booking/pdf_detail.php';
+            $htmlContent = ob_get_clean();
+
+            sendBookingPDFMail($customerEmail, $subject, $message, $htmlContent);
+
+            // Redirect...
             if (isLoggedIn()) {
                 redirect('/index.php?page=booking&action=detail&id=' . $bookingId);
             } else {
@@ -256,7 +296,8 @@ class BookingController extends BaseController {
     }
 
     // AJAX endpoints
-    public function getAvailableSlots() {
+    public function getAvailableSlots()
+    {
         $date = $_GET['date'] ?? '';
         $partySize = intval($_GET['party_size'] ?? 0);
 
@@ -269,7 +310,8 @@ class BookingController extends BaseController {
         $this->jsonResponse(['slots' => $availableSlots]);
     }
 
-    public function clearFormData() {
+    public function clearFormData()
+    {
         if (isset($_SESSION['form_data'])) {
             unset($_SESSION['form_data']);
         }
@@ -278,5 +320,14 @@ class BookingController extends BaseController {
         echo json_encode(['success' => true]);
         exit;
     }
+
+    public function confirmBooking()
+    {
+        $this->requireAdmin();
+
+        $bookingId = intval($_POST['booking_id'] ?? 0);
+        $booking = $this->bookingModel->findById($bookingId);
+
+        $this->bookingModel->updateBookingStatus($bookingId, 'confirmed');
+    }
 }
-?>

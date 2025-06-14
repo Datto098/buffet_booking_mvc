@@ -6,6 +6,8 @@ require_once __DIR__ . '/../models/Category.php';
 require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Booking.php';
 require_once __DIR__ . '/../models/Table.php';
+require_once __DIR__ . '/../helpers/mail_helper.php';
+require_once __DIR__ . '/../helpers/pdf_helper.php';
 
 class AdminController extends BaseController
 {
@@ -25,14 +27,16 @@ class AdminController extends BaseController
         $this->orderModel = new Order();
         $this->bookingModel = new Booking();
         $this->tableModel = new Table();
-    }    public function dashboard()
+    }
+    public function dashboard()
     {
         $data = [
             'title' => 'Admin Dashboard',
             'stats' => $this->getDashboardStats()
         ];
 
-        $this->loadAdminView('dashboard', $data);    }
+        $this->loadAdminView('dashboard', $data);
+    }
 
     public function dashboardStats()
     {
@@ -44,7 +48,8 @@ class AdminController extends BaseController
             'success' => true,
             'stats' => $stats
         ]);
-    }    public function users()
+    }
+    public function users()
     {
         $userModel = new User();
         $page = (int)($_GET['page'] ?? 1);
@@ -61,21 +66,21 @@ class AdminController extends BaseController
 
         // Apply filters
         if ($search) {
-            $allUsers = array_filter($allUsers, function($user) use ($search) {
+            $allUsers = array_filter($allUsers, function ($user) use ($search) {
                 return stripos($user['first_name'] . ' ' . $user['last_name'], $search) !== false ||
-                       stripos($user['email'], $search) !== false ||
-                       stripos($user['phone'], $search) !== false;
+                    stripos($user['email'], $search) !== false ||
+                    stripos($user['phone'], $search) !== false;
             });
         }
 
         if ($role) {
-            $allUsers = array_filter($allUsers, function($user) use ($role) {
+            $allUsers = array_filter($allUsers, function ($user) use ($role) {
                 return $user['role'] === $role;
             });
         }
 
         if ($status !== '') {
-            $allUsers = array_filter($allUsers, function($user) use ($status) {
+            $allUsers = array_filter($allUsers, function ($user) use ($status) {
                 return (string)$user['is_active'] === $status;
             });
         }
@@ -241,7 +246,8 @@ class AdminController extends BaseController
         }
 
         $this->redirect('/admin/users');
-    }    public function foods()
+    }
+    public function foods()
     {
         $foodModel = new Food();
         $categoryModel = new Category();
@@ -260,23 +266,23 @@ class AdminController extends BaseController
 
         // Apply filters
         if ($search) {
-            $allFoods = array_filter($allFoods, function($food) use ($search) {
+            $allFoods = array_filter($allFoods, function ($food) use ($search) {
                 return stripos($food['name'], $search) !== false ||
-                       stripos($food['description'], $search) !== false ||
-                       stripos($food['category_name'], $search) !== false;
+                    stripos($food['description'], $search) !== false ||
+                    stripos($food['category_name'], $search) !== false;
             });
         }
 
         if ($category) {
-            $allFoods = array_filter($allFoods, function($food) use ($category) {
+            $allFoods = array_filter($allFoods, function ($food) use ($category) {
                 return $food['category_id'] == $category;
             });
         }
 
         if ($status !== '') {
-            $allFoods = array_filter($allFoods, function($food) use ($status) {
+            $allFoods = array_filter($allFoods, function ($food) use ($status) {
                 return ($status === 'available' && $food['is_available'] == 1) ||
-                       ($status === 'unavailable' && $food['is_available'] == 0);
+                    ($status === 'unavailable' && $food['is_available'] == 0);
             });
         }
 
@@ -326,7 +332,8 @@ class AdminController extends BaseController
                 $this->redirect('/admin/foods');
                 return;
             }
-            $foodModel = new Food();            $foodData = [
+            $foodModel = new Food();
+            $foodData = [
                 'name' => $this->sanitize($_POST['name']),
                 'description' => $this->sanitize($_POST['description'] ?? ''),
                 'price' => (float)$_POST['price'],
@@ -337,7 +344,7 @@ class AdminController extends BaseController
                 'is_new' => isset($_POST['is_new']) ? 1 : 0,
                 'is_seasonal' => isset($_POST['is_seasonal']) ? 1 : 0,
                 'created_at' => date('Y-m-d H:i:s')
-            ];// Handle image upload
+            ]; // Handle image upload
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $uploadDir = 'uploads/food_images/';
                 if (!is_dir($uploadDir)) {
@@ -354,7 +361,8 @@ class AdminController extends BaseController
                     error_log("Failed to move uploaded file from " . $_FILES['image']['tmp_name'] . " to " . $uploadPath);
                 }
             } else {
-                error_log("Image upload failed or no image provided. Error: " . ($_FILES['image']['error'] ?? 'No file'));            }
+                error_log("Image upload failed or no image provided. Error: " . ($_FILES['image']['error'] ?? 'No file'));
+            }
 
             error_log("Food data to be inserted: " . print_r($foodData, true));
 
@@ -386,7 +394,8 @@ class AdminController extends BaseController
                 $this->setFlash('error', 'Invalid security token.');
                 $this->redirect('/admin/foods');
                 return;
-            }            $foodData = [
+            }
+            $foodData = [
                 'name' => $this->sanitize($_POST['name']),
                 'description' => $this->sanitize($_POST['description'] ?? ''),
                 'price' => (float)$_POST['price'],
@@ -396,7 +405,7 @@ class AdminController extends BaseController
                 'is_new' => isset($_POST['is_new']) ? 1 : 0,
                 'is_seasonal' => isset($_POST['is_seasonal']) ? 1 : 0,
                 'updated_at' => date('Y-m-d H:i:s')
-            ];// Handle image upload
+            ]; // Handle image upload
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $uploadDir = 'uploads/food_images/';
                 if (!is_dir($uploadDir)) {
@@ -466,7 +475,8 @@ class AdminController extends BaseController
         }
 
         $this->redirect('/admin/foods');
-    }    public function orders()
+    }
+    public function orders()
     {
         $orderModel = new Order();
 
@@ -510,7 +520,8 @@ class AdminController extends BaseController
                 return $order['total_amount'] ?? 0;
             }
             return 0;
-        }, $allOrders));        $data = [
+        }, $allOrders));
+        $data = [
             'title' => 'Order Management',
             'orders' => $orders,
             'currentPage' => $page,
@@ -525,7 +536,8 @@ class AdminController extends BaseController
         ];
 
         $this->loadAdminView('orders/index', $data);
-    }    public function updateOrderStatus($id)
+    }
+    public function updateOrderStatus($id)
     {
         if (!$this->validateCSRF()) {
             echo json_encode(['success' => false, 'message' => 'Invalid security token.']);
@@ -551,14 +563,16 @@ class AdminController extends BaseController
         $updateData = [
             'status' => $status,
             'updated_at' => date('Y-m-d H:i:s')
-        ];        if ($orderModel->update($id, $updateData)) {
+        ];
+        if ($orderModel->update($id, $updateData)) {
             echo json_encode(['success' => true, 'message' => 'Order status updated successfully.']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to update order status.']);
         }
     }
 
-    public function updatePaymentStatus($id) {
+    public function updatePaymentStatus($id)
+    {
         if (!$this->validateCSRF()) {
             echo json_encode(['success' => false, 'message' => 'Invalid security token.']);
             return;
@@ -584,7 +598,8 @@ class AdminController extends BaseController
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to update payment status.']);
         }
-    }    public function bookings()
+    }
+    public function bookings()
     {
         $bookingModel = new Booking();
         $page = (int)($_GET['page'] ?? 1);
@@ -610,7 +625,8 @@ class AdminController extends BaseController
         // Calculate statistics (unfiltered)
         $confirmedBookings = $bookingModel->count('confirmed');
         $pendingBookings = $bookingModel->count('pending');
-        $todayBookings = $bookingModel->getTodayCount();        $data = [
+        $todayBookings = $bookingModel->getTodayCount();
+        $data = [
             'title' => 'Booking Management',
             'bookings' => $bookings,
             'currentPage' => $page,
@@ -625,7 +641,8 @@ class AdminController extends BaseController
         ];
 
         $this->loadAdminView('bookings/index', $data);
-    }    public function updateBookingStatus($bookingIdFromUrl = null)
+    }
+    public function updateBookingStatus($bookingIdFromUrl = null)
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
@@ -669,8 +686,49 @@ class AdminController extends BaseController
         if (!in_array($status, $allowedStatuses)) {
             echo json_encode(['success' => false, 'message' => 'Invalid status']);
             return;
-        }        $bookingModel = new Booking();
+        }
+        $bookingModel = new Booking();
         if ($bookingModel->updateBookingStatus($bookingId, $status)) {
+            // Gửi email xác nhận nếu trạng thái là confirmed
+            if ($status === 'confirmed') {
+                $booking = $bookingModel->getBookingDetails($bookingId);
+
+                // Lấy email từ booking hoặc user
+                $email = $booking['email'] ?? '';
+                if (empty($email) && !empty($booking['user_id'])) {
+                    $userModel = new User();
+                    $user = $userModel->findById($booking['user_id']);
+                    $email = $user['email'] ?? '';
+                }
+
+                if (!empty($email)) {
+                    $subject = "Đặt bàn của bạn đã được xác nhận!";
+                    $message = "
+                    <h2>Xin chào {$booking['customer_name']},</h2>
+                    <p>Đơn đặt bàn của bạn tại <b>Buffet Booking</b> đã được xác nhận!</p>
+                    <ul>
+                        <li><b>Ngày:</b> " . date('d/m/Y', strtotime($booking['reservation_time'])) . "</li>
+                        <li><b>Giờ:</b> " . date('H:i', strtotime($booking['reservation_time'])) . "</li>
+                        <li><b>Số lượng khách:</b> {$booking['number_of_guests']}</li>
+                        <li><b>Số điện thoại:</b> {$booking['phone_number']}</li>
+                    </ul>
+                    <p>Chúng tôi rất mong được đón tiếp bạn!</p>
+                    <p>Trạng thái: <b>Đã xác nhận</b></p>
+                ";
+                     // Gửi email xác nhận đã nhận phiếu đặt bàn
+            sendResetMail($email, $subject, $message);
+
+            // Lấy lại thông tin booking vừa tạo
+            $booking = $this->bookingModel->getBookingDetails($bookingId);
+
+            // Truyền biến $booking vào view PDF
+            ob_start();
+            include __DIR__ . '/../views/customer/booking/pdf_detail.php';
+            $htmlContent = ob_get_clean();
+
+            sendBookingPDFMail($email, $subject, $message, $htmlContent);
+                }
+            }
             echo json_encode(['success' => true, 'message' => 'Booking status updated successfully']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to update booking status']);
@@ -712,7 +770,8 @@ class AdminController extends BaseController
         } else {
             echo json_encode(['success' => false, 'message' => 'Booking not found']);
         }
-    }    public function getCategory($id)
+    }
+    public function getCategory($id)
     {
         header('Content-Type: application/json');
 
@@ -1012,7 +1071,8 @@ class AdminController extends BaseController
         $bookingStats = $bookingModel->getBookingStats();
 
         echo json_encode(['success' => true, 'stats' => $bookingStats]);
-    }    public function categories()
+    }
+    public function categories()
     {
         $categoryModel = new Category();
         $page = (int)($_GET['page'] ?? 1);
@@ -1028,16 +1088,16 @@ class AdminController extends BaseController
 
         // Apply filters
         if ($search) {
-            $allCategories = array_filter($allCategories, function($category) use ($search) {
+            $allCategories = array_filter($allCategories, function ($category) use ($search) {
                 return stripos($category['name'], $search) !== false ||
-                       stripos($category['description'], $search) !== false;
+                    stripos($category['description'], $search) !== false;
             });
         }
 
         if ($status !== '') {
-            $allCategories = array_filter($allCategories, function($category) use ($status) {
+            $allCategories = array_filter($allCategories, function ($category) use ($status) {
                 return ($status === 'active' && $category['is_active'] == 1) ||
-                       ($status === 'inactive' && $category['is_active'] == 0);
+                    ($status === 'inactive' && $category['is_active'] == 0);
             });
         }
 
@@ -1066,10 +1126,11 @@ class AdminController extends BaseController
         $popularToday = count(array_filter($allCategoriesForStats, function ($category) {
             // This is a simplified calculation - you can make it more sophisticated
             return isset($category['food_count']) && $category['food_count'] > 0;
-        }));// Ensure CSRF token exists
+        })); // Ensure CSRF token exists
         if (!isset($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }        $data = [
+        }
+        $data = [
             'title' => 'Category Management',
             'categories' => $categories,
             'stats' => $stats,
@@ -1251,12 +1312,13 @@ class AdminController extends BaseController
         ];
 
         $this->loadAdminView('categories/edit', $data);
-    }    public function deleteCategory($id = null)
+    }
+    public function deleteCategory($id = null)
     {
         // Support both POST (form submission) and DELETE (AJAX) methods
         $isAjax = $_SERVER['REQUEST_METHOD'] === 'DELETE' ||
-                  (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-                   strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+            (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'DELETE') {
             if ($isAjax) {
@@ -1316,7 +1378,8 @@ class AdminController extends BaseController
             $this->setFlash('error', 'Cannot delete category that contains food items.');
             $this->redirect('/admin/categories');
             return;
-        }        if ($categoryModel->delete($categoryId)) {
+        }
+        if ($categoryModel->delete($categoryId)) {
             if ($isAjax) {
                 $this->jsonResponse(['success' => true, 'message' => 'Category deleted successfully']);
                 return;
@@ -1331,7 +1394,8 @@ class AdminController extends BaseController
         }
 
         $this->redirect('/admin/categories');
-    }    public function tables()
+    }
+    public function tables()
     {
         $tableModel = new Table();
         $page = (int)($_GET['page'] ?? 1);
@@ -1348,22 +1412,22 @@ class AdminController extends BaseController
 
         // Apply filters
         if ($search) {
-            $allTables = array_filter($allTables, function($table) use ($search) {
+            $allTables = array_filter($allTables, function ($table) use ($search) {
                 return stripos($table['table_number'], $search) !== false ||
-                       stripos($table['location'], $search) !== false ||
-                       stripos($table['description'], $search) !== false;
+                    stripos($table['location'], $search) !== false ||
+                    stripos($table['description'], $search) !== false;
             });
         }
 
         if ($status !== '') {
-            $allTables = array_filter($allTables, function($table) use ($status) {
+            $allTables = array_filter($allTables, function ($table) use ($status) {
                 return ($status === 'available' && $table['is_available'] == 1) ||
-                       ($status === 'unavailable' && $table['is_available'] == 0);
+                    ($status === 'unavailable' && $table['is_available'] == 0);
             });
         }
 
         if ($location) {
-            $allTables = array_filter($allTables, function($table) use ($location) {
+            $allTables = array_filter($allTables, function ($table) use ($location) {
                 return $table['location'] === $location;
             });
         }
@@ -1376,7 +1440,8 @@ class AdminController extends BaseController
 
         // Get unfiltered statistics
         $stats = $tableModel->getTableStats();
-        $locationStats = $tableModel->getTablesByLocation();        $data = [
+        $locationStats = $tableModel->getTablesByLocation();
+        $data = [
             'title' => 'Table Management',
             'tables' => $tables,
             'stats' => $stats,
@@ -1397,7 +1462,8 @@ class AdminController extends BaseController
                 $this->setFlash('error', 'Invalid security token.');
                 $this->redirect('/admin/tables');
                 return;
-            }            $tableModel = new Table();
+            }
+            $tableModel = new Table();
             $tableData = [
                 'table_number' => $this->sanitize($_POST['table_number']),
                 'capacity' => (int)$_POST['capacity'],
@@ -1446,7 +1512,8 @@ class AdminController extends BaseController
 
     public function editTable($id)
     {
-        $tableModel = new Table();        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $tableModel = new Table();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$this->validateCSRF()) {
                 $this->setFlash('error', 'Invalid security token.');
                 $this->redirect('/admin/tables');
@@ -1509,7 +1576,8 @@ class AdminController extends BaseController
         ];
 
         $this->loadAdminView('tables/edit', $data);
-    }    public function deleteTable($id)
+    }
+    public function deleteTable($id)
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->jsonResponse(['success' => false, 'message' => 'Invalid request method'], 405);
@@ -1631,7 +1699,8 @@ class AdminController extends BaseController
         }
 
         $tableModel = new Table();
-        $isAvailable = $tableModel->isTableAvailable($tableId, $date, $time);        echo json_encode([
+        $isAvailable = $tableModel->isTableAvailable($tableId, $date, $time);
+        echo json_encode([
             'success' => true,
             'available' => $isAvailable,
             'table_id' => $tableId,
@@ -1794,7 +1863,8 @@ class AdminController extends BaseController
     }
 
     // PAYMENT MANAGEMENT
-    public function payments() {
+    public function payments()
+    {
         require_once __DIR__ . '/../models/Payment.php';
         $paymentModel = new Payment();
 
@@ -1833,7 +1903,8 @@ class AdminController extends BaseController
         $this->loadAdminView('payments/index', $data);
     }
 
-    public function paymentDetails($id) {
+    public function paymentDetails($id)
+    {
         require_once __DIR__ . '/../models/Payment.php';
         $paymentModel = new Payment();
 
@@ -1852,9 +1923,10 @@ class AdminController extends BaseController
         $this->jsonResponse(['success' => true, 'html' => $html]);
     }
 
-    private function renderPaymentDetailsHtml($payment, $order) {
+    private function renderPaymentDetailsHtml($payment, $order)
+    {
         ob_start();
-        ?>
+?>
         <div class="row">
             <div class="col-md-6">
                 <h6>Thông Tin Thanh Toán</h6>
@@ -1901,49 +1973,50 @@ class AdminController extends BaseController
             <div class="col-md-6">
                 <h6>Thông Tin Đơn Hàng</h6>
                 <?php if ($order): ?>
-                <table class="table table-sm">
-                    <tr>
-                        <td><strong>Mã Đơn Hàng:</strong></td>
-                        <td>#<?= $order['order_number'] ?></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Khách Hàng:</strong></td>
-                        <td><?= htmlspecialchars($order['customer_name']) ?></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Email:</strong></td>
-                        <td><?= htmlspecialchars($order['customer_email']) ?></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Điện Thoại:</strong></td>
-                        <td><?= htmlspecialchars($order['customer_phone']) ?></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Tổng Tiền Đơn Hàng:</strong></td>
-                        <td><strong><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</strong></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Trạng Thái Đơn Hàng:</strong></td>
-                        <td><?= ucfirst($order['status']) ?></td>
-                    </tr>
-                </table>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Mã Đơn Hàng:</strong></td>
+                            <td>#<?= $order['order_number'] ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Khách Hàng:</strong></td>
+                            <td><?= htmlspecialchars($order['customer_name']) ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td><?= htmlspecialchars($order['customer_email']) ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Điện Thoại:</strong></td>
+                            <td><?= htmlspecialchars($order['customer_phone']) ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tổng Tiền Đơn Hàng:</strong></td>
+                            <td><strong><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trạng Thái Đơn Hàng:</strong></td>
+                            <td><?= ucfirst($order['status']) ?></td>
+                        </tr>
+                    </table>
                 <?php else: ?>
-                <p class="text-muted">Không tìm thấy thông tin đơn hàng</p>
+                    <p class="text-muted">Không tìm thấy thông tin đơn hàng</p>
                 <?php endif; ?>
             </div>
         </div>
 
         <?php if (!empty($payment['payment_data'])): ?>
-        <div class="mt-3">
-            <h6>Dữ Liệu Raw VNPay</h6>
-            <pre class="bg-light p-3 rounded small"><?= htmlspecialchars(json_encode(json_decode($payment['payment_data']), JSON_PRETTY_PRINT)) ?></pre>
-        </div>
+            <div class="mt-3">
+                <h6>Dữ Liệu Raw VNPay</h6>
+                <pre class="bg-light p-3 rounded small"><?= htmlspecialchars(json_encode(json_decode($payment['payment_data']), JSON_PRETTY_PRINT)) ?></pre>
+            </div>
         <?php endif; ?>
-        <?php
+<?php
         return ob_get_clean();
     }
 
-    public function cancelPayment($id) {
+    public function cancelPayment($id)
+    {
         if (!$this->validateCSRF()) {
             $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
             return;
@@ -1970,7 +2043,8 @@ class AdminController extends BaseController
         }
     }
 
-    public function exportPayments() {
+    public function exportPayments()
+    {
         require_once __DIR__ . '/../models/Payment.php';
         $paymentModel = new Payment();
 
@@ -2222,7 +2296,8 @@ class AdminController extends BaseController
             'totalPages' => $totalPages,
             'totalOrders' => $totalOrders,
             'filters' => $filters
-        ];        $this->loadAdminView('orders/index', $data);
+        ];
+        $this->loadAdminView('orders/index', $data);
     }
 
     // Get Order for Editing
@@ -2293,7 +2368,8 @@ class AdminController extends BaseController
             foreach ($updateData as $key => $value) {
                 $setParts[] = "$key = :$key";
                 $params[":$key"] = $value;
-            }            $sql .= implode(', ', $setParts) . " WHERE id = :id";
+            }
+            $sql .= implode(', ', $setParts) . " WHERE id = :id";
             $params[':id'] = $id;
 
             $result = $orderModel->update($id, $updateData);
@@ -2346,7 +2422,8 @@ class AdminController extends BaseController
             // Duplicate order items if they exist
             $orderItems = [];
             if (!empty($originalOrder['items'])) {
-                foreach ($originalOrder['items'] as $item) {                    $orderItems[] = [
+                foreach ($originalOrder['items'] as $item) {
+                    $orderItems[] = [
                         'food_item_id' => $item['food_item_id'],
                         'quantity' => $item['quantity'],
                         'price' => $item['unit_price'] ?? 0
@@ -2464,14 +2541,16 @@ class AdminController extends BaseController
         if ($order['status'] === 'delivered' || $order['status'] === 'completed') {
             $this->jsonResponse(['success' => false, 'message' => 'Cannot delete completed or delivered orders'], 400);
             return;
-        }        try {
+        }
+        try {
             $result = $orderModel->deleteOrder($id);
 
             if ($result) {
                 $this->jsonResponse(['success' => true, 'message' => 'Order deleted successfully']);
             } else {
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to delete order'], 500);
-            }        } catch (Exception $e) {
+            }
+        } catch (Exception $e) {
             error_log("Order deletion error: " . $e->getMessage());
             $this->jsonResponse(['success' => false, 'message' => 'Failed to delete order'], 500);
         }
@@ -2483,7 +2562,8 @@ class AdminController extends BaseController
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->jsonResponse(['success' => false, 'message' => 'Invalid request method'], 405);
             return;
-        }        if (!$this->validateCSRF()) {
+        }
+        if (!$this->validateCSRF()) {
             $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
             return;
         }
@@ -2567,7 +2647,8 @@ class AdminController extends BaseController
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->jsonResponse(['success' => false, 'message' => 'Invalid request method'], 405);
             return;
-        }        if (!$this->validateCSRF()) {
+        }
+        if (!$this->validateCSRF()) {
             $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
             return;
         }
@@ -2610,7 +2691,8 @@ class AdminController extends BaseController
                 $failedCount++;
                 $errors[] = "Invalid booking ID: $bookingId";
                 continue;
-            }            try {
+            }
+            try {
                 if ($bookingModel->updateBookingStatus($bookingId, $status)) {
                     $successCount++;
                 } else {
@@ -2763,7 +2845,7 @@ class AdminController extends BaseController
         }
 
         // Sort by modification date (newest first)
-        usort($logFiles, function($a, $b) {
+        usort($logFiles, function ($a, $b) {
             return $b['modified'] - $a['modified'];
         });
 
@@ -2913,7 +2995,7 @@ class AdminController extends BaseController
         }
 
         // Sort by timestamp (newest first)
-        usort($allEntries, function($a, $b) {
+        usort($allEntries, function ($a, $b) {
             if ($a['timestamp'] && $b['timestamp']) {
                 return strtotime($b['timestamp']) - strtotime($a['timestamp']);
             }

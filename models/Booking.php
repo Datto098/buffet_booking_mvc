@@ -46,8 +46,9 @@ class Booking extends BaseModel {
     }
 
     public function getBookingDetails($bookingId, $userId = null) {
-        $sql = "SELECT r.*, t.table_number, t.capacity
+        $sql = "SELECT r.*, u.email as customer_email, t.table_number, t.capacity
                 FROM {$this->table} r
+                LEFT JOIN users u ON r.user_id = u.id
                 LEFT JOIN tables t ON r.table_id = t.id
                 WHERE r.id = :booking_id";
 
@@ -63,7 +64,10 @@ class Booking extends BaseModel {
         }
 
         $stmt->execute();
-        return $stmt->fetch();
+        $booking = $stmt->fetch();
+
+        // Đảm bảo mapping cho view
+        return $this->transformBookingForView($booking);
     }
 
     public function updateBookingStatus($bookingId, $status) {

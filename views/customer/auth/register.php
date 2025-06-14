@@ -100,27 +100,34 @@ body {
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background: #f8fafc;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden; /* Không cho kéo xuống */
 }
 
 .auth-container {
+    height: 100vh;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 2rem;
+    padding: 0;
+    overflow: hidden;
 }
 
 .auth-card {
     background: white;
-    border-radius: 20px;
-    padding: 3rem;
+    border-radius: 16px;
+    padding: 1.2rem 0.7rem;
     width: 100%;
-    max-width: 520px;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-    max-height: 95vh;
+    max-width: 600px;
+    max-height: 92vh;
     overflow-y: auto;
-    animation: slideUp 0.6s ease;
+    box-shadow: 0 16px 32px rgba(0,0,0,0.10);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 @keyframes slideUp {
@@ -156,7 +163,7 @@ body {
 .auth-header h1 {
     margin: 0 0 0.5rem 0;
     color: #1f2937;
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 700;
 }
 
@@ -208,11 +215,11 @@ body {
 
 .form-group input,
 .form-group textarea {
+    padding: 0.7rem 1rem;
+    font-size: 0.97rem;
     width: 100%;
-    padding: 1rem 1.25rem;
     border: 2px solid #e5e7eb;
     border-radius: 12px;
-    font-size: 1rem;
     transition: all 0.3s ease;
     background: #f9fafb;
     font-family: inherit;
@@ -399,7 +406,9 @@ body {
     }
     
     .auth-card {
-        padding: 2rem;
+        max-height: none;
+        height: auto;
+        padding: 1rem;
     }
     
     .form-row {
