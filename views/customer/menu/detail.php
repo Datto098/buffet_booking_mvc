@@ -206,16 +206,14 @@
                         <!-- Action Buttons -->
                         <div class="action-buttons">
                             <div class="row g-2">
-                                <div class="col-md-8">
-                                    <button class="btn btn-primary btn-lg w-100 add-to-cart-btn"
+                                <div class="col-md-8">                                    <button class="btn btn-luxury btn-lg w-100 add-to-cart"
                                         data-food-id="<?= $food['id'] ?>"
                                         data-food-name="<?= htmlspecialchars($food['name']) ?>"
                                         data-food-price="<?= $food['price'] ?>">
-                                        <i class="fas fa-shopping-cart"></i> Thêm Vào Giỏ Hàng
+                                        <i class="fas fa-cart-plus"></i> Thêm Vào Giỏ Hàng
                                     </button>
                                 </div>
-                                <div class="col-md-4">
-                                    <a href="<?= SITE_URL ?>/menu" class="btn btn-outline-secondary btn-lg w-100">
+                                <div class="col-md-4">                                    <a href="<?= SITE_URL ?>/menu" class="btn btn-outline-luxury btn-lg w-100">
                                         <i class="fas fa-arrow-left"></i> Quay Lại
                                     </a>
                                 </div>
@@ -448,61 +446,59 @@
                 <div>Chưa có đánh giá nào cho món ăn này.</div>
             <?php endif; ?>
         </div>
-    </section>
-
-    <!-- Related Foods Section -->
+    </section>    <!-- Related Foods Section -->
     <?php if (!empty($relatedFoods)): ?>
-        <section class="py-5 bg-light">
+        <section class="section-luxury bg-luxury">
             <div class="container">
-                <div class="text-center mb-5">
-                    <h2 class="h3">Món Ăn Liên Quan</h2>
-                    <p class="text-muted">Khám phá thêm các món ăn khác trong cùng danh mục</p>
+                <div class="section-title">
+                    <h2>Món Ăn Liên Quan</h2>
+                    <p class="section-subtitle">Khám phá thêm các món ăn khác trong cùng danh mục <?= htmlspecialchars($category['name'] ?? '') ?></p>
                 </div>
 
-                <div class="row">
+                <div class="food-grid">
                     <?php foreach ($relatedFoods as $relatedFood): ?>
-                        <div class="col-lg-4 col-md-6 mb-4">
-                            <div class="card h-100 food-card">
-                                <div class="position-relative">
-                                    <img src="<?= !empty($relatedFood['image']) ? SITE_URL . '/uploads/food_images/' . htmlspecialchars($relatedFood['image']) : SITE_URL . '/assets/images/food-placeholder.svg' ?>"
-                                        class="card-img-top" alt="<?= htmlspecialchars($relatedFood['name']) ?>"
-                                        style="height: 200px; object-fit: cover;">
-
-                                    <button class="btn btn-outline-light btn-sm position-absolute top-0 start-0 m-2 favorite-btn"
-                                        data-food-id="<?= $relatedFood['id'] ?>">
-                                        <i class="far fa-heart"></i>
-                                    </button>
-                                </div>
-
-                                <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title"><?= htmlspecialchars($relatedFood['name']) ?></h5>
-                                    <p class="card-text flex-grow-1 text-muted">
-                                        <?= htmlspecialchars(substr($relatedFood['description'], 0, 100)) ?>
-                                        <?= strlen($relatedFood['description']) > 100 ? '...' : '' ?>
-                                    </p>
-
-                                    <div class="price-section mb-3">
-                                        <span class="h5 text-primary">
-                                            <?= number_format($relatedFood['price'], 0, ',', '.') ?>đ
-                                        </span>
-                                    </div>
-
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-primary flex-grow-1 add-to-cart-btn"
-                                            data-food-id="<?= $relatedFood['id'] ?>"
-                                            data-food-name="<?= htmlspecialchars($relatedFood['name']) ?>"
-                                            data-food-price="<?= $relatedFood['price'] ?>">
-                                            <i class="fas fa-shopping-cart"></i> Thêm
-                                        </button>
-                                        <a href="<?= SITE_URL ?>/food/detail/<?= $relatedFood['id'] ?>"
-                                            class="btn btn-outline-primary">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </div>
+                        <div class="food-item">
+                            <div class="food-image">
+                                <img src="<?php echo $relatedFood['image'] ? SITE_URL . '/uploads/food_images/' . $relatedFood['image'] : SITE_URL . '/assets/images/food-placeholder.svg'; ?>"
+                                     alt="<?php echo htmlspecialchars($relatedFood['name']); ?>"
+                                     class="card-img-luxury">
+                                <div class="food-badge">
+                                    <i class="fas fa-heart"></i> Liên Quan
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
+                            <div class="food-content">
+                                <div class="food-category">
+                                    <?php echo htmlspecialchars($category['name'] ?? 'Đặc sản'); ?>
+                                </div>
+                                <h3 class="food-title"><?php echo htmlspecialchars($relatedFood['name']); ?></h3>
+                                <p class="food-description">
+                                    <?php echo htmlspecialchars(substr($relatedFood['description'] ?? 'Món ăn được chế biến tinh tế với nguyên liệu tươi ngon, mang đến hương vị khó quên.', 0, 120)) . '...'; ?>
+                                </p>
+                                <div class="food-price">
+                                    <span class="price-current">
+                                        <?php echo number_format($relatedFood['price'], 0, ',', '.'); ?>đ
+                                    </span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="<?php echo SITE_URL; ?>/food/detail/<?php echo $relatedFood['id']; ?>"
+                                       class="btn btn-outline-luxury flex-fill">
+                                        <i class="fas fa-eye"></i> Chi Tiết
+                                    </a>
+                                    <button class="btn btn-luxury add-to-cart"
+                                            data-food-id="<?php echo $relatedFood['id']; ?>"
+                                            data-food-name="<?php echo htmlspecialchars($relatedFood['name']); ?>"
+                                            data-food-price="<?php echo $relatedFood['price']; ?>">
+                                        <i class="fas fa-cart-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>                    <?php endforeach; ?>
+                </div>
+
+                <div class="text-center mt-5">
+                    <a href="<?php echo SITE_URL; ?>/menu" class="btn btn-luxury btn-lg">
+                        <i class="fas fa-utensils"></i> Xem Thêm Món Khác
+                    </a>
                 </div>
             </div>
         </section>
@@ -540,19 +536,9 @@
         }
 
         .card-body {
-            position: relative;
-        }
+            position: relative;        }
 
-        .food-card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            border: none;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .food-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-        }
+        /* Legacy styles - sẽ được thay thế bởi luxury-style.css */
 
         .like-btn.active {
             background: #0d6efd;
@@ -637,7 +623,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Add to cart functionality
-            document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+            document.querySelectorAll('.add-to-cart').forEach(button => {
                 button.addEventListener('click', function() {
                     const foodId = this.dataset.foodId;
                     const foodName = this.dataset.foodName;

@@ -842,11 +842,12 @@ function handleCustomerRoute($page, $action, $param)
     if (!class_exists($controllerClass)) {
         throw new Exception("Controller class $controllerClass not found");
     }
-    $controller = new $controllerClass();
-
-    // Call the appropriate method
+    $controller = new $controllerClass();    // Call the appropriate method
     if ($action === 'update-profile' || $action === 'updateProfile') {
         $controller->updateProfile();
+        exit;
+    } elseif ($action === 'forgot-password' || $action === 'forgotPassword') {
+        $controller->forgotPassword();
         exit;
     } elseif ($page === 'about' && method_exists($controller, 'about')) {
         $controller->about();
