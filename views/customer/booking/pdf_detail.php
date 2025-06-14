@@ -6,7 +6,13 @@
 </head>
 <body style="font-family: Arial, sans-serif; background: #f6f7fb; margin:0; padding:0;">
     <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:16px;box-shadow:0 4px 24px #0002;padding:40px 32px;">
-        <h2 style="color:#222;margin-top:0;margin-bottom:32px;font-size:2rem;letter-spacing:1px;">Booking #<?= $booking['id'] ?? '' ?></h2>
+        <h2 style="color:#222;margin-top:0;margin-bottom:8px;font-size:2rem;letter-spacing:1px;">
+            Booking #<?= $booking['id'] ?? '' ?>
+        </h2>
+        <div style="color:#888;font-size:0.98rem;margin-bottom:24px;">
+            <?php date_default_timezone_set('Asia/Ho_Chi_Minh'); ?>
+            Created on <?= !empty($booking['created_at']) ? date('F d, Y \a\t h:i A', strtotime($booking['created_at'])) : date('F d, Y \a\t h:i A') ?>
+        </div>
         <table style="width:100%;border-collapse:collapse;font-size:1.08rem;">
             <tr>
                 <td style="padding:8px 0;width:160px;"><b>Khách hàng:</b></td>

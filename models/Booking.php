@@ -23,22 +23,23 @@ class Booking extends BaseModel {
     return $stmt->execute();
 }
 
-    public function getBookingsByUser($userId, $limit = null) {
+    public function getBookingsByUser($userId, $limit = null, $offset = 0) {
         $sql = "SELECT r.*, t.table_number, t.capacity
                 FROM {$this->table} r
                 LEFT JOIN tables t ON r.table_id = t.id
                 WHERE r.user_id = :user_id
                 ORDER BY r.reservation_time DESC";
 
-        if ($limit) {
-            $sql .= " LIMIT :limit";
+        if ($limit !== null) {
+            $sql .= " LIMIT :limit OFFSET :offset";
         }
 
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
 
-        if ($limit) {
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        if ($limit !== null) {
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
         }
 
         $stmt->execute();
@@ -357,8 +358,9 @@ class Booking extends BaseModel {
      * Updated to handle multiple parameters for pagination
      */
     public function getUserBookings($userId, $limit = null, $offset = 0) {
-        return $this->getBookingsByUser($userId, $limit);
+        return $this->getBookingsByUser($userId, $limit, $offset);
     }
+    
 
     /**
      * Count bookings for a specific user
@@ -511,31 +513,27 @@ class Booking extends BaseModel {
      * @return bool Success status
      */
     public function updateBooking($bookingId, $data) {
-        try {
-            $sql = "UPDATE {$this->table} SET
-                        customer_name = :customer_name,
-                        phone_number = :phone_number,
-                        email = :email,
-                        number_of_guests = :number_of_guests,
-                        reservation_time = :reservation_time,
-                        special_requests = :special_requests
-                    WHERE id = :id";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':customer_name', $data['customer_name'], PDO::PARAM_STR);
-            $stmt->bindValue(':phone_number', $data['phone_number'], PDO::PARAM_STR);
-            $stmt->bindValue(':email', $data['email'] ?? null, PDO::PARAM_STR);
-            $stmt->bindValue(':number_of_guests', $data['number_of_guests'], PDO::PARAM_INT);
-            $stmt->bindValue(':reservation_time', $data['reservation_time'], PDO::PARAM_STR);
-            $stmt->bindValue(':special_requests', $data['special_requests'] ?? null, PDO::PARAM_STR);
-            $stmt->bindValue(':id', $bookingId, PDO::PARAM_INT);
-
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("Error updating booking: " . $e->getMessage());
-            return false;
-        }
-    }    /**
+        $sql = "UPDATE {$this->table} SET
+                customer_name = :customer_name,
+                phone_number = :phone_number,
+                email = :email,
+                number_of_guests = :number_of_guests,
+                reservation_time = :reservation_time,
+                special_requests = :special_requests,
+                status = :status
+            WHERE id = :id";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(':customer_name', $data['customer_name'], PDO::PARAM_STR);
+    $stmt->bindValue(':phone_number', $data['phone_number'], PDO::PARAM_STR);
+    $stmt->bindValue(':email', $data['email'], PDO::PARAM_STR);
+    $stmt->bindValue(':number_of_guests', $data['number_of_guests'], PDO::PARAM_INT);
+    $stmt->bindValue(':reservation_time', $data['reservation_time'], PDO::PARAM_STR);
+    $stmt->bindValue(':special_requests', $data['special_requests'], PDO::PARAM_STR);
+    $stmt->bindValue(':status', $data['status'], PDO::PARAM_STR);
+    $stmt->bindValue(':id', $bookingId, PDO::PARAM_INT);
+    return $stmt->execute();
+}
+    /**
      * Transform booking data for admin interface compatibility
      * Maps database fields to expected view fields
      */
@@ -636,5 +634,29 @@ class Booking extends BaseModel {
         }
         return $booking;
     }
+
+    public function cancelBooking($bookingId, $userId = null) {
+        // Nếu có userId, chỉ cho phép user đó hủy booking của mình
+        $sql = "UPDATE {$this->table} SET status = 'cancelled', updated_at = NOW() WHERE id = :id";
+if ($userId !== null) {
+    $sql .= " AND user_id = :user_id";
+}
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $bookingId, PDO::PARAM_INT);
+        if ($userId !== null) {
+            $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        }
+        return $stmt->execute();
+    }
+
+public function getBookingById($bookingId, $userId) {
+    $sql = "SELECT * FROM {$this->table} WHERE id = :id AND user_id = :user_id";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(':id', $bookingId, PDO::PARAM_INT);
+    $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
 }
 ?>
