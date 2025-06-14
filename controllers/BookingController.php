@@ -373,7 +373,8 @@ class BookingController extends BaseController
                     if ($user && !empty($user['email'])) {
                         $email = $user['email'];
                     }
-                }$updateData = [
+                }
+                $updateData = [
                     'customer_name'    => $_POST['customer_name'],
                     'phone_number'     => $_POST['phone_number'],
                     'number_of_guests' => (int)$_POST['number_of_guests'],

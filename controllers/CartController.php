@@ -78,24 +78,61 @@ class CartController extends BaseController {
             'message' => 'Đã thêm vào giỏ hàng',
             'cartInfo' => $cartInfo
         ]);
-    }
-
-    public function update() {
+    }    public function update() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->jsonResponse(['error' => 'Method not allowed'], 405);
         }
 
         $foodId = intval($_POST['food_id'] ?? 0);
+        $action = $_POST['action'] ?? '';
         $quantity = intval($_POST['quantity'] ?? 0);
+
+        error_log("CartController update - Food ID: $foodId, Action: $action, Quantity: $quantity");
 
         if ($foodId <= 0) {
             $this->jsonResponse(['error' => 'Invalid food ID'], 400);
         }
 
-        if ($quantity <= 0) {
-            // Remove item from cart
-            $this->removeFromCart($foodId);
-        } else {            // Check stock quantity
+        // Handle action-based updates (increase/decrease)
+        if (!empty($action) && in_array($action, ['increase', 'decrease'])) {
+            $cart = $this->getCart();
+            $currentQuantity = $cart[$foodId] ?? 0;
+
+            error_log("CartController update - Current quantity: $currentQuantity");
+
+            if ($action === 'increase') {
+                $newQuantity = $currentQuantity + 1;
+            } else { // decrease
+                $newQuantity = $currentQuantity - 1;
+            }
+
+            error_log("CartController update - New quantity: $newQuantity");
+
+            if ($newQuantity <= 0) {
+                // Remove item from cart
+                $this->removeFromCart($foodId);
+                error_log("CartController update - Removed item from cart");
+            } else {
+                // Check stock quantity
+                $food = $this->foodModel->getFoodDetails($foodId);
+                if ($food && isset($food['stock_quantity']) && $food['stock_quantity'] > 0) {
+                    if ($newQuantity > $food['stock_quantity']) {
+                        $this->jsonResponse([
+                            'success' => false,
+                            'message' => 'Số lượng vượt quá tồn kho'
+                        ]);
+                        return;
+                    }
+                }
+
+                // Update quantity
+                $this->updateCartQuantity($foodId, $newQuantity);
+                error_log("CartController update - Updated quantity to: $newQuantity");
+            }
+        }
+        // Handle direct quantity update
+        else if ($quantity > 0) {
+            // Check stock quantity
             $food = $this->foodModel->getFoodDetails($foodId);
             if ($food && isset($food['stock_quantity']) && $food['stock_quantity'] > 0) {
                 if ($quantity > $food['stock_quantity']) {
@@ -105,6 +142,10 @@ class CartController extends BaseController {
 
             // Update quantity
             $this->updateCartQuantity($foodId, $quantity);
+        }
+        else {
+            // Remove item from cart
+            $this->removeFromCart($foodId);
         }
 
         // Get updated cart info
