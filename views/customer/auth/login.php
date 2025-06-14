@@ -1,348 +1,372 @@
-<!-- Clean & Minimal Login Design -->
-<div class="auth-container">
-    <div class="auth-card">
-        <div class="auth-header">
-            <div class="logo">
-                <i class="fas fa-utensils"></i>
-            </div>
-            <h1>Chào mừng trở lại</h1>
-            <p>Đăng nhập để tiếp tục</p>
-        </div>
+<!-- Login Page with Luxury Site Layout -->
+<div class="auth-page-luxury">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 col-md-7">
+                <div class="auth-card-luxury">
+                    <div class="auth-header-luxury">
+                        <div class="auth-icon-luxury">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <h2>Chào mừng trở lại</h2>
+                        <p>Đăng nhập để tiếp tục trải nghiệm</p>
+                    </div>
 
-        <!-- Flash Messages -->
-        <?php if (isset($_SESSION['error'])): ?>
-            <div class="alert alert-error">
-                <i class="fas fa-exclamation-circle"></i>
-                <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
-            </div>
-        <?php endif; ?>
+                    <!-- Flash Messages -->
+                    <?php if (isset($_SESSION['error'])): ?>
+                        <div class="alert alert-danger luxury-alert">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                        </div>
+                    <?php endif; ?>
 
-        <?php if (isset($_SESSION['success'])): ?>
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i>
-                <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
-            </div>
-        <?php endif; ?>
+                    <?php if (isset($_SESSION['success'])): ?>
+                        <div class="alert alert-success luxury-alert">
+                            <i class="fas fa-check-circle"></i>
+                            <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+                        </div>
+                    <?php endif; ?>
 
-        <form action="<?php echo SITE_URL; ?>/auth/login" method="POST" class="auth-form">
-            <input type="hidden" name="csrf_token" value="<?php echo isset($_SESSION['csrf_token']) ? $_SESSION['csrf_token'] : ''; ?>">
+                    <form action="<?php echo SITE_URL; ?>/auth/login" method="POST" class="auth-form-luxury">
+                        <input type="hidden" name="csrf_token" value="<?php echo isset($_SESSION['csrf_token']) ? $_SESSION['csrf_token'] : ''; ?>">
 
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="Nhập email của bạn" required>
-            </div>
+                        <div class="form-group-luxury">
+                            <label for="email">
+                                <i class="fas fa-envelope"></i>
+                                Email
+                            </label>
+                            <input type="email" id="email" name="email" class="form-control-luxury" placeholder="Nhập địa chỉ email" required>
+                        </div>
 
-            <div class="form-group">
-                <label for="password">Mật khẩu</label>
-                <div class="password-input">
-                    <input type="password" id="password" name="password" placeholder="Nhập mật khẩu" required>
-                    <button type="button" class="password-toggle" onclick="togglePassword()">
-                        <i class="fas fa-eye"></i>
-                    </button>
+                        <div class="form-group-luxury">
+                            <label for="password">
+                                <i class="fas fa-lock"></i>
+                                Mật khẩu
+                            </label>
+                            <div class="password-input-luxury">
+                                <input type="password" id="password" name="password" class="form-control-luxury" placeholder="Nhập mật khẩu" required>
+                                <button type="button" class="password-toggle-luxury" onclick="togglePassword()">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-options-luxury">
+                            <label class="checkbox-luxury">
+                                <input type="checkbox" id="remember">
+                                <span class="checkmark-luxury"></span>
+                                Ghi nhớ đăng nhập
+                            </label>
+                            <a href="<?php echo SITE_URL; ?>/auth/forgot-password" class="forgot-link-luxury">
+                                Quên mật khẩu?
+                            </a>
+                        </div>
+
+                        <button type="submit" class="btn-luxury btn-primary-luxury">
+                            Đăng nhập
+                        </button>
+
+                        <div class="auth-footer-luxury">
+                            <p>Chưa có tài khoản? <a href="<?php echo SITE_URL; ?>/auth/register">Đăng ký ngay</a></p>
+                        </div>
+                    </form>
                 </div>
             </div>
-
-            <div class="form-options">
-                <label class="checkbox">
-                    <input type="checkbox" id="remember">
-                    <span>Ghi nhớ đăng nhập</span>
-                </label>
-                <a href="<?php echo SITE_URL; ?>/auth/forgot-password" class="forgot-link">Quên mật khẩu?</a>
-            </div>
-
-            <button type="submit" class="btn-primary">Đăng nhập</button>
-
-            <div class="auth-footer">
-                <p>Chưa có tài khoản? <a href="<?php echo SITE_URL; ?>/auth/register">Đăng ký ngay</a></p>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<!-- Clean & Minimal CSS -->
 <style>
-body {
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: #f8fafc;
-}
-
-.auth-container {
+/* Auth Page Luxury Styles - Matching Site Theme */
+.auth-page-luxury {
     min-height: 100vh;
+    background: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-navy-dark) 100%);
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 2rem;
+    padding: 2rem 0;
+    position: relative;
 }
 
-.auth-card {
-    background: white;
-    border-radius: 20px;
+.auth-page-luxury::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23D4AF37" fill-opacity="0.05"><circle cx="30" cy="30" r="1"/></g></svg>') repeat;
+    animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.auth-card-luxury {
+    background: var(--bg-primary);
+    border-radius: var(--radius-xl);
     padding: 3rem;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-    animation: slideUp 0.6s ease;
+    box-shadow: var(--shadow-strong);
+    border: 1px solid var(--neutral-pearl);
+    position: relative;
+    z-index: 1;
 }
 
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.auth-header {
+.auth-header-luxury {
     text-align: center;
     margin-bottom: 2.5rem;
 }
 
-.logo {
-    width: 70px;
-    height: 70px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+.auth-icon-luxury {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 1.5rem;
-    color: white;
-    font-size: 1.8rem;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-}
-
-.auth-header h1 {
-    margin: 0 0 0.5rem 0;
-    color: #1f2937;
+    color: var(--text-white);
     font-size: 2rem;
-    font-weight: 700;
+    box-shadow: var(--shadow-gold);
 }
 
-.auth-header p {
-    margin: 0;
-    color: #6b7280;
+.auth-header-luxury h2 {
+    color: var(--text-primary);
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.auth-header-luxury p {
+    color: var(--text-secondary);
+    font-family: 'Inter', sans-serif;
     font-size: 1rem;
+    margin: 0;
 }
 
-.alert {
+.luxury-alert {
+    border-radius: var(--radius-md);
+    border: none;
     padding: 1rem 1.25rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-weight: 500;
+    gap: 0.5rem;
+    font-family: 'Inter', sans-serif;
 }
 
-.alert-error {
-    background: linear-gradient(135deg, #fef2f2, #fee2e2);
-    color: #dc2626;
-    border: 1px solid #fecaca;
+.alert-danger.luxury-alert {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border-left: 4px solid #dc3545;
 }
 
-.alert-success {
-    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-    color: #16a34a;
-    border: 1px solid #bbf7d0;
+.alert-success.luxury-alert {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border-left: 4px solid #28a745;
 }
 
-.form-group {
-    margin-bottom: 1.75rem;
+.form-group-luxury {
+    margin-bottom: 1.5rem;
 }
 
-.form-group label {
+.form-group-luxury label {
     display: block;
     margin-bottom: 0.75rem;
-    color: #374151;
-    font-weight: 600;
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
     font-size: 0.95rem;
 }
 
-.form-group input {
+.form-group-luxury label i {
+    margin-right: 0.5rem;
+    color: var(--primary-gold);
+}
+
+.form-control-luxury {
     width: 100%;
     padding: 1rem 1.25rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 12px;
+    border: 2px solid var(--neutral-pearl);
+    border-radius: var(--radius-md);
     font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     transition: all 0.3s ease;
-    background: #f9fafb;
-    color: #1f2937;
 }
 
-.form-group input:focus {
+.form-control-luxury:focus {
     outline: none;
-    border-color: #667eea;
-    background: white;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-    transform: translateY(-1px);
+    border-color: var(--primary-gold);
+    background: var(--bg-primary);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
 }
 
-.form-group input::placeholder {
-    color: #9ca3af;
-}
-
-.password-input {
+.password-input-luxury {
     position: relative;
 }
 
-.password-toggle {
+.password-toggle-luxury {
     position: absolute;
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
-    color: #6b7280;
+    color: var(--text-light);
     cursor: pointer;
-    padding: 6px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.3s ease;
 }
 
-.password-toggle:hover {
-    color: #374151;
-    background: #f3f4f6;
+.password-toggle-luxury:hover {
+    color: var(--primary-gold);
+    background: rgba(212, 175, 55, 0.1);
 }
 
-.form-options {
+.form-options-luxury {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
 }
 
-.checkbox {
+.checkbox-luxury {
     display: flex;
     align-items: center;
     cursor: pointer;
+    font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
-    color: #374151;
-    font-weight: 500;
+    color: var(--text-secondary);
+    position: relative;
 }
 
-.checkbox input {
-    width: auto !important;
-    margin-right: 0.5rem;
-    accent-color: #667eea;
-    transform: scale(1.1);
+.checkbox-luxury input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
 }
 
-.forgot-link {
-    color: #667eea;
+.checkmark-luxury {
+    height: 20px;
+    width: 20px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--neutral-pearl);
+    border-radius: 4px;
+    margin-right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.checkbox-luxury input:checked ~ .checkmark-luxury {
+    background: var(--primary-gold);
+    border-color: var(--primary-gold);
+}
+
+.checkbox-luxury input:checked ~ .checkmark-luxury::after {
+    content: '\2713';
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.forgot-link-luxury {
+    color: var(--primary-gold);
     text-decoration: none;
+    font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
+    font-weight: 500;
+    transition: all 0.3s ease;
 }
 
-.forgot-link:hover {
-    color: #5a67d8;
+.forgot-link-luxury:hover {
+    color: var(--primary-gold-dark);
     text-decoration: underline;
 }
 
-.btn-primary {
+.btn-luxury {
     width: 100%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    padding: 1rem 2rem;
     border: none;
-    padding: 1.125rem;
-    border-radius: 12px;
-    font-size: 1.05rem;
+    border-radius: var(--radius-md);
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-bottom: 2rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    margin-bottom: 1.5rem;
 }
 
-.btn-primary:hover {
+.btn-primary-luxury {
+    background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+    color: var(--text-white);
+    box-shadow: var(--shadow-gold);
+}
+
+.btn-primary-luxury:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 12px 35px rgba(212, 175, 55, 0.4);
 }
 
-.btn-primary:active {
-    transform: translateY(0);
-}
-
-.auth-footer {
+.auth-footer-luxury {
     text-align: center;
-    padding-top: 2rem;
-    border-top: 1px solid #e5e7eb;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--neutral-pearl);
 }
 
-.auth-footer p {
+.auth-footer-luxury p {
     margin: 0;
-    color: #6b7280;
-    font-size: 0.95rem;
+    color: var(--text-light);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
 }
 
-.auth-footer a {
-    color: #667eea;
+.auth-footer-luxury a {
+    color: var(--primary-gold);
     text-decoration: none;
-    font-weight: 700;
-    transition: all 0.2s ease;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
-.auth-footer a:hover {
-    color: #5a67d8;
+.auth-footer-luxury a:hover {
+    color: var(--primary-gold-dark);
     text-decoration: underline;
 }
 
-/* Form validation */
-.input-error {
-    border-color: #dc2626 !important;
-    background: #fef2f2 !important;
-    animation: shake 0.3s ease;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-}
-
 /* Responsive */
-@media (max-width: 480px) {
-    .auth-container {
-        padding: 1rem;
-    }
-    
-    .auth-card {
+@media (max-width: 768px) {
+    .auth-card-luxury {
         padding: 2rem;
+        margin: 1rem;
     }
-    
-    .auth-header h1 {
+
+    .auth-header-luxury h2 {
         font-size: 1.75rem;
     }
-    
-    .logo {
-        width: 60px;
-        height: 60px;
-        font-size: 1.5rem;
-    }
-    
-    .form-options {
+
+    .form-options-luxury {
         flex-direction: column;
         gap: 1rem;
-        align-items: flex-start;
+        text-align: center;
     }
 }
 </style>
 
-<!-- Clean JavaScript -->
 <script>
 function togglePassword() {
     const passwordInput = document.getElementById('password');
-    const toggleButton = document.querySelector('.password-toggle i');
-    
+    const toggleButton = document.querySelector('.password-toggle-luxury i');
+
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
         toggleButton.classList.remove('fa-eye');
@@ -354,63 +378,33 @@ function togglePassword() {
     }
 }
 
-// Enhanced form validation
+// Form validation
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('.auth-form');
+    const form = document.querySelector('.auth-form-luxury');
     const inputs = form.querySelectorAll('input[required]');
-    
+
     form.addEventListener('submit', function(e) {
         let isValid = true;
-        
+
         inputs.forEach(input => {
-            input.classList.remove('input-error');
-            
             if (!input.value.trim()) {
-                input.classList.add('input-error');
+                input.style.borderColor = '#dc3545';
                 isValid = false;
-            }
-            
-            // Email validation
-            if (input.type === 'email' && input.value) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(input.value)) {
-                    input.classList.add('input-error');
-                    isValid = false;
-                }
+            } else {
+                input.style.borderColor = 'var(--neutral-pearl)';
             }
         });
-        
+
         if (!isValid) {
             e.preventDefault();
-            // Focus first error
-            const firstError = form.querySelector('.input-error');
-            if (firstError) {
-                firstError.focus();
-            }
         }
     });
-    
-    // Clear error styling on input
+
     inputs.forEach(input => {
         input.addEventListener('input', function() {
             if (this.value.trim()) {
-                this.classList.remove('input-error');
+                this.style.borderColor = 'var(--neutral-pearl)';
             }
-        });
-        
-        input.addEventListener('focus', function() {
-            this.classList.remove('input-error');
-        });
-    });
-    
-    // Add smooth focus transitions
-    inputs.forEach(input => {
-        input.addEventListener('focus', function() {
-            this.parentElement.style.transform = 'scale(1.02)';
-        });
-        
-        input.addEventListener('blur', function() {
-            this.parentElement.style.transform = 'scale(1)';
         });
     });
 });

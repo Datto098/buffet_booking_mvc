@@ -2598,3 +2598,527 @@ Session user_role: manager
 Role check result: pass
 Authentication check - role: manager, authenticated: yes
 Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:25:11 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:25:11 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:25:11 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:25:11 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:25:11 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:25:11 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:25:41 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:25:41 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:25:41 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:25:41 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:25:41 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:25:41 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:26:21 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:26:21 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:26:21 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:26:21 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:26:21 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:26:21 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:27:21 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:27:21 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:27:21 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:27:21 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[13-Jun-2025 20:27:21 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[13-Jun-2025 20:27:21 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 697792f05f6036b269958c7641e680772ec68cf0162dbaed4f78c888950fc646
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 05:51:19 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method AuthController::index() in C:\wamp64\www\buffet_booking_mvc\index.php:860
+Stack trace:
+#0 C:\wamp64\www\buffet_booking_mvc\index.php(110): handleCustomerRoute('auth', 'forgot-password', NULL)
+#1 C:\wamp64\www\buffet_booking_mvc\index.php(36): routeRequest(Array)
+#2 {main}
+  thrown in C:\wamp64\www\buffet_booking_mvc\index.php on line 860
+[14-Jun-2025 06:48:14 UTC] PHP Warning:  Undefined array key "confirm_password" in C:\wamp64\www\buffet_booking_mvc\controllers\AuthController.php on line 133
+[14-Jun-2025 06:48:14 UTC] PHP Stack trace:
+[14-Jun-2025 06:48:14 UTC] PHP   1. {main}() C:\wamp64\www\buffet_booking_mvc\index.php:0
+[14-Jun-2025 06:48:14 UTC] PHP   2. routeRequest($segments = [0 => 'auth', 1 => 'register']) C:\wamp64\www\buffet_booking_mvc\index.php:36
+[14-Jun-2025 06:48:14 UTC] PHP   3. handleCustomerRoute($page = 'auth', $action = 'register', $param = NULL) C:\wamp64\www\buffet_booking_mvc\index.php:110
+[14-Jun-2025 06:48:14 UTC] PHP   4. AuthController->register() C:\wamp64\www\buffet_booking_mvc\index.php:859
+[14-Jun-2025 06:48:14 UTC] PHP   5. AuthController->handleRegister() C:\wamp64\www\buffet_booking_mvc\controllers\AuthController.php:38
+[14-Jun-2025 06:51:16 UTC] PHP Warning:  Undefined array key "confirm_password" in C:\wamp64\www\buffet_booking_mvc\controllers\AuthController.php on line 133
+[14-Jun-2025 06:51:16 UTC] PHP Stack trace:
+[14-Jun-2025 06:51:16 UTC] PHP   1. {main}() C:\wamp64\www\buffet_booking_mvc\index.php:0
+[14-Jun-2025 06:51:16 UTC] PHP   2. routeRequest($segments = [0 => 'auth', 1 => 'register']) C:\wamp64\www\buffet_booking_mvc\index.php:36
+[14-Jun-2025 06:51:16 UTC] PHP   3. handleCustomerRoute($page = 'auth', $action = 'register', $param = NULL) C:\wamp64\www\buffet_booking_mvc\index.php:110
+[14-Jun-2025 06:51:16 UTC] PHP   4. AuthController->register() C:\wamp64\www\buffet_booking_mvc\index.php:859
+[14-Jun-2025 06:51:16 UTC] PHP   5. AuthController->handleRegister() C:\wamp64\www\buffet_booking_mvc\controllers\AuthController.php:38
