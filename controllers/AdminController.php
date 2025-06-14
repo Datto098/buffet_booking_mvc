@@ -625,7 +625,8 @@ class AdminController extends BaseController
         ];
 
         $this->loadAdminView('bookings/index', $data);
-    }    public function updateBookingStatus($bookingIdFromUrl = null)
+    }
+    public function updateBookingStatus($bookingIdFromUrl = null)
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
