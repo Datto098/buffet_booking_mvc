@@ -343,53 +343,76 @@ class BookingController extends BaseController
             header('Location: index.php?page=booking');
             exit;
         }
-
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $newDate = $_POST['booking_date'];
-            $newTime = $_POST['booking_time'];
-            $newDateTime = $newDate . ' ' . $newTime . ':00';
-            $changedDateTime = $newDateTime !== $booking['reservation_time'];
+            // Debug logging
+            error_log("BookingController modify POST - Data received: " . json_encode($_POST));
+            error_log("BookingController modify - Booking ID: " . $bookingId);
+            error_log("BookingController modify - User ID: " . $userId);
 
-            $updateData = [
-                'customer_name'    => $_POST['customer_name'],
-                'phone_number'     => $_POST['phone_number'],
-                'number_of_guests' => $_POST['number_of_guests'],
-                'reservation_time' => $newDateTime,
-                'special_requests' => $_POST['special_requests'] ?? '',
-                'status'           => $changedDateTime ? 'pending' : $booking['status'],
-            ];
+            try {
+                // Validate required fields
+                if (
+                    empty($_POST['customer_name']) || empty($_POST['phone_number']) ||
+                    empty($_POST['booking_date']) || empty($_POST['booking_time']) ||
+                    empty($_POST['number_of_guests'])
+                ) {
+                    $_SESSION['error'] = 'Vui lòng điền đầy đủ thông tin bắt buộc.';
+                    header('Location: index.php?page=booking&action=modify&id=' . $bookingId);
+                    exit;
+                }
 
-
-            $result = $this->bookingModel->updateBooking($bookingId, $updateData);
-
-            // Gửi email nếu đổi ngày/giờ
-            if ($result) {
-                $_SESSION['success'] = 'Sửa bàn thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất để xác nhận.';
-
-                // Lấy lại thông tin booking vừa sửa
-                $booking = $this->bookingModel->getBookingDetails($bookingId);
-
-                // Lấy thông tin khách hàng từ dữ liệu booking
-                $customerName = $booking['customer_name'] ?? '';
-                $customerEmail = '';
+                $newDate = $_POST['booking_date'];
+                $newTime = $_POST['booking_time'];
+                $newDateTime = $newDate . ' ' . $newTime . ':00';
+                $changedDateTime = $newDateTime !== $booking['reservation_time'];                // Lấy email từ user (vì table reservations không có field email)
+                $email = '';
                 if (!empty($booking['customer_email'])) {
-                    $customerEmail = $booking['customer_email'];
-                } elseif (!empty($booking['email'])) {
-                    $customerEmail = $booking['email'];
+                    $email = $booking['customer_email'];
                 } elseif (!empty($booking['user_id'])) {
                     $user = $this->userModel->findById($booking['user_id']);
                     if ($user && !empty($user['email'])) {
-                        $customerEmail = $user['email'];
+                        $email = $user['email'];
                     }
-                }
-                $customerPhone = $booking['phone_number'] ?? '';
-                $bookingDate = isset($booking['reservation_time']) ? date('Y-m-d', strtotime($booking['reservation_time'])) : '';
-                $bookingTime = isset($booking['reservation_time']) ? date('H:i', strtotime($booking['reservation_time'])) : '';
-                $partySize = $booking['number_of_guests'] ?? '';
+                }$updateData = [
+                    'customer_name'    => $_POST['customer_name'],
+                    'phone_number'     => $_POST['phone_number'],
+                    'number_of_guests' => (int)$_POST['number_of_guests'],
+                    'reservation_time' => $newDateTime,
+                    'notes'            => $_POST['notes'] ?? '',
+                    'status'           => $changedDateTime ? 'pending' : $booking['status'],
+                ];
 
-                // Tạo subject và message cho email xác nhận đặt bàn
-                $subject = "Sửa bàn thành công tại Buffet Booking";
-                $message = "
+
+                $result = $this->bookingModel->updateBooking($bookingId, $updateData);
+
+                // Debug logging
+                error_log("BookingController modify - Update data: " . json_encode($updateData));
+                error_log("BookingController modify - Update result: " . ($result ? 'SUCCESS' : 'FAILED'));
+
+                // Gửi email nếu đổi ngày/giờ
+                if ($result) {
+                    $_SESSION['success'] = 'Sửa bàn thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất để xác nhận.';
+
+                    // Lấy lại thông tin booking vừa sửa
+                    $booking = $this->bookingModel->getBookingDetails($bookingId);                    // Lấy thông tin khách hàng từ dữ liệu booking
+                    $customerName = $booking['customer_name'] ?? '';
+                    $customerEmail = '';
+                    if (!empty($booking['customer_email'])) {
+                        $customerEmail = $booking['customer_email'];
+                    } elseif (!empty($booking['user_id'])) {
+                        $user = $this->userModel->findById($booking['user_id']);
+                        if ($user && !empty($user['email'])) {
+                            $customerEmail = $user['email'];
+                        }
+                    }
+                    $customerPhone = $booking['phone_number'] ?? '';
+                    $bookingDate = isset($booking['reservation_time']) ? date('Y-m-d', strtotime($booking['reservation_time'])) : '';
+                    $bookingTime = isset($booking['reservation_time']) ? date('H:i', strtotime($booking['reservation_time'])) : '';
+                    $partySize = $booking['number_of_guests'] ?? '';
+
+                    // Tạo subject và message cho email xác nhận đặt bàn
+                    $subject = "Sửa bàn thành công tại Buffet Booking";
+                    $message = "
                     <h2>Xin chào $customerName,</h2>
                     <p>Bạn đã sửa bàn thành công tại <b>Buffet Booking</b>!</p>
                     <ul>
@@ -401,20 +424,34 @@ class BookingController extends BaseController
                     <p>Chúng tôi sẽ xác nhận đặt bàn của bạn trong thời gian sớm nhất.</p>
                     <p>Trạng thái: <b>Chờ xác nhận</b></p>
                     <p>Cảm ơn bạn đã sử dụng dịch vụ!</p>
-                ";
+                ";                // Gửi email xác nhận đã nhận phiếu đặt bàn
+                    if (!empty($customerEmail)) {
+                        sendResetMail($customerEmail, $subject, $message);
 
-                // Gửi email xác nhận đã nhận phiếu đặt bàn
-                sendResetMail($customerEmail, $subject, $message);
+                        // Tạo nội dung HTML cho PDF
+                        $htmlContent = "
+                        <h2>PHIẾU ĐẶT BÀN</h2>
+                        <p><strong>Khách hàng:</strong> $customerName</p>
+                        <p><strong>Số điện thoại:</strong> $customerPhone</p>
+                        <p><strong>Ngày:</strong> $bookingDate</p>
+                        <p><strong>Giờ:</strong> $bookingTime</p>
+                        <p><strong>Số lượng khách:</strong> $partySize</p>
+                        <p><strong>Trạng thái:</strong> Chờ xác nhận</p>
+                    ";
+                        sendBookingPDFMail($customerEmail, $subject, $message, $htmlContent);
+                    }
+                } else {
+                    $_SESSION['error'] = 'Có lỗi xảy ra khi cập nhật booking. Vui lòng thử lại.';
+                }
 
-                // Truyền biến $booking vào view PDF
-                ob_start();
-                $htmlContent = ob_get_clean();
-
-                sendBookingPDFMail($customerEmail, $subject, $message, $htmlContent);
+                header('Location: index.php?page=booking&action=detail&id=' . $bookingId);
+                exit;
+            } catch (Exception $e) {
+                error_log("Booking update error: " . $e->getMessage());
+                $_SESSION['error'] = 'Có lỗi xảy ra khi cập nhật booking. Vui lòng thử lại.';
+                header('Location: index.php?page=booking&action=modify&id=' . $bookingId);
+                exit;
             }
-
-            header('Location: index.php?page=booking&action=detail&id=' . $bookingId);
-            exit;
         }
 
         $data = [

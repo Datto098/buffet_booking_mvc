@@ -842,7 +842,14 @@ function handleCustomerRoute($page, $action, $param)
     if (!class_exists($controllerClass)) {
         throw new Exception("Controller class $controllerClass not found");
     }
-    $controller = new $controllerClass();    // Call the appropriate method
+    $controller = new $controllerClass();
+
+    // Debug route handling
+    error_log("Customer route - Page: $page, Action: $action, Param: $param");
+    error_log("Controller class: $controllerClass");
+    error_log("Request method: " . $_SERVER['REQUEST_METHOD']);
+
+    // Call the appropriate method
     if ($action === 'update-profile' || $action === 'updateProfile') {
         $controller->updateProfile();
         exit;

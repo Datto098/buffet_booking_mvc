@@ -360,7 +360,7 @@ class Booking extends BaseModel {
     public function getUserBookings($userId, $limit = null, $offset = 0) {
         return $this->getBookingsByUser($userId, $limit, $offset);
     }
-    
+
 
     /**
      * Count bookings for a specific user
@@ -511,28 +511,40 @@ class Booking extends BaseModel {
      * @param int $bookingId Booking ID
      * @param array $data Updated booking data
      * @return bool Success status
-     */
-    public function updateBooking($bookingId, $data) {
+     */    public function updateBooking($bookingId, $data) {
+        error_log("Booking Model updateBooking - ID: $bookingId, Data: " . json_encode($data));
+
         $sql = "UPDATE {$this->table} SET
                 customer_name = :customer_name,
                 phone_number = :phone_number,
-                email = :email,
                 number_of_guests = :number_of_guests,
                 reservation_time = :reservation_time,
-                special_requests = :special_requests,
-                status = :status
+                notes = :notes,
+                status = :status,
+                updated_at = NOW()
             WHERE id = :id";
-    $stmt = $this->db->prepare($sql);
-    $stmt->bindValue(':customer_name', $data['customer_name'], PDO::PARAM_STR);
-    $stmt->bindValue(':phone_number', $data['phone_number'], PDO::PARAM_STR);
-    $stmt->bindValue(':email', $data['email'], PDO::PARAM_STR);
-    $stmt->bindValue(':number_of_guests', $data['number_of_guests'], PDO::PARAM_INT);
-    $stmt->bindValue(':reservation_time', $data['reservation_time'], PDO::PARAM_STR);
-    $stmt->bindValue(':special_requests', $data['special_requests'], PDO::PARAM_STR);
-    $stmt->bindValue(':status', $data['status'], PDO::PARAM_STR);
-    $stmt->bindValue(':id', $bookingId, PDO::PARAM_INT);
-    return $stmt->execute();
-}
+
+        error_log("Booking Model updateBooking - SQL: " . $sql);
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':customer_name', $data['customer_name'], PDO::PARAM_STR);
+        $stmt->bindValue(':phone_number', $data['phone_number'], PDO::PARAM_STR);
+        $stmt->bindValue(':number_of_guests', $data['number_of_guests'], PDO::PARAM_INT);
+        $stmt->bindValue(':reservation_time', $data['reservation_time'], PDO::PARAM_STR);
+        $stmt->bindValue(':notes', $data['notes'], PDO::PARAM_STR);
+        $stmt->bindValue(':status', $data['status'], PDO::PARAM_STR);
+        $stmt->bindValue(':id', $bookingId, PDO::PARAM_INT);
+
+        $result = $stmt->execute();
+
+        if (!$result) {
+            error_log("Booking Model updateBooking - SQL Error: " . json_encode($stmt->errorInfo()));
+        } else {
+            error_log("Booking Model updateBooking - Rows affected: " . $stmt->rowCount());
+        }
+
+        return $result;
+    }
     /**
      * Transform booking data for admin interface compatibility
      * Maps database fields to expected view fields

@@ -2,7 +2,7 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require_once __DIR__ . '/../vendor/autoload.php'; 
+require_once __DIR__ . '/../vendor/autoload.php';
 
 function sendResetMail($to, $subject, $body) {
     $mail = new PHPMailer(true);
@@ -11,8 +11,8 @@ function sendResetMail($to, $subject, $body) {
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'euyry88@gmail.com'; 
-        $mail->Password = 'gnkj jyti ydew ctdf';   
+        $mail->Username = 'euyry88@gmail.com';
+        $mail->Password = 'gnkj jyti ydew ctdf';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
 
@@ -23,15 +23,12 @@ function sendResetMail($to, $subject, $body) {
         $mail->CharSet = 'UTF-8';
         $mail->Encoding = 'base64';
         $mail->Subject = $subject;
-        $mail->Body    = $body;
-
-        $mail->send();
+        $mail->Body    = $body;        $mail->send();
         return true;
     } catch (Exception $e) {
         // Ghi log hoặc xử lý lỗi
-    }   return false;
+        error_log("Mail sending failed: " . $e->getMessage());
+        return false;
+    }
 }
 ?>
-<?php if (!empty($user['first_name'])): ?>
-    <?= htmlspecialchars($user['first_name']) ?>
-<?php endif; ?>

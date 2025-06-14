@@ -35,8 +35,7 @@ $booking = $booking ?? [];
             <label for="number_of_guests" class="form-label">Số lượng khách</label>
             <input type="number" class="form-control" id="number_of_guests" name="number_of_guests"
                    value="<?= htmlspecialchars($booking['number_of_guests'] ?? '') ?>" min="1" required>
-        </div>
-        <div class="mb-3">
+        </div>        <div class="mb-3">
             <label for="notes" class="form-label">Yêu cầu đặc biệt</label>
             <textarea class="form-control" id="notes" name="notes"><?= htmlspecialchars($booking['notes'] ?? '') ?></textarea>
         </div>
