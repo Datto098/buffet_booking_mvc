@@ -10,6 +10,7 @@ require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../helpers/mail_helper.php';
 require_once __DIR__ . '/../helpers/pdf_helper.php';
 
+
 class BookingController extends BaseController
 {
     private $bookingModel;
@@ -358,8 +359,6 @@ class BookingController extends BaseController
                 'status'           => $changedDateTime ? 'pending' : $booking['status'],
             ];
 
-            print_r($updateData);
-            echo '</pre>';
 
             $result = $this->bookingModel->updateBooking($bookingId, $updateData);
 
@@ -372,11 +371,16 @@ class BookingController extends BaseController
 
                 // Lấy thông tin khách hàng từ dữ liệu booking
                 $customerName = $booking['customer_name'] ?? '';
-                $user = $this->userModel->findById($booking['user_id']);
-                $customerEmail = $booking['email'] ?? '';
-                if (empty($customerEmail) && !empty($booking['user_id'])) {
+                $customerEmail = '';
+                if (!empty($booking['customer_email'])) {
+                    $customerEmail = $booking['customer_email'];
+                } elseif (!empty($booking['email'])) {
+                    $customerEmail = $booking['email'];
+                } elseif (!empty($booking['user_id'])) {
                     $user = $this->userModel->findById($booking['user_id']);
-                    $customerEmail = $user['email'] ?? '';
+                    if ($user && !empty($user['email'])) {
+                        $customerEmail = $user['email'];
+                    }
                 }
                 $customerPhone = $booking['phone_number'] ?? '';
                 $bookingDate = isset($booking['reservation_time']) ? date('Y-m-d', strtotime($booking['reservation_time'])) : '';
@@ -404,7 +408,6 @@ class BookingController extends BaseController
 
                 // Truyền biến $booking vào view PDF
                 ob_start();
-                include __DIR__ . '/../views/customer/booking/pdf_detail.php';
                 $htmlContent = ob_get_clean();
 
                 sendBookingPDFMail($customerEmail, $subject, $message, $htmlContent);
