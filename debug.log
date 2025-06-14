@@ -23781,3 +23781,567 @@ Admin authentication passed - proceeding with routing
                     LEFT JOIN sub_categories sc ON f.subcategory_id = sc.id WHERE f.is_available = 1 ORDER BY f.name ASC LIMIT :limit OFFSET :offset
 [14-Jun-2025 09:18:25 UTC] Food Model Debug - Params: []
 [14-Jun-2025 09:18:25 UTC] Food Model Debug - Found 12 results
+[14-Jun-2025 09:19:21 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:19:21 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 09:19:21 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:19:21 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 09:19:21 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:19:21 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 09:19:32 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:19:32 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 09:19:32 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:19:32 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 09:19:32 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:19:32 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 09:19:56 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:19:56 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 09:19:56 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:19:56 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 09:19:56 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:19:56 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 09:20:26 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:20:26 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 09:20:26 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:20:26 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
+[14-Jun-2025 09:20:26 UTC] Main router handling admin route: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+[14-Jun-2025 09:20:26 UTC] Session in main router: Array
+(
+    [cart_count] => 2
+    [csrf_token] => 46ca306c4b58e7d1e4522c69dd28803f23fe5ca87eae7b12ca3735c5cd606188
+    [user_id] => 1
+    [first_name] => Adminn
+    [last_name] => User
+    [user_email] => admin@buffet.com
+    [user_role] => manager
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 1
+            [first_name] => Adminn
+            [last_name] => User
+            [full_name] => Adminn User
+            [email] => admin@buffet.com
+            [role] => manager
+        )
+
+    [cart] => Array
+        (
+            [14] => 1
+            [13] => 1
+        )
+
+)
+
+handleAdminRoute called with segments: Array
+(
+    [0] => admin
+    [1] => dashboard
+    [2] => stats
+)
+
+Session user_id: 1
+Session user_role: manager
+Role check result: pass
+Authentication check - role: manager, authenticated: yes
+Admin authentication passed - proceeding with routing
