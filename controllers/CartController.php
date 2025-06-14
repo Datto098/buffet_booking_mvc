@@ -39,21 +39,28 @@ class CartController extends BaseController {
         ];
 
         $this->loadView('customer/cart/index', $data);
-    }
+    }    public function add() {
+        error_log("CartController add() called");
 
-    public function add() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            error_log("CartController add() - Not POST method");
             $this->jsonResponse(['error' => 'Method not allowed'], 405);
         }
 
         $foodId = intval($_POST['food_id'] ?? 0);
         $quantity = intval($_POST['quantity'] ?? 1);
 
+        error_log("CartController add() - Food ID: $foodId, Quantity: $quantity");
+
         if ($foodId <= 0 || $quantity <= 0) {
+            error_log("CartController add() - Invalid parameters");
             $this->jsonResponse(['error' => 'Invalid parameters'], 400);
         }        // Check if food exists and is available
         $food = $this->foodModel->getFoodDetails($foodId);
+        error_log("CartController add() - Food details: " . json_encode($food));
+
         if (!$food || !$food['is_available']) {
+            error_log("CartController add() - Food not available");
             $this->jsonResponse(['error' => 'Food not available', 'debug' => $foodId], 404);
         }
 

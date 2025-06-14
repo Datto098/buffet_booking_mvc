@@ -928,8 +928,7 @@
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add to cart functionality with loading state
+    document.addEventListener('DOMContentLoaded', function() {        // Add to cart functionality with loading state
         document.querySelectorAll('.add-to-cart-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const foodId = this.dataset.foodId;
@@ -937,30 +936,65 @@
                 const foodPrice = this.dataset.foodPrice;
                 const originalText = this.innerHTML;
 
+                console.log('Add to cart clicked:', { foodId, foodName, foodPrice });
+
                 // Add loading state
                 this.classList.add('btn-loading');
-                this.innerHTML = '<span class="visually-hidden">Đang thêm...</span>';
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang thêm...';
                 this.disabled = true;
 
-                // Simulate API call
-                setTimeout(() => {
+                // Make actual API call to add to cart
+                fetch('<?= SITE_URL ?>/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `food_id=${foodId}&quantity=1`
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+
                     // Remove loading state
                     this.classList.remove('btn-loading');
-                    this.innerHTML = '<i class="fas fa-check me-2"></i>Đã thêm';
-                    this.classList.remove('btn-primary');
-                    this.classList.add('btn-success');
 
-                    // Show success toast
-                    showToast('Thành công!', 'Đã thêm ' + foodName + ' vào giỏ hàng', 'success');
+                    if (data.success) {
+                        this.innerHTML = '<i class="fas fa-check me-2"></i>Đã thêm';
+                        this.classList.remove('btn-primary', 'btn-luxury');
+                        this.classList.add('btn-success');
 
-                    // Reset button after 2 seconds
-                    setTimeout(() => {
+                        // Show success toast
+                        showToast('Thành công!', 'Đã thêm ' + foodName + ' vào giỏ hàng', 'success');
+
+                        // Update cart count if exists
+                        const cartCount = document.querySelector('.cart-count');
+                        if (cartCount && data.cartInfo && data.cartInfo.itemCount) {
+                            cartCount.textContent = data.cartInfo.itemCount;
+                        }
+
+                        // Reset button after 2 seconds
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                            this.classList.remove('btn-success');
+                            this.classList.add('btn-luxury');
+                            this.disabled = false;
+                        }, 2000);
+                    } else {
                         this.innerHTML = originalText;
-                        this.classList.remove('btn-success');
-                        this.classList.add('btn-primary');
                         this.disabled = false;
-                    }, 2000);
-                }, 1000);
+                        showToast('Lỗi!', data.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    this.classList.remove('btn-loading');
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                    showToast('Lỗi!', 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
+                });
             });
         });
 
