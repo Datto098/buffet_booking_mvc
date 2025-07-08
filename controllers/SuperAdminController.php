@@ -14,6 +14,7 @@ require_once __DIR__ . '/../models/Table.php';
 require_once __DIR__ . '/../models/Promotion.php';
 require_once __DIR__ . '/../models/Review.php';
 require_once __DIR__ . '/../models/Notification.php';
+require_once __DIR__ . '/../models/InternalMessage.php';
 
 class SuperAdminController extends BaseController
 {
@@ -26,6 +27,7 @@ class SuperAdminController extends BaseController
     private $promotionModel;
     private $reviewModel;
     private $notificationModel;
+    private $internalMessageModel;
 
     public function __construct()
     {
@@ -38,6 +40,7 @@ class SuperAdminController extends BaseController
         $this->promotionModel = new Promotion();
         $this->reviewModel = new Review();
         $this->notificationModel = new Notification();
+        $this->internalMessageModel = new InternalMessage();
     }
 
     public function dashboard()
@@ -1642,6 +1645,216 @@ class SuperAdminController extends BaseController
         if ($time < 2592000) return floor($time/86400) . ' days ago';
 
         return date('M j, Y', strtotime($datetime));
+    }
+
+    // ==========================================
+    // INTERNAL MESSAGES
+    // ==========================================
+
+    /**
+     * Hiển thị trang gửi thông báo nội bộ
+     */
+    public function sendInternalMessage()
+    {
+        $recipients = $this->internalMessageModel->getAvailableRecipients();
+
+        $data = [
+            'title' => 'Gửi Thông Báo Nội Bộ',
+            'recipients' => $recipients,
+            'csrf_token' => $this->generateCSRF()
+        ];
+
+        $this->loadSuperAdminView('internal_messages/send', $data);
+    }
+
+    /**
+     * Xử lý gửi thông báo nội bộ
+     */
+    public function processInternalMessage()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/superadmin/internal-messages/send');
+        }
+
+        if (!$this->validateCSRF()) {
+            $this->setFlash('error', 'Token không hợp lệ');
+            $this->redirect('/superadmin/internal-messages/send');
+        }
+
+        // Validate input
+        $title = trim($_POST['title'] ?? '');
+        $content = trim($_POST['content'] ?? '');
+        $messageType = $_POST['message_type'] ?? 'general';
+        $priority = $_POST['priority'] ?? 'normal';
+        $recipients = $_POST['recipients'] ?? [];
+        $isBroadcast = isset($_POST['is_broadcast']) ? 1 : 0;
+
+        if (empty($title) || empty($content)) {
+            $this->setFlash('error', 'Tiêu đề và nội dung không được để trống');
+            $this->redirect('/superadmin/internal-messages/send');
+        }
+
+        if (!$isBroadcast && empty($recipients)) {
+            $this->setFlash('error', 'Vui lòng chọn ít nhất một người nhận');
+            $this->redirect('/superadmin/internal-messages/send');
+        }
+
+        // Xử lý file đính kèm
+        $attachmentPath = null;
+        $attachmentName = null;
+
+        if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
+            $uploadResult = $this->handleFileUpload($_FILES['attachment']);
+            if ($uploadResult['success']) {
+                $attachmentPath = $uploadResult['path'];
+                $attachmentName = $uploadResult['name'];
+            } else {
+                $this->setFlash('error', 'Lỗi upload file: ' . $uploadResult['message']);
+                $this->redirect('/superadmin/internal-messages/send');
+            }
+        }
+
+        // Nếu là broadcast, lấy tất cả admin
+        if ($isBroadcast) {
+            $allRecipients = $this->internalMessageModel->getAvailableRecipients();
+            $recipients = array_column($allRecipients, 'id');
+        }
+
+        // Tạo thông báo
+        $messageData = [
+            'sender_id' => $_SESSION['user_id'],
+            'title' => $title,
+            'content' => $content,
+            'attachment_path' => $attachmentPath,
+            'attachment_name' => $attachmentName,
+            'message_type' => $messageType,
+            'priority' => $priority,
+            'is_broadcast' => $isBroadcast,
+            'recipients' => $recipients
+        ];
+
+        $messageId = $this->internalMessageModel->createMessage($messageData);
+
+        if ($messageId) {
+            $this->setFlash('success', 'Thông báo đã được gửi thành công!');
+            $this->redirect('/superadmin/internal-messages/sent');
+        } else {
+            $this->setFlash('error', 'Có lỗi xảy ra khi gửi thông báo');
+            $this->redirect('/superadmin/internal-messages/send');
+        }
+    }
+
+    /**
+     * Hiển thị danh sách thông báo đã gửi
+     */
+    public function sentInternalMessages()
+    {
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        $messages = $this->internalMessageModel->getSentMessages($_SESSION['user_id'], $limit, $offset);
+        $stats = $this->internalMessageModel->getMessageStats($_SESSION['user_id']);
+
+        $data = [
+            'title' => 'Thông Báo Đã Gửi',
+            'messages' => $messages,
+            'stats' => $stats,
+            'page' => $page,
+            'limit' => $limit,
+            'csrf_token' => $this->generateCSRF()
+        ];
+
+        $this->loadSuperAdminView('internal_messages/sent', $data);
+    }
+
+    /**
+     * Xem chi tiết thông báo
+     */
+    public function viewInternalMessage($messageId)
+    {
+        $message = $this->internalMessageModel->getMessageDetail($messageId, $_SESSION['user_id']);
+
+        if (!$message) {
+            $this->setFlash('error', 'Thông báo không tồn tại');
+            $this->redirect('/superadmin/internal-messages/sent');
+        }
+
+        // Lấy danh sách người nhận
+        $recipients = $this->internalMessageModel->getMessageRecipients($messageId);
+
+        $data = [
+            'title' => 'Chi Tiết Thông Báo',
+            'message' => $message,
+            'recipients' => $recipients
+        ];
+
+        $this->loadSuperAdminView('internal_messages/view', $data);
+    }
+
+    /**
+     * Xóa thông báo
+     */
+    public function deleteInternalMessage($messageId)
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/superadmin/internal-messages/sent');
+        }
+
+        if (!$this->validateCSRF()) {
+            $this->setFlash('error', 'Token không hợp lệ');
+            $this->redirect('/superadmin/internal-messages/sent');
+        }
+
+        $success = $this->internalMessageModel->deleteMessage($messageId, $_SESSION['user_id']);
+
+        if ($success) {
+            $this->setFlash('success', 'Thông báo đã được xóa thành công');
+        } else {
+            $this->setFlash('error', 'Không thể xóa thông báo này');
+        }
+
+        $this->redirect('/superadmin/internal-messages/sent');
+    }
+
+    /**
+     * Xử lý upload file
+     */
+    private function handleFileUpload($file)
+    {
+        $allowedTypes = ['pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png'];
+        $maxSize = 5 * 1024 * 1024; // 5MB
+
+        // Kiểm tra kích thước
+        if ($file['size'] > $maxSize) {
+            return ['success' => false, 'message' => 'File quá lớn (tối đa 5MB)'];
+        }
+
+        // Kiểm tra loại file
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($extension, $allowedTypes)) {
+            return ['success' => false, 'message' => 'Loại file không được hỗ trợ'];
+        }
+
+        // Tạo thư mục upload nếu chưa có
+        $uploadDir = 'uploads/internal_messages/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Tạo tên file unique
+        $filename = uniqid() . '_' . time() . '.' . $extension;
+        $filepath = $uploadDir . $filename;
+
+        if (move_uploaded_file($file['tmp_name'], $filepath)) {
+            return [
+                'success' => true,
+                'path' => $filepath,
+                'name' => $file['name']
+            ];
+        } else {
+            return ['success' => false, 'message' => 'Lỗi upload file'];
+        }
     }
 }
 ?>

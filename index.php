@@ -188,6 +188,9 @@ function handleAdminRoute($segments)
         case 'logs':
             handleAdminLogsRoute($controller, $action, $param);
             break;
+        case 'internal-messages':
+            handleAdminInternalMessagesRoute($controller, $action, $param);
+            break;
         default:
             $controller->dashboard();    }
 }
@@ -258,6 +261,9 @@ function handleSuperAdminRoute($segments)
             break;
         case 'notifications':
             handleSuperAdminNotificationsRoute($controller, $action, $param);
+            break;
+        case 'internal-messages':
+            handleSuperAdminInternalMessagesRoute($controller, $action, $param);
             break;
         case 'statistics':
             $controller->statistics();
@@ -429,6 +435,38 @@ function handleSuperAdminNotificationsRoute($controller, $action, $param)
             break;
         default:
             $controller->notifications();
+    }
+}
+
+function handleSuperAdminInternalMessagesRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'send':
+            $controller->sendInternalMessage();
+            break;
+        case 'process':
+            $controller->processInternalMessage();
+            break;
+        case 'sent':
+            $controller->sentInternalMessages();
+            break;
+        case 'view':
+            $controller->viewInternalMessage($param);
+            break;
+        case 'delete':
+            $controller->deleteInternalMessage($param);
+            break;
+        case 'sse':
+            $controller->sse();
+            break;
+        case 'get-unread-count':
+            $controller->getUnreadCount();
+            break;
+        case 'mark-as-read':
+            $controller->markAsReadAjax();
+            break;
+        default:
+            $controller->sendInternalMessage();
     }
 }
 
@@ -650,6 +688,32 @@ function handleAdminLogsRoute($controller, $action, $param)
             break;
         default:
             $controller->logs();
+    }
+}
+
+function handleAdminInternalMessagesRoute($controller, $action, $param)
+{
+    switch ($action) {
+        case 'view':
+            $controller->viewInternalMessage($param);
+            break;
+        case 'download-attachment':
+            $controller->downloadInternalMessageAttachment($param);
+            break;
+        case 'unread-count':
+            $controller->getUnreadInternalMessageCount();
+            break;
+        case 'sse':
+            $controller->sse();
+            break;
+        case 'get-unread-count':
+            $controller->getUnreadCount();
+            break;
+        case 'mark-as-read':
+            $controller->markAsReadAjax();
+            break;
+        default:
+            $controller->internalMessages();
     }
 }
 

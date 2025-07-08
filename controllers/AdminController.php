@@ -6,6 +6,7 @@ require_once __DIR__ . '/../models/Category.php';
 require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Booking.php';
 require_once __DIR__ . '/../models/Table.php';
+require_once __DIR__ . '/../models/InternalMessage.php';
 require_once __DIR__ . '/../helpers/mail_helper.php';
 require_once __DIR__ . '/../helpers/pdf_helper.php';
 
@@ -17,6 +18,7 @@ class AdminController extends BaseController
     private $orderModel;
     private $bookingModel;
     private $tableModel;
+    private $internalMessageModel;
 
     public function __construct()
     {
@@ -27,6 +29,7 @@ class AdminController extends BaseController
         $this->orderModel = new Order();
         $this->bookingModel = new Booking();
         $this->tableModel = new Table();
+        $this->internalMessageModel = new InternalMessage();
     }
     public function dashboard()
     {
@@ -3059,5 +3062,95 @@ class AdminController extends BaseController
         } else {
             $this->jsonResponse(['success' => false, 'message' => 'No categories were updated'], 500);
         }
+    }
+
+    // ==========================================
+    // INTERNAL MESSAGES
+    // ==========================================
+
+    /**
+     * Hiển thị danh sách thông báo nội bộ đã nhận
+     */
+    public function internalMessages()
+    {
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        $messages = $this->internalMessageModel->getReceivedMessages($_SESSION['user_id'], $limit, $offset);
+        $unreadCount = $this->internalMessageModel->getUnreadCount($_SESSION['user_id']);
+
+        $data = [
+            'title' => 'Thông Báo Nội Bộ',
+            'messages' => $messages,
+            'unreadCount' => $unreadCount,
+            'page' => $page,
+            'limit' => $limit
+        ];
+
+        $this->loadAdminView('internal_messages/received', $data);
+    }
+
+    /**
+     * Xem chi tiết thông báo nội bộ
+     */
+    public function viewInternalMessage($messageId)
+    {
+        $message = $this->internalMessageModel->getMessageDetail($messageId, $_SESSION['user_id']);
+
+        if (!$message) {
+            $this->setFlash('error', 'Thông báo không tồn tại');
+            $this->redirect('/admin/internal-messages');
+        }
+
+        // Đánh dấu đã đọc
+        $this->internalMessageModel->markAsRead($messageId, $_SESSION['user_id']);
+
+        $data = [
+            'title' => 'Chi Tiết Thông Báo',
+            'message' => $message
+        ];
+
+        $this->loadAdminView('internal_messages/view', $data);
+    }
+
+    /**
+     * API: Lấy số thông báo chưa đọc
+     */
+    public function getUnreadInternalMessageCount()
+    {
+        $count = $this->internalMessageModel->getUnreadCount($_SESSION['user_id']);
+        $this->jsonResponse(['count' => $count]);
+    }
+
+    /**
+     * Download file đính kèm
+     */
+    public function downloadInternalMessageAttachment($messageId)
+    {
+        $message = $this->internalMessageModel->getMessageDetail($messageId, $_SESSION['user_id']);
+
+        if (!$message || !$message['attachment_path']) {
+            $this->setFlash('error', 'File không tồn tại');
+            $this->redirect('/admin/internal-messages');
+        }
+
+        $filepath = $message['attachment_path'];
+        $filename = $message['attachment_name'];
+
+        if (!file_exists($filepath)) {
+            $this->setFlash('error', 'File không tồn tại');
+            $this->redirect('/admin/internal-messages');
+        }
+
+        // Set headers for download
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . filesize($filepath));
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Pragma: no-cache');
+
+        readfile($filepath);
+        exit;
     }
 }

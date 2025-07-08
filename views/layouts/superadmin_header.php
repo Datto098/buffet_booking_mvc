@@ -1142,6 +1142,8 @@
 
     <!-- Custom Super Admin JavaScript -->
     <script src="<?= SITE_URL ?>/assets/js/superadmin.js" defer></script>
+    <!-- Realtime Notifications -->
+    <script src="<?= SITE_URL ?>/assets/js/realtime-notifications.js"></script>
 </head>
 
 <body class="super-admin-body"> <!-- Top Navigation Bar -->

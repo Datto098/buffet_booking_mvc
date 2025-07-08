@@ -53,6 +53,24 @@
                     <i class="fas fa-table me-2"></i> Tables
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link <?= strpos($requestUri, '/admin/internal-messages') !== false ? 'active' : '' ?>" href="<?= SITE_URL ?>/admin/internal-messages">
+                    <i class="fas fa-envelope me-2"></i> Internal Messages
+                    <?php
+                    // Get unread count for internal messages
+                    if (isset($_SESSION['user']['id'])) {
+                        require_once __DIR__ . '/../../../models/InternalMessage.php';
+                        $internalMessageModel = new InternalMessage();
+                        $unreadCount = $internalMessageModel->getUnreadCount($_SESSION['user']['id']);
+                        if ($unreadCount > 0):
+                    ?>
+                        <span class="badge bg-danger ms-2"><?= $unreadCount ?></span>
+                    <?php
+                        endif;
+                    }
+                    ?>
+                </a>
+            </li>
         </ul> <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'super_admin'): ?>
             <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-uppercase">
                 <span>Super Admin</span>
