@@ -1,6 +1,7 @@
 <!-- Hero Section -->
-<section class="hero-section">
-    <div class="container">
+<section class="hero-section hero-section--slider position-relative" id="hero-section">
+    <div class="hero-bg" id="hero-bg"></div>
+    <div class="container position-relative" style="z-index:2;">
         <div class="hero-content">
             <h1 class="hero-title " style="color: #fff">
                 Trải Nghiệm Ẩm Thực <br>
@@ -260,3 +261,4 @@
         </div>
     </div>
 </section>
+

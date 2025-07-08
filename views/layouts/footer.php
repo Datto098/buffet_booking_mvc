@@ -88,6 +88,28 @@
         }
         ?>
     </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+const heroImages = [
+    '<?php echo SITE_URL; ?>/assets/images/nha-hang-buffet-2.png',
+    '<?php echo SITE_URL; ?>/assets/images/nha-hang-buffet.jpg',
+];
+let currentHero = 0;
+const heroBg = document.getElementById('hero-bg');
+function setHeroBg(idx) {
+    heroBg.style.backgroundImage = 'url(' + heroImages[idx] + ')';
+}
+setHeroBg(currentHero);
+setInterval(() => {
+    currentHero = (currentHero + 1) % heroImages.length;
+    setHeroBg(currentHero);
+}, 3000); 
+console.log('heroBg:', heroBg);
+console.log('heroImages:', heroImages);
+setHeroBg(currentHero);
+console.log('Set background:', heroImages[currentHero]);
+});
+</script>
     </body>
 
     </html>

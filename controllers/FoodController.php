@@ -353,7 +353,19 @@ class FoodController extends BaseController
 
             // Lấy orderId của đơn hàng completed gần nhất có món này
             $orderId = $this->orderModel->getCompletedOrderIdByUserAndFood($userId, $foodId);
-
+           
+            //test data
+            // echo "User ID: $userId<br>";
+            // echo "Order ID: $orderId<br>";
+            // echo "Food ID: $foodId<br>";
+            // echo "Rating: $rating<br>";
+            // echo "Comment: $comment<br>";
+            // echo "Photos: " . implode(', ', $photos) . "<br>";
+            // Kiểm tra dữ liệu
+            if ($rating < 1 || $rating > 5) {
+                $this->jsonResponse(['error' => 'Invalid rating'], 400);
+            }
+            echo '</pre>';
             // Lưu vào DB
             $this->reviewModel->addReview($userId, $orderId, $foodId, $rating, $comment, $photos);
 
