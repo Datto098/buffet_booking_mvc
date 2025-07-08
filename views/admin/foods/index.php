@@ -134,53 +134,45 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </div>                </div>
 
-                <!-- Search and Actions Bar -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="fas fa-search"></i>
-                            </span>
-                            <input type="text" class="form-control" id="searchFoods" placeholder="Search by food name, category, or price...">
-                        </div>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleBulkActions()">
-                                <i class="fas fa-tasks"></i> Bulk Actions
-                            </button>
-                            <button type="button" class="btn btn-outline-info btn-sm" onclick="refreshFoods()">
-                                <i class="fas fa-sync-alt"></i> Refresh
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bulk Actions Bar (Hidden by default) -->
-                <div id="bulkActionsBar" class="row mb-3" style="display: none;">
-                    <div class="col-12">
-                        <div class="alert alert-light border">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <strong><span id="selectedCount">0</span> food(s) selected</strong>
-                                </div>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-success btn-sm" onclick="bulkUpdateStatus('available')">
-                                        <i class="fas fa-check"></i> Make Available
-                                    </button>
-                                    <button type="button" class="btn btn-warning btn-sm" onclick="bulkUpdateStatus('unavailable')">
-                                        <i class="fas fa-ban"></i> Make Unavailable
-                                    </button>
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearSelection()">
-                                        <i class="fas fa-times"></i> Clear Selection
-                                    </button>
-                                </div>
+                <!-- Filter Bar -->
+                <div class="filter-bar mb-4">
+                    <form action="<?= SITE_URL ?>/admin/foods" method="GET" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">Search Foods</label>
+                            <div class="search-box">
+                                <input type="text" class="form-control" name="search" placeholder="Food name, description..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
                             </div>
                         </div>
-                    </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" name="category">
+                                <option value="">All Categories</option>
+                                <?php foreach ($categories as $category): ?>
+                                    <option value="<?= $category['id'] ?>" <?= ($_GET['category'] ?? '') == $category['id'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($category['name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="">All Status</option>
+                                <option value="available" <?= ($_GET['status'] ?? '') == 'available' ? 'selected' : '' ?>>Available</option>
+                                <option value="unavailable" <?= ($_GET['status'] ?? '') == 'unavailable' ? 'selected' : '' ?>>Unavailable</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter me-1"></i>Filter
+                            </button>
+                            <a href="<?= SITE_URL ?>/admin/foods" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </a>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- Foods Table -->

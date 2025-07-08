@@ -1,7 +1,8 @@
-<?php require_once 'views/layouts/superadmin_header.php'; ?>
-<?php require_once 'views/layouts/superadmin_sidebar.php'; ?>
-
-<div class="main-content fade-in">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <?php require_once 'views/layouts/superadmin_header.php'; ?>
+    <title>Promotion Management - Super Admin</title>
     <style>
         .promotion-application-type {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -48,137 +49,129 @@
             margin: 10px 0;
             border-radius: 0 8px 8px 0;
         }
-
-        .application-type-radio {
-            margin: 10px 0;
-            padding: 12px;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .application-type-radio:hover {
-            background-color: #f0f7ff;
-            border-color: #2196f3;
-        }
-
-        .application-type-radio input:checked + label {
-            color: #1976d2;
-            font-weight: 600;
-        }
-
-        .scrollable-selection {
-            border: 2px dashed #e0e0e0;
-            border-radius: 8px;
-            transition: border-color 0.3s ease;
-        }
-
-        .scrollable-selection:hover {
-            border-color: #2196f3;
-        }
-
-        .promotion-preview {
-            background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
-            border: 1px solid #4caf50;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 20px;
-        }
     </style>
-
+</head>
+<body>
     <div class="container-fluid">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1>
-                    <i class="fas fa-tags"></i>
-                    Promotion Management
-                </h1>
-                <div class="btn-toolbar">
-                    <button type="button" class="btn btn-primary" onclick="showAddPromotionModal()">
-                        <i class="fas fa-plus"></i> Add New Promotion
-                    </button>
-                </div>
-            </div>
-        </div>
+        <div class="row">
+            <?php require_once 'views/layouts/superadmin_sidebar.php'; ?>
 
-        <!-- Promotion Statistics -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-primary me-3">
-                                <i class="fas fa-tags"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Total Promotions</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['total_promotions'] ?? 0; ?></div>
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">
+                            <i class="fas fa-tags me-2 text-success"></i>Promotion Management
+                        </h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/superadmin/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Promotions</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-primary" onclick="showCreatePromotionModal()">
+                            <i class="fas fa-plus me-1"></i>Create Promotion
+                        </button>
+                    </div>
+                </div>                <!-- Flash Messages -->
+                <?php
+                $flash = $_SESSION['flash'] ?? [];
+                foreach ($flash as $type => $message):
+                ?>
+                    <div class="alert alert-<?= $type === 'error' ? 'danger' : $type ?> alert-dismissible fade show" role="alert">
+                        <i class="fas fa-<?= $type === 'success' ? 'check-circle' : 'exclamation-triangle' ?> me-2"></i>
+                        <?= htmlspecialchars($message) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php
+                endforeach;
+                unset($_SESSION['flash']);
+                ?>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Promotions</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['total_promotions'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-tags fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-success me-3">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Active</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['active_promotions'] ?? 0; ?></div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Active Promotions</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['active_promotions'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-warning me-3">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Scheduled</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['scheduled_promotions'] ?? 0; ?></div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Expiring Soon</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['expiring_promotions'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-info me-3">
-                                <i class="fas fa-percentage"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Usage Rate</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo number_format($stats['usage_rate'] ?? 0, 1); ?>%</div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Savings</div>
+                                        <div class="h4 mb-0 font-weight-bold">$<?= number_format($stats['total_savings'] ?? 0, 2) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </div>                </div>
 
-        <!-- Filters -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <form method="GET" class="row g-3">
-                    <div class="col-md-3">
-                        <label for="status" class="form-label">Status</label>
-                        <select class="form-select" id="status" name="status">
-                            <option value="">All Status</option>
-                            <option value="active" <?php echo (isset($_GET['status']) && $_GET['status'] == 'active') ? 'selected' : ''; ?>>Active</option>
-                            <option value="inactive" <?php echo (isset($_GET['status']) && $_GET['status'] == 'inactive') ? 'selected' : ''; ?>>Inactive</option>
+                <!-- Filters -->
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-light border-0">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-filter me-2 text-success"></i>Filters
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" class="row g-3">
+                            <div class="col-md-3">
+                                <label for="status" class="form-label fw-bold">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">All Status</option>
+                                    <option value="active" <?php echo (isset($_GET['status']) && $_GET['status'] == 'active') ? 'selected' : ''; ?>>Active</option>
+                                    <option value="inactive" <?php echo (isset($_GET['status']) && $_GET['status'] == 'inactive') ? 'selected' : ''; ?>>Inactive</option>
                             <option value="expired" <?php echo (isset($_GET['status']) && $_GET['status'] == 'expired') ? 'selected' : ''; ?>>Expired</option>
                         </select>
                     </div>
@@ -877,12 +870,14 @@ function getPromotionTypeBadgeColor($type)
         case 'fixed':
             return 'info';
         case 'buy_one_get_one':
-            return 'warning';
-        default:
+            return 'warning';        default:
             return 'secondary';
     }
 }
 ?>
 
-
-<?php require_once 'views/layouts/superadmin_footer.php'; ?>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

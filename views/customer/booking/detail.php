@@ -177,13 +177,13 @@ $current_page = 'bookings';
 
             <!-- Action Buttons -->
             <div class="text-center">
-                <a href="<?= SITE_NAME ?>/booking/history" class="btn btn-outline-primary me-2">
+                <a href="index.php?page=booking" class="btn btn-outline-primary me-2">
                     <i class="fas fa-arrow-left me-2"></i>Back to Bookings
                 </a>
 
                 <?php if ($booking['status'] === 'pending' || $booking['status'] === 'confirmed'): ?>
                     <?php if (strtotime($booking['booking_date'] . ' ' . $booking['booking_time']) > time() + 7200): // At least 2 hours before ?>
-                    <a href="<?= SITE_NAME ?>/booking/modify/<?= $booking['id'] ?>" class="btn btn-warning me-2">
+                    <a href="index.php?page=booking&action=modify&id=<?= $booking['id'] ?>" class="btn btn-warning me-2">
                         <i class="fas fa-edit me-2"></i>Modify Booking
                     </a>
                     <button class="btn btn-danger me-2" onclick="cancelBooking(<?= $booking['id'] ?>)">
@@ -335,12 +335,10 @@ updateCountdown(); // Initial update
 
 function cancelBooking(bookingId) {
     if (confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
-        fetch(`<?= SITE_NAME ?>/booking/cancel/${bookingId}`, {
+        fetch(`index.php?page=booking&action=cancel`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ booking_id: bookingId })
         })
         .then(response => response.json())
         .then(data => {
@@ -359,18 +357,18 @@ function cancelBooking(bookingId) {
 }
 
 function rebookTable(bookingId) {
-    fetch(`<?= SITE_NAME ?>/booking/rebook/${bookingId}`, {
+    fetch(`index.php?page=booking&action=rebook&id=${bookingId}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            'Content-Type': 'application/json'
+            // ,'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             showAlert('Booking details copied. Redirecting to booking form...', 'success');
-            setTimeout(() => window.location.href = '<?= SITE_NAME ?>/booking', 1500);
+            setTimeout(() => window.location.href = 'index.php?page=booking', 1500);
         } else {
             showAlert(data.message || 'Failed to copy booking details', 'error');
         }

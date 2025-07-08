@@ -133,53 +133,42 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </div>                </div>
 
-                <!-- Search and Actions Bar -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="fas fa-search"></i>
-                            </span>
-                            <input type="text" class="form-control" id="searchBookings" placeholder="Search by customer name, email, or booking ID...">
-                        </div>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleBulkActions()">
-                                <i class="fas fa-tasks"></i> Bulk Actions
-                            </button>
-                            <button type="button" class="btn btn-outline-info btn-sm" onclick="refreshBookings()">
-                                <i class="fas fa-sync-alt"></i> Refresh
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bulk Actions Bar (Hidden by default) -->
-                <div id="bulkActionsBar" class="row mb-3" style="display: none;">
-                    <div class="col-12">
-                        <div class="alert alert-light border">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <strong><span id="selectedCount">0</span> booking(s) selected</strong>
-                                </div>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-success btn-sm" onclick="bulkUpdateStatus('confirmed')">
-                                        <i class="fas fa-check"></i> Confirm Selected
-                                    </button>
-                                    <button type="button" class="btn btn-danger btn-sm" onclick="bulkUpdateStatus('cancelled')">
-                                        <i class="fas fa-times"></i> Cancel Selected
-                                    </button>
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearSelection()">
-                                        <i class="fas fa-times"></i> Clear Selection
-                                    </button>
-                                </div>
+                <!-- Filter Bar -->
+                <div class="filter-bar mb-4">
+                    <form action="<?= SITE_URL ?>/admin/bookings" method="GET" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">Search Bookings</label>
+                            <div class="search-box">
+                                <input type="text" class="form-control" name="search" placeholder="Customer name, email, booking ID..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
                             </div>
                         </div>
-                    </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="">All Status</option>
+                                <option value="pending" <?= ($_GET['status'] ?? '') == 'pending' ? 'selected' : '' ?>>Pending</option>
+                                <option value="confirmed" <?= ($_GET['status'] ?? '') == 'confirmed' ? 'selected' : '' ?>>Confirmed</option>
+                                <option value="seated" <?= ($_GET['status'] ?? '') == 'seated' ? 'selected' : '' ?>>Seated</option>
+                                <option value="completed" <?= ($_GET['status'] ?? '') == 'completed' ? 'selected' : '' ?>>Completed</option>
+                                <option value="cancelled" <?= ($_GET['status'] ?? '') == 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                                <option value="no_show" <?= ($_GET['status'] ?? '') == 'no_show' ? 'selected' : '' ?>>No Show</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-control" name="date" value="<?= htmlspecialchars($_GET['date'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter me-1"></i>Filter
+                            </button>
+                            <a href="<?= SITE_URL ?>/admin/bookings" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </a>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- Bookings Table -->

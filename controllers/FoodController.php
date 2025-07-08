@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Food/Menu Controller
  */
@@ -9,35 +10,53 @@ require_once __DIR__ . '/../models/Category.php';
 require_once __DIR__ . '/../models/Review.php';
 require_once __DIR__ . '/../models/Order.php';
 
-class FoodController extends BaseController {
+class FoodController extends BaseController
+{
     private $foodModel;
     private $categoryModel;
     protected $orderModel;
     protected $reviewModel;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->foodModel = new Food();
         $this->categoryModel = new Category();
         $this->orderModel = new Order();
         $this->reviewModel = new Review();
     }
 
-    public function index() {
+    public function index()
+    {
         $this->menu();
     }
-
-    public function menu() {
+    public function menu()
+    {
         // Get pagination parameters
         $page = intval($_GET['p'] ?? 1);
         $limit = 12;
         $offset = ($page - 1) * $limit;
 
-        // Get filter parameters
+        // Get filter parameters with better UTF-8 handling
         $categoryId = intval($_GET['category'] ?? 0);
-        $subcategoryId = intval($_GET['subcategory'] ?? 0);
-        $search = sanitizeInput($_GET['search'] ?? '');
+        $subcategoryId = intval($_GET['subcategory'] ?? 0);        // Handle search with proper UTF-8 decoding
+        $rawSearch = $_GET['search'] ?? '';
+        $search = '';
+        if (!empty($rawSearch)) {
+            // Just trim, don't use htmlspecialchars for database search
+            $search = trim(urldecode($rawSearch));
+        }
+
         $sortBy = $_GET['sort'] ?? 'name';
-        $priceRange = $_GET['price_range'] ?? '';        // Build filter conditions
+        $priceRange = $_GET['price_range'] ?? '';
+
+        // Debug logging
+        error_log("Menu Search Debug - Raw search: " . $rawSearch);
+        error_log("Menu Search Debug - Decoded search: " . $search);
+        error_log("Menu Search Debug - Search term length: " . strlen($search));
+        error_log("Menu Search Debug - Search term: " . $search);
+        error_log("Menu Search Debug - Raw search: " . ($_GET['search'] ?? 'empty'));
+
+        // Build filter conditions
         $conditions = ['f.is_available = 1'];
         $params = [];
 
@@ -49,12 +68,23 @@ class FoodController extends BaseController {
         if ($subcategoryId > 0) {
             $conditions[] = 'f.subcategory_id = :subcategory_id';
             $params[':subcategory_id'] = $subcategoryId;
-        }
+        }        if (!empty($search)) {
+            // Debug: Test search directly
+            $debugResults = $this->foodModel->debugSearch($search);
+            error_log("Menu Search Debug - Direct search found: " . count($debugResults) . " items");
 
-        if (!empty($search)) {
-            $conditions[] = '(f.name LIKE :search OR f.description LIKE :search)';
-            $params[':search'] = "%$search%";
-        }        if (!empty($priceRange)) {
+            // Fix: Use separate parameters for name and description search
+            $searchTerm = "%$search%";
+            $conditions[] = '(f.name LIKE :search_name OR f.description LIKE :search_desc)';
+            $params[':search_name'] = $searchTerm;
+            $params[':search_desc'] = $searchTerm;
+
+            error_log("Menu Search Debug - Search condition added");
+            error_log("Menu Search Debug - Search term used: " . $searchTerm);
+            error_log("Menu Search Debug - Search original: " . $search);
+            error_log("Menu Search Debug - Current conditions: " . json_encode($conditions));
+        }
+        if (!empty($priceRange)) {
             switch ($priceRange) {
                 case 'under-50000':
                     $conditions[] = 'f.price < 50000';
@@ -70,8 +100,14 @@ class FoodController extends BaseController {
                     break;
             }
         }
+        $whereClause = implode(' AND ', $conditions);
 
-        $whereClause = implode(' AND ', $conditions);        
+        // Debug SQL query
+        error_log("Menu Search Debug - Final where clause: " . $whereClause);
+        error_log("Menu Search Debug - All params: " . json_encode($params));
+        error_log("Menu Search Debug - Category ID: " . $categoryId);
+        error_log("Menu Search Debug - Search term: " . $search);
+
         switch ($sortBy) {
             case 'price_asc':
                 $orderBy = 'f.price ASC';
@@ -82,13 +118,31 @@ class FoodController extends BaseController {
             default:
                 $orderBy = 'f.name ASC';
         }
-       
-        // Get foods with pagination
-        $foods = $this->foodModel->getFoodWithFilters($whereClause, $params, $orderBy, $limit, $offset);
 
-        // Get total count for pagination
-        $totalFoods = $this->foodModel->countFoodWithFilters($whereClause, $params);
-        $totalPages = ceil($totalFoods / $limit);
+        try {
+            // Quick test: get all foods first to see if there are any
+            $testFoods = $this->foodModel->getFoodWithFilters('f.is_available = 1', [], $orderBy, 5, 0);
+            error_log("Menu Search Debug - Test query found " . count($testFoods) . " foods");
+            if (count($testFoods) > 0) {
+                error_log("Menu Search Debug - First food name: " . $testFoods[0]['name']);
+            }
+
+            // Get foods with pagination
+            $foods = $this->foodModel->getFoodWithFilters($whereClause, $params, $orderBy, $limit, $offset);
+
+            // Get total count for pagination
+            $totalFoods = $this->foodModel->countFoodWithFilters($whereClause, $params);
+            $totalPages = ceil($totalFoods / $limit);
+        } catch (Exception $e) {
+            error_log("Menu Search Error: " . $e->getMessage());
+            error_log("Menu Search SQL Error - Where: " . $whereClause);
+            error_log("Menu Search SQL Error - Params: " . json_encode($params));
+
+            // Set default values to prevent fatal error
+            $foods = [];
+            $totalFoods = 0;
+            $totalPages = 1;
+        }
 
         // Get categories for filter
         $categories = $this->categoryModel->getCategoriesWithSubcategories();
@@ -97,7 +151,8 @@ class FoodController extends BaseController {
         $subcategories = [];
         if ($categoryId > 0) {
             $subcategories = $this->categoryModel->getSubcategories($categoryId);
-        }        $data = [
+        }
+        $data = [
             'title' => 'Thực Đơn - ' . SITE_NAME,
             'foods' => $foods,
             'categories' => $categories,
@@ -118,7 +173,9 @@ class FoodController extends BaseController {
         // echo "</pre>";
 
         $this->loadView('customer/menu/index', $data);
-    }    public function detail() {
+    }
+    public function detail()
+    {
         // Get food id from URL segment
         $segments = $this->getUrlSegments();
         $id = isset($segments[2]) ? intval($segments[2]) : 0;
@@ -142,11 +199,12 @@ class FoodController extends BaseController {
         $relatedFoods = $this->foodModel->getFoodByCategory($food['category_id'], 6, $id);
 
         // Get food category info
-        $category = $this->categoryModel->findById($food['category_id']);        $userOrdered = false;
+        $category = $this->categoryModel->findById($food['category_id']);
+        $userOrdered = false;
         if (isset($_SESSION['user_id'])) {
             $userOrdered = $this->orderModel->hasUserOrderedFood($_SESSION['user_id'], $food['id']);
         }
-          $comments = $this->reviewModel->getReviewsByFood($food['id']);
+        $comments = $this->reviewModel->getReviewsByFood($food['id']);
         $avgRating = $this->reviewModel->getAverageRating($food['id']);
         $totalRating = $this->reviewModel->getTotalRating($food['id']);
         $isReviewed = false;
@@ -175,7 +233,8 @@ class FoodController extends BaseController {
         $this->loadView('customer/menu/detail', $data);
     }
 
-    public function category() {
+    public function category()
+    {
         // Get category id from URL segment
         $segments = $this->getUrlSegments();
         $categoryId = isset($segments[2]) ? intval($segments[2]) : 0;
@@ -211,7 +270,8 @@ class FoodController extends BaseController {
         $this->loadView('customer/menu/category', $data);
     }
 
-    public function search() {
+    public function search()
+    {
         // Try to get query from URL segment
         $segments = $this->getUrlSegments();
         $query = isset($segments[2]) ? sanitizeInput($segments[2]) : '';
@@ -238,7 +298,8 @@ class FoodController extends BaseController {
     }
 
     // AJAX endpoints
-    public function getSubcategories() {
+    public function getSubcategories()
+    {
         $categoryId = intval($_GET['category_id'] ?? 0);
 
         if ($categoryId <= 0) {
@@ -249,7 +310,8 @@ class FoodController extends BaseController {
         $this->jsonResponse(['subcategories' => $subcategories]);
     }
 
-    public function getFoodInfo() {
+    public function getFoodInfo()
+    {
         $foodId = intval($_GET['id'] ?? 0);
 
         if ($foodId <= 0) {
@@ -265,7 +327,8 @@ class FoodController extends BaseController {
         $this->jsonResponse(['food' => $food]);
     }
 
-    public function comment($foodId) {
+    public function comment($foodId)
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user'])) {
 
 
@@ -290,7 +353,19 @@ class FoodController extends BaseController {
 
             // Lấy orderId của đơn hàng completed gần nhất có món này
             $orderId = $this->orderModel->getCompletedOrderIdByUserAndFood($userId, $foodId);
-
+           
+            //test data
+            // echo "User ID: $userId<br>";
+            // echo "Order ID: $orderId<br>";
+            // echo "Food ID: $foodId<br>";
+            // echo "Rating: $rating<br>";
+            // echo "Comment: $comment<br>";
+            // echo "Photos: " . implode(', ', $photos) . "<br>";
+            // Kiểm tra dữ liệu
+            if ($rating < 1 || $rating > 5) {
+                $this->jsonResponse(['error' => 'Invalid rating'], 400);
+            }
+            echo '</pre>';
             // Lưu vào DB
             $this->reviewModel->addReview($userId, $orderId, $foodId, $rating, $comment, $photos);
 
@@ -300,4 +375,3 @@ class FoodController extends BaseController {
         }
     }
 }
-

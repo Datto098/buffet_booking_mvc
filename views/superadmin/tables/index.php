@@ -1,156 +1,268 @@
-<?php require_once 'views/layouts/superadmin_header.php'; ?>
-<?php require_once 'views/layouts/superadmin_sidebar.php'; ?>
-
-<div class="main-content fade-in">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <?php require_once 'views/layouts/superadmin_header.php'; ?>
+    <title>Table Management - Super Admin</title>
+</head>
+<body>
     <div class="container-fluid">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1>
-                    <i class="fas fa-chair"></i>
-                    Table Management
-                </h1>
-                <div class="btn-toolbar">
-                    <button type="button" class="btn btn-primary" onclick="showAddTableModal()">
-                        <i class="fas fa-plus"></i> Add New Table
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Table Statistics -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-primary me-3">
-                                <i class="fas fa-chair"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Total Tables</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['total_tables'] ?? 0; ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-success me-3">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Available</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['available_tables'] ?? 0; ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-warning me-3">
-                                <i class="fas fa-utensils"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Occupied</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['occupied_tables'] ?? 0; ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card stats-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stats-icon bg-gradient-info me-3">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted text-uppercase small fw-bold mb-1">Total Capacity</div>
-                                <div class="h4 mb-0 fw-bold text-dark"><?php echo $stats['total_capacity'] ?? 0; ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> <!-- Tables Grid -->
         <div class="row">
-            <?php if (!empty($tables)): ?>
-                <?php foreach ($tables as $table): ?>
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="card h-100 <?php echo ($table['is_available'] ?? 1) ? 'border-success' : 'border-danger'; ?>">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5 class="card-title mb-0"><?php echo htmlspecialchars($table['table_number'] ?? 'Unknown Table'); ?></h5>
-                                <span class="badge bg-<?php echo ($table['is_available'] ?? 1) ? 'success' : 'danger'; ?>">
-                                    <?php echo ($table['is_available'] ?? 1) ? 'Available' : 'Unavailable'; ?>
-                                </span>
-                            </div>
+            <?php require_once 'views/layouts/superadmin_sidebar.php'; ?>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <div>
+                        <h1 class="h2">
+                            <i class="fas fa-chair me-2 text-warning"></i>Table Management
+                        </h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="<?= SITE_URL ?>/superadmin/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Tables</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-primary" onclick="showAddTableModal()">
+                            <i class="fas fa-plus me-1"></i>Add New Table
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                <?php
+                $flash = $_SESSION['flash'] ?? [];
+                foreach ($flash as $type => $message):
+                ?>
+                    <div class="alert alert-<?= $type === 'error' ? 'danger' : $type ?> alert-dismissible fade show" role="alert">
+                        <i class="fas fa-<?= $type === 'success' ? 'check-circle' : 'exclamation-triangle' ?> me-2"></i>
+                        <?= htmlspecialchars($message) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php
+                endforeach;
+                unset($_SESSION['flash']);
+                ?>
+
+                <!-- Statistics Cards -->                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-primary text-white">
                             <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-12">
-                                        <small class="text-muted">Capacity</small>
-                                        <div class="fw-bold">
-                                            <i class="fas fa-users"></i> <?php echo htmlspecialchars($table['capacity'] ?? 'N/A'); ?> guests
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Tables</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['total_tables'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-chair fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Available</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['available_tables'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Occupied</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['occupied_tables'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-utensils fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100 bg-gradient-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Capacity</div>
+                                        <div class="h4 mb-0 font-weight-bold"><?= number_format($stats['total_capacity'] ?? 0) ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-users fa-2x opacity-75"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                </div>
+
+                <!-- Filter Bar -->
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-light border-0">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-filter me-2 text-warning"></i>Filters
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form action="<?= SITE_URL ?>/superadmin/tables" method="GET" class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Search Tables</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-search text-muted"></i></span>
+                                    <input type="text" class="form-control" name="search" placeholder="Table number, location, description..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="">All Status</option>
+                                    <option value="available" <?= ($_GET['status'] ?? '') == 'available' ? 'selected' : '' ?>>Available</option>
+                                    <option value="unavailable" <?= ($_GET['status'] ?? '') == 'unavailable' ? 'selected' : '' ?>>Unavailable</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold">Location</label>
+                                <select class="form-select" name="location">
+                                    <option value="">All Locations</option>
+                                    <?php if (!empty($locationStats)): ?>
+                                        <?php foreach ($locationStats as $locationStat): ?>
+                                            <option value="<?= htmlspecialchars($locationStat['location']) ?>" <?= ($_GET['location'] ?? '') == $locationStat['location'] ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($locationStat['location'] ?: 'Main Area') ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100 mb-2">
+                                    <i class="fas fa-filter me-1"></i>Filter
+                                </button>
+                                <a href="<?= SITE_URL ?>/superadmin/tables" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-times me-1"></i>Clear
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>                <!-- Tables Grid -->
+                <div class="row">
+                    <?php if (!empty($tables)): ?>
+                        <?php foreach ($tables as $table): ?>
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="card h-100 border-0 shadow-sm hover-shadow">
+                                    <div class="card-header bg-gradient-<?php echo ($table['is_available'] ?? 1) ? 'success' : 'danger'; ?> text-white border-0">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="card-title mb-0 fw-bold">
+                                                <i class="fas fa-chair me-2"></i>
+                                                Table <?php echo htmlspecialchars($table['table_number'] ?? 'Unknown'); ?>
+                                            </h5>
+                                            <span class="badge bg-white text-<?php echo ($table['is_available'] ?? 1) ? 'success' : 'danger'; ?> px-3 py-2">
+                                                <i class="fas fa-<?php echo ($table['is_available'] ?? 1) ? 'check-circle' : 'times-circle'; ?> me-1"></i>
+                                                <?php echo ($table['is_available'] ?? 1) ? 'Available' : 'Unavailable'; ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <div class="text-center p-3 bg-light rounded">
+                                                    <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                                                    <div class="fw-bold text-primary"><?php echo htmlspecialchars($table['capacity'] ?? 'N/A'); ?></div>
+                                                    <small class="text-muted">Guests</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-center p-3 bg-light rounded">
+                                                    <i class="fas fa-map-marker-alt fa-2x text-info mb-2"></i>
+                                                    <div class="fw-bold text-info"><?php echo htmlspecialchars($table['location'] ?: 'Main'); ?></div>
+                                                    <small class="text-muted">Location</small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <?php if (!empty($table['description'])): ?>
+                                            <div class="mb-3">
+                                                <div class="bg-gradient-light p-3 rounded">
+                                                    <div class="small text-muted mb-1">
+                                                        <i class="fas fa-quote-left me-1"></i>Description
+                                                    </div>
+                                                    <div class="text-dark"><?php echo htmlspecialchars($table['description']); ?></div>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <!-- Table Features -->
+                                        <div class="d-flex flex-wrap gap-2 mb-3">
+                                            <?php if (($table['capacity'] ?? 0) >= 6): ?>
+                                                <span class="badge bg-gradient-info px-3 py-2">
+                                                    <i class="fas fa-users me-1"></i>Large Group
+                                                </span>
+                                            <?php endif; ?>
+                                            <?php if (!empty($table['location']) && strtolower($table['location']) === 'vip'): ?>
+                                                <span class="badge bg-gradient-warning px-3 py-2">
+                                                    <i class="fas fa-crown me-1"></i>VIP Area
+                                                </span>
+                                            <?php endif; ?>
+                                            <?php if (($table['is_available'] ?? 1)): ?>
+                                                <span class="badge bg-gradient-success px-3 py-2">
+                                                    <i class="fas fa-check me-1"></i>Ready
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-white border-0 pt-0">
+                                        <div class="btn-group w-100" role="group">                                            <button type="button" class="btn btn-outline-primary flex-fill me-2" onclick="editTable(<?php echo $table['id']; ?>)">
+                                                <i class="fas fa-edit me-1"></i>Edit
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger flex-fill" onclick="deleteTable(<?php echo $table['id']; ?>)">
+                                                <i class="fas fa-trash me-1"></i>Delete
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-
-                                <?php if (!empty($table['description'])): ?>
-                                    <div class="mb-3">
-                                        <small class="text-muted">Description</small>
-                                        <div class="small"><?php echo htmlspecialchars($table['description']); ?></div>
-                                    </div>
-                                <?php endif; ?>
-
-                                <?php if (!empty($table['location'])): ?>
-                                    <div class="mb-3">
-                                        <small class="text-muted">Location</small>
-                                        <div class="small"><?php echo htmlspecialchars($table['location']); ?></div>
-                                    </div>
-                                <?php endif; ?>
                             </div>
-                            <div class="card-footer">
-                                <div class="btn-group w-100" role="group">
-                                    <button type="button" class="btn btn-outline-primary btn-sm"
-                                        onclick="editTable(<?php echo $table['id']; ?>)">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm"
-                                        onclick="deleteTable(<?php echo $table['id']; ?>)">
-                                        <i class="fas fa-trash"></i> Delete
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="fas fa-chair fa-4x text-muted"></i>
+                                    </div>
+                                    <h4 class="text-muted mb-3">No tables found</h4>
+                                    <p class="text-muted mb-4">Get started by adding your first table to manage restaurant seating efficiently.</p>
+                                    <button type="button" class="btn btn-primary btn-lg" onclick="showAddTableModal()">
+                                        <i class="fas fa-plus me-2"></i>Add First Table
                                     </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body text-center py-5">
-                            <i class="fas fa-chair fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No tables found</h5>
-                            <p class="text-muted">Add your first table to get started.</p>
-                            <button type="button" class="btn btn-danger" onclick="showAddTableModal()">
-                                <i class="fas fa-plus"></i> Add First Table
-                            </button>
-                        </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
+
+            </main>
         </div>
     </div>
-</div>
+                            </button>                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
 
 <!-- Add/Edit Table Modal -->
 <div class="modal fade" id="tableModal" tabindex="-1" aria-labelledby="tableModalLabel" aria-hidden="true">
@@ -436,6 +548,31 @@
         position: relative;
         z-index: 1;
     }
+
+    /* Custom styles for table cards */
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.bg-gradient-light {
+    background: linear-gradient(135deg, #f8f9fc 0%, #f1f3f6 100%);
+}
+
+/* Table grid responsive adjustments */
+@media (max-width: 768px) {
+    .card .btn-group {
+        flex-direction: column;
+    }
+
+    .card .btn-group .btn {
+        margin-bottom: 0.25rem;
+    }
+}
 </style>
 
 <?php

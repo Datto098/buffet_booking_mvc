@@ -7,7 +7,7 @@ require_once 'BaseModel.php';
 
 class Booking extends BaseModel {
     protected $table = 'reservations';    public function createBooking($bookingData) {
-        $sql = "INSERT INTO reservations 
+        $sql = "INSERT INTO reservations
         (customer_name, customer_email, customer_phone, booking_date, booking_time, guest_count, special_requests, status, created_at, updated_at)
         VALUES
         (:customer_name, :customer_email, :customer_phone, :booking_date, :booking_time, :guest_count, :special_requests, :status, NOW(), NOW())";
@@ -23,22 +23,23 @@ class Booking extends BaseModel {
     return $stmt->execute();
 }
 
-    public function getBookingsByUser($userId, $limit = null) {
+    public function getBookingsByUser($userId, $limit = null, $offset = 0) {
         $sql = "SELECT r.*, t.table_number, t.capacity
                 FROM {$this->table} r
                 LEFT JOIN tables t ON r.table_id = t.id
                 WHERE r.user_id = :user_id
                 ORDER BY r.reservation_time DESC";
 
-        if ($limit) {
-            $sql .= " LIMIT :limit";
+        if ($limit !== null) {
+            $sql .= " LIMIT :limit OFFSET :offset";
         }
 
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
 
-        if ($limit) {
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        if ($limit !== null) {
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
         }
 
         $stmt->execute();
@@ -46,8 +47,9 @@ class Booking extends BaseModel {
     }
 
     public function getBookingDetails($bookingId, $userId = null) {
-        $sql = "SELECT r.*, t.table_number, t.capacity
+        $sql = "SELECT r.*, u.email as customer_email, t.table_number, t.capacity
                 FROM {$this->table} r
+                LEFT JOIN users u ON r.user_id = u.id
                 LEFT JOIN tables t ON r.table_id = t.id
                 WHERE r.id = :booking_id";
 
@@ -63,7 +65,10 @@ class Booking extends BaseModel {
         }
 
         $stmt->execute();
-        return $stmt->fetch();
+        $booking = $stmt->fetch();
+
+        // Đảm bảo mapping cho view
+        return $this->transformBookingForView($booking);
     }
 
     public function updateBookingStatus($bookingId, $status) {
@@ -127,37 +132,47 @@ class Booking extends BaseModel {
         return $stmt->fetchAll();
     }    public function getAvailableTables($reservationTime, $numberOfGuests) {
         try {
+            // First check if tables exist
             $checkSql = "SELECT COUNT(*) as count FROM tables";
             $checkStmt = $this->db->prepare($checkSql);
             $checkStmt->execute();
             $result = $checkStmt->fetch();
 
+            error_log("Booking Debug - Tables in database: " . $result['count']);
+
             if ($result['count'] <= 0) {
+                error_log("Booking Debug - No tables found in database");
                 return [];
             }
+
+            // Simple query: only check capacity and availability
+            $sql = "SELECT t.*
+                    FROM tables t
+                    WHERE t.capacity >= :number_of_guests
+                    AND t.is_available = 1
+                    ORDER BY t.capacity, t.table_number";
+
+            error_log("Booking Debug - Simplified SQL: " . $sql);
+            error_log("Booking Debug - Params: guests=" . $numberOfGuests);
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindValue(':number_of_guests', $numberOfGuests, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $tables = $stmt->fetchAll();
+            error_log("Booking Debug - Available tables found: " . count($tables));
+
+            if (count($tables) > 0) {
+                error_log("Booking Debug - First available table: capacity=" . $tables[0]['capacity'] . ", number=" . $tables[0]['table_number']);
+            }
+
+            return $tables;
+
         } catch (PDOException $e) {
-            error_log("Error checking tables: " . $e->getMessage());
+            error_log("Error in getAvailableTables: " . $e->getMessage());
+            error_log("SQL Error: " . $e->getCode());
             return [];
         }
-
-        $sql = "SELECT t.*
-                FROM tables t
-                WHERE t.capacity >= :number_of_guests
-                AND t.is_available = 1
-                AND t.id NOT IN (
-                    SELECT DISTINCT r.table_id
-                    FROM reservations r
-                    WHERE r.table_id IS NOT NULL
-                    AND r.status IN ('confirmed', 'pending')
-                    AND ABS(TIMESTAMPDIFF(MINUTE, r.reservation_time, :reservation_time)) < 120
-                )
-                ORDER BY t.capacity, t.table_number";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':number_of_guests', $numberOfGuests, PDO::PARAM_INT);
-        $stmt->bindValue(':reservation_time', $reservationTime);
-        $stmt->execute();
-        return $stmt->fetchAll();
     }
 
     public function getRecentBookings($limit = 10) {
@@ -297,22 +312,26 @@ class Booking extends BaseModel {
         return $stmt->fetchAll();
     }    /**
      * Check availability for a booking at specified date and time
-     */
-    public function checkAvailability($date, $time, $partySize) {
+     */    public function checkAvailability($date, $time, $partySize) {
         $bookingDateTime = $date . ' ' . $time;
-       
+
+        error_log("Booking Debug - checkAvailability called");
+        error_log("Booking Debug - Date: $date, Time: $time, Party Size: $partySize");
+        error_log("Booking Debug - DateTime: $bookingDateTime");
 
         // Check if there are available tables for the party size
         try {
             $availableTables = $this->getAvailableTables($bookingDateTime, $partySize);
 
             if (count($availableTables) > 0) {
+                error_log("Booking Debug - Found " . count($availableTables) . " available tables");
                 return [
                     'available' => true,
                     'message' => 'Có bàn trống cho thời gian này',
                     'suggestedTimes' => []
                 ];
             } else {
+                error_log("Booking Debug - No available tables found");
                 // Suggest alternative times
                 $suggestedTimes = $this->getSuggestedTimes($date, $partySize);
 
@@ -325,9 +344,10 @@ class Booking extends BaseModel {
         } catch (Exception $e) {
             // Log the error and return a user-friendly message
             error_log("Error in checkAvailability: " . $e->getMessage());
+            error_log("Error trace: " . $e->getTraceAsString());
             return [
-                'available' => true, // Assume available for now to allow booking to proceed
-                'message' => 'Hệ thống đang kiểm tra tình trạng bàn',
+                'available' => false, // Changed to false to be safe
+                'message' => 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.',
                 'suggestedTimes' => []
             ];
         }
@@ -338,8 +358,9 @@ class Booking extends BaseModel {
      * Updated to handle multiple parameters for pagination
      */
     public function getUserBookings($userId, $limit = null, $offset = 0) {
-        return $this->getBookingsByUser($userId, $limit);
+        return $this->getBookingsByUser($userId, $limit, $offset);
     }
+
 
     /**
      * Count bookings for a specific user
@@ -490,33 +511,41 @@ class Booking extends BaseModel {
      * @param int $bookingId Booking ID
      * @param array $data Updated booking data
      * @return bool Success status
-     */
-    public function updateBooking($bookingId, $data) {
-        try {
-            $sql = "UPDATE {$this->table} SET
-                        customer_name = :customer_name,
-                        phone_number = :phone_number,
-                        email = :email,
-                        number_of_guests = :number_of_guests,
-                        reservation_time = :reservation_time,
-                        special_requests = :special_requests
-                    WHERE id = :id";
+     */    public function updateBooking($bookingId, $data) {
+        error_log("Booking Model updateBooking - ID: $bookingId, Data: " . json_encode($data));
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':customer_name', $data['customer_name'], PDO::PARAM_STR);
-            $stmt->bindValue(':phone_number', $data['phone_number'], PDO::PARAM_STR);
-            $stmt->bindValue(':email', $data['email'] ?? null, PDO::PARAM_STR);
-            $stmt->bindValue(':number_of_guests', $data['number_of_guests'], PDO::PARAM_INT);
-            $stmt->bindValue(':reservation_time', $data['reservation_time'], PDO::PARAM_STR);
-            $stmt->bindValue(':special_requests', $data['special_requests'] ?? null, PDO::PARAM_STR);
-            $stmt->bindValue(':id', $bookingId, PDO::PARAM_INT);
+        $sql = "UPDATE {$this->table} SET
+                customer_name = :customer_name,
+                phone_number = :phone_number,
+                number_of_guests = :number_of_guests,
+                reservation_time = :reservation_time,
+                notes = :notes,
+                status = :status,
+                updated_at = NOW()
+            WHERE id = :id";
 
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("Error updating booking: " . $e->getMessage());
-            return false;
+        error_log("Booking Model updateBooking - SQL: " . $sql);
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':customer_name', $data['customer_name'], PDO::PARAM_STR);
+        $stmt->bindValue(':phone_number', $data['phone_number'], PDO::PARAM_STR);
+        $stmt->bindValue(':number_of_guests', $data['number_of_guests'], PDO::PARAM_INT);
+        $stmt->bindValue(':reservation_time', $data['reservation_time'], PDO::PARAM_STR);
+        $stmt->bindValue(':notes', $data['notes'], PDO::PARAM_STR);
+        $stmt->bindValue(':status', $data['status'], PDO::PARAM_STR);
+        $stmt->bindValue(':id', $bookingId, PDO::PARAM_INT);
+
+        $result = $stmt->execute();
+
+        if (!$result) {
+            error_log("Booking Model updateBooking - SQL Error: " . json_encode($stmt->errorInfo()));
+        } else {
+            error_log("Booking Model updateBooking - Rows affected: " . $stmt->rowCount());
         }
-    }    /**
+
+        return $result;
+    }
+    /**
      * Transform booking data for admin interface compatibility
      * Maps database fields to expected view fields
      */
@@ -544,8 +573,7 @@ class Booking extends BaseModel {
 
     /**
      * Get all bookings with admin-compatible field mapping
-     */
-    public function getAllForAdmin($limit = null, $offset = 0, $status = null, $search = null) {
+     */    public function getAllForAdmin($limit = null, $offset = 0, $status = null, $search = null, $date = null) {
         $sql = "SELECT r.*,
                        COALESCE(u.email, '') as customer_email,
                        u.email,
@@ -566,6 +594,11 @@ class Booking extends BaseModel {
         if ($search) {
             $conditions[] = "(r.customer_name LIKE :search OR u.email LIKE :search OR r.phone_number LIKE :search)";
             $params[':search'] = "%{$search}%";
+        }
+
+        if ($date) {
+            $conditions[] = "DATE(r.reservation_time) = :date";
+            $params[':date'] = $date;
         }
 
         if (!empty($conditions)) {
@@ -613,5 +646,29 @@ class Booking extends BaseModel {
         }
         return $booking;
     }
+
+    public function cancelBooking($bookingId, $userId = null) {
+        // Nếu có userId, chỉ cho phép user đó hủy booking của mình
+        $sql = "UPDATE {$this->table} SET status = 'cancelled', updated_at = NOW() WHERE id = :id";
+if ($userId !== null) {
+    $sql .= " AND user_id = :user_id";
+}
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $bookingId, PDO::PARAM_INT);
+        if ($userId !== null) {
+            $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        }
+        return $stmt->execute();
+    }
+
+public function getBookingById($bookingId, $userId) {
+    $sql = "SELECT * FROM {$this->table} WHERE id = :id AND user_id = :user_id";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(':id', $bookingId, PDO::PARAM_INT);
+    $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
 }
 ?>

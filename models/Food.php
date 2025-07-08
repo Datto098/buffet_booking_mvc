@@ -217,50 +217,109 @@ class Food extends BaseModel {
 
     /**
      * Get foods with complex filters, sorting, and pagination
-     */
-    public function getFoodWithFilters($whereClause, $params, $orderBy = 'name ASC', $limit = null, $offset = 0) {
-        $sql = "SELECT f.*, c.name as category_name, sc.name as subcategory_name
-                FROM food_items f
-                LEFT JOIN categories c ON f.category_id = c.id
-                LEFT JOIN sub_categories sc ON f.subcategory_id = sc.id"; 
+     */    public function getFoodWithFilters($whereClause, $params, $orderBy = 'name ASC', $limit = null, $offset = 0) {
+        try {
+            $sql = "SELECT f.*, c.name as category_name, sc.name as subcategory_name
+                    FROM food_items f
+                    LEFT JOIN categories c ON f.category_id = c.id
+                    LEFT JOIN sub_categories sc ON f.subcategory_id = sc.id";
 
-        if (!empty($whereClause)) {
-            $sql .= " WHERE $whereClause";
+            if (!empty($whereClause)) {
+                $sql .= " WHERE $whereClause";
+            }
+            $sql .= " ORDER BY $orderBy";
+            if ($limit !== null) {
+                $sql .= " LIMIT :limit OFFSET :offset";
+            }
+
+            // Debug the final SQL
+            error_log("Food Model Debug - SQL: " . $sql);
+            error_log("Food Model Debug - Params: " . json_encode($params));
+
+            $stmt = $this->db->prepare($sql);
+
+            // Set UTF-8 charset for the connection
+            $this->db->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value, PDO::PARAM_STR);
+                error_log("Food Model Debug - Binding $key = $value");
+            }
+
+            if ($limit !== null) {
+                $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+                $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+            }
+
+            $stmt->execute();
+            $result = $stmt->fetchAll();
+
+            error_log("Food Model Debug - Found " . count($result) . " results");
+            return $result;
+
+        } catch (PDOException $e) {
+            error_log("Food Model Error: " . $e->getMessage());
+            error_log("Food Model Error SQL: " . $sql);
+            error_log("Food Model Error Params: " . json_encode($params));
+            throw $e;
         }
-        $sql .= " ORDER BY $orderBy";
-        if ($limit !== null) {
-            $sql .= " LIMIT :limit OFFSET :offset";
+    }    public function countFoodWithFilters($whereClause, $params) {
+        try {
+            $sql = "SELECT COUNT(*) as count FROM {$this->table} f
+                    LEFT JOIN categories c ON f.category_id = c.id
+                    LEFT JOIN sub_categories sc ON f.subcategory_id = sc.id";
+
+            if (!empty($whereClause)) {
+                $sql .= " WHERE " . $whereClause;
+            }
+
+            $stmt = $this->db->prepare($sql);
+
+            // Set UTF-8 charset for the connection
+            $this->db->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value, PDO::PARAM_STR);
+            }
+
+            $stmt->execute();
+            $result = $stmt->fetch();
+            return $result['count'] ?? 0;
+
+        } catch (PDOException $e) {
+            error_log("Food Count Error: " . $e->getMessage());
+            error_log("Food Count Error SQL: " . $sql);
+            error_log("Food Count Error Params: " . json_encode($params));
+            return 0;
         }
-        $stmt = $this->db->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        if ($limit !== null) {
-            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
-        }
-        $stmt->execute();
-        return $stmt->fetchAll();
     }
 
-    public function countFoodWithFilters($whereClause, $params) {
-        $sql = "SELECT COUNT(*) as count FROM {$this->table} f
-                LEFT JOIN categories c ON f.category_id = c.id
-                LEFT JOIN sub_categories sc ON f.subcategory_id = sc.id";
+    /**
+     * Debug method to test search functionality
+     */    public function debugSearch($searchTerm) {
+        try {
+            $sql = "SELECT f.name, f.description
+                    FROM food_items f
+                    WHERE f.is_available = 1
+                    AND (f.name LIKE :search_name OR f.description LIKE :search_desc)
+                    LIMIT 5";
 
-        if (!empty($whereClause)) {
-            $sql .= " WHERE " . $whereClause;
+            $stmt = $this->db->prepare($sql);
+            $searchPattern = "%$searchTerm%";
+            $stmt->bindValue(':search_name', $searchPattern, PDO::PARAM_STR);
+            $stmt->bindValue(':search_desc', $searchPattern, PDO::PARAM_STR);
+            $stmt->execute();
+
+            $results = $stmt->fetchAll();
+            error_log("Debug Search Results for '$searchTerm': " . count($results) . " found");
+
+            foreach ($results as $result) {
+                error_log("Found: " . $result['name']);
+            }
+
+            return $results;
+        } catch (PDOException $e) {
+            error_log("Debug Search Error: " . $e->getMessage());
+            return [];
         }
-
-        $stmt = $this->db->prepare($sql);
-
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-
-        $stmt->execute();
-        $result = $stmt->fetch();
-        return $result['count'] ?? 0;
     }
 }
 ?>

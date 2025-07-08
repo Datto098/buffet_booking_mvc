@@ -17,6 +17,12 @@ class AuthController extends BaseController
         $this->userModel = new User();
     }
 
+    public function index()
+    {
+        // Default to login page
+        $this->login();
+    }
+
     public function login()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -118,23 +124,24 @@ class AuthController extends BaseController
 
     private function handleRegister()
     {
-        $this->validateCSRF();
-
-        $fullName = sanitizeInput($_POST['full_name']);
+        $this->validateCSRF();        $fullName = sanitizeInput($_POST['full_name']);
         $email = sanitizeInput($_POST['email']);
         $phone = sanitizeInput($_POST['phone_number']);
+        $address = sanitizeInput($_POST['address'] ?? '');
         $password = $_POST['password'];
-        $confirmPassword = $_POST['confirm_password'];
+        $confirmPassword = $_POST['password_confirmation'];
 
         // Validate input
         $errors = [];
 
         if (empty($fullName)) {
             $errors[] = 'Họ tên không được để trống';
+        }        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Email không hợp lệ';
         }
 
-        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Email không hợp lệ';
+        if (empty($phone) || strlen($phone) < 10) {
+            $errors[] = 'Số điện thoại không hợp lệ';
         }
 
         if (empty($password) || strlen($password) < PASSWORD_MIN_LENGTH) {
@@ -157,13 +164,12 @@ class AuthController extends BaseController
         }
         //  echo '<pre>';
         // print_r($_POST);
-        // echo '</pre>';
-
-        // Create new user
+        // echo '</pre>';        // Create new user
         $userData = [
             'full_name' => $fullName,
             'email' => $email,
             'phone_number' => $phone,
+            'address' => $address,
             'password' => $password,
             'role' => 'customer'
         ];

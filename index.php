@@ -844,9 +844,17 @@ function handleCustomerRoute($page, $action, $param)
     }
     $controller = new $controllerClass();
 
+    // Debug route handling
+    error_log("Customer route - Page: $page, Action: $action, Param: $param");
+    error_log("Controller class: $controllerClass");
+    error_log("Request method: " . $_SERVER['REQUEST_METHOD']);
+
     // Call the appropriate method
     if ($action === 'update-profile' || $action === 'updateProfile') {
         $controller->updateProfile();
+        exit;
+    } elseif ($action === 'forgot-password' || $action === 'forgotPassword') {
+        $controller->forgotPassword();
         exit;
     } elseif ($page === 'about' && method_exists($controller, 'about')) {
         $controller->about();
