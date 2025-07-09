@@ -30,20 +30,12 @@ class HomeController extends BaseController {
             $latestNews = [];
         }
 
-        $data = [
-            'title' => 'Trang Chủ - ' . SITE_NAME,
-            'featuredFoods' => $featuredFoods,
-            'categories' => $categories,
-            'latestNews' => $latestNews
-        ];
-
-        $this->loadView('customer/home', $data);
-    }    public function about() {
         // Get restaurant info
         try {
-            $stmt = Database::getInstance()->getConnection()->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
             $stmt->execute();
-            $restaurantInfo = $stmt->fetch();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             $restaurantInfo = [
                 'name' => SITE_NAME,
@@ -54,9 +46,39 @@ class HomeController extends BaseController {
             ];
         }
 
-                $data = [
+        $data = [
+            'title' => 'Trang Chủ - ' . SITE_NAME,
+            'featuredFoods' => $featuredFoods,
+            'categories' => $categories,
+            'latestNews' => $latestNews,
+            'info' => $restaurantInfo
+        ];
+        // echo '<pre>';
+        // print_r($data['info']);
+        // echo '</pre>';
+
+        $this->loadView('customer/home', $data);
+    }    public function about() {
+        // Get restaurant info
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'about_us_content' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
+        $data = [
             'title' => 'Giới Thiệu - ' . SITE_NAME,
-            'restaurantInfo' => $restaurantInfo
+            'restaurantInfo' => $restaurantInfo,
+            'info' => $restaurantInfo // Thêm dòng này để footer nhận được info
         ];
 
         $this->loadView('customer/about', $data);
@@ -132,11 +154,28 @@ class HomeController extends BaseController {
             $promotionalFoods = $fallbackFoods;
         }
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
             'title' => 'Khuyến Mãi Đặc Biệt - ' . SITE_NAME,
             'promotionalFoods' => $promotionalFoods,
             'activePromotions' => $activePromotions,
-            'meta_description' => 'Khám phá những món ăn khuyến mãi đặc biệt với giá ưu đãi tại ' . SITE_NAME . '. Tiết kiệm đến ' . (isset($promotionalFoods[0]) ? $promotionalFoods[0]['discount_percent'] : '40') . '% cho các món ăn ngon nhất!'
+            'meta_description' => 'Khám phá những món ăn khuyến mãi đặc biệt với giá ưu đãi tại ' . SITE_NAME . '. Tiết kiệm đến ' . (isset($promotionalFoods[0]) ? $promotionalFoods[0]['discount_percent'] : '40') . '% cho các món ăn ngon nhất!',
+            'info' => $restaurantInfo // Thêm dòng này
         ];
 
         $this->loadView('customer/promotions', $data);

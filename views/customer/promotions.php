@@ -17,8 +17,8 @@
                     <li class="breadcrumb-item active" style="color: var(--primary-gold);">Khuyến Mãi</li>
                 </ol>
             </nav> -->
-            <h1 class="hero-title " >
-                <span  style="color: #fff">Ưu Đãi</span> <br>
+            <h1 class="hero-title ">
+                <span style="color: #fff">Ưu Đãi</span> <br>
                 <span class="text-white">Độc Quyền</span>
             </h1>
             <p class="hero-subtitle banner-subtitle" style="color: #fff">
@@ -144,7 +144,7 @@
                                                 <div class="promotion-applies">
                                                     <i class="fas fa-tag"></i>
                                                     <?php
-                                                    switch($promotion['application_type']) {
+                                                    switch ($promotion['application_type']) {
                                                         case 'specific_items':
                                                             echo 'Áp dụng cho ' . count($promotion['food_items']) . ' món đã chọn';
                                                             break;
@@ -208,7 +208,7 @@
 
                             <!-- Discount Badge -->
                             <div class="food-badge discount-badge">
-                                 -<?= $discountPercent ?><i class="fas fa-percent"></i>
+                                -<?= $discountPercent ?><i class="fas fa-percent"></i>
                             </div>
 
                             <!-- Hot Deal Badge -->
@@ -261,7 +261,8 @@
                                     <i class="fas fa-piggy-bank"></i>
                                     Tiết kiệm: <?= number_format($originalPrice - $discountedPrice, 0, ',', '.') ?>đ
                                 </div>
-                            </div>                            <div class="d-flex gap-2">
+                            </div>
+                            <div class="d-flex gap-2">
                                 <button class="btn btn-luxury add-to-cart-btn flex-grow-1"
                                     data-food-id="<?= $food['id'] ?>"
                                     data-food-name="<?= htmlspecialchars($food['name']) ?>"
@@ -296,7 +297,7 @@
             <div class="text-center mt-5 fade-in-up" data-delay="300">
                 <button class="btn-luxury btn-outline-luxury btn-lg">
                     <i class="fas fa-plus me-2"></i>
-                    <span>Xem Thêm Món Khuyến Mãi</span>                </button>
+                    <span>Xem Thêm Món Khuyến Mãi</span> </button>
             </div>
         <?php else: ?>
             <div class="text-center py-5 fade-in-up">
@@ -311,13 +312,13 @@
                 </div>
             </div>
         <?php endif; ?>
-</div>
+    </div>
 </section>
 
 <!-- Special Offers Banner -->
 <section class="section-luxury bg-light-luxury">
     <div class="container">
-        <div class="luxury-grid-3" >
+        <div class="luxury-grid-3">
             <div class="feature-card text-center fade-in-up" style="" data-delay="0">
                 <div class="feature-icon bg-gradient-primary">
                     <i class="fas fa-shipping-fast"></i>
@@ -359,10 +360,12 @@
                         </p>
                         <div class="contact-info">
                             <span class="contact-badge phone">
-                                <i class="fas fa-phone me-2"></i>Hotline: 0123-456-789
+                                <i class="fas fa-phone me-2"></i>
+                                Hotline: <?= htmlspecialchars($info['phone'] ?? '0123-456-789') ?>
                             </span>
                             <span class="contact-badge hours">
-                                <i class="fas fa-clock me-2"></i>Mở cửa: 10:00 - 22:00
+                                <i class="fas fa-clock me-2"></i>
+                             <?= nl2br(htmlspecialchars($info['opening_hours'] ?? '10:00 - 22:00')) ?>
                             </span>
                         </div>
                     </div>
@@ -625,7 +628,7 @@
 
     /* CTA Section */
     .cta-section {
-        background:  var(--primary-navy);
+        background: var(--primary-navy);
         /* background: linear-gradient(135deg, var(--primary-navy), var(--primary-gold)); */
         color: white;
         padding: 5rem 0;
@@ -755,8 +758,15 @@
     }
 
     @keyframes pulse-bogo {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
     }
 
     /* CSS for Promotion Summary Cards */
@@ -836,7 +846,8 @@
         line-height: 1.4;
     }
 
-    .promotion-validity, .promotion-applies {
+    .promotion-validity,
+    .promotion-applies {
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -844,7 +855,8 @@
         color: var(--text-secondary);
     }
 
-    .promotion-validity i, .promotion-applies i {
+    .promotion-validity i,
+    .promotion-applies i {
         color: var(--primary-gold);
         width: 12px;
     }
@@ -928,7 +940,7 @@
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {        // Add to cart functionality with loading state
+    document.addEventListener('DOMContentLoaded', function() { // Add to cart functionality with loading state
         document.querySelectorAll('.add-to-cart-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const foodId = this.dataset.foodId;
@@ -936,7 +948,11 @@
                 const foodPrice = this.dataset.foodPrice;
                 const originalText = this.innerHTML;
 
-                console.log('Add to cart clicked:', { foodId, foodName, foodPrice });
+                console.log('Add to cart clicked:', {
+                    foodId,
+                    foodName,
+                    foodPrice
+                });
 
                 // Add loading state
                 this.classList.add('btn-loading');
@@ -945,56 +961,56 @@
 
                 // Make actual API call to add to cart
                 fetch('<?= SITE_URL ?>/cart/add', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `food_id=${foodId}&quantity=1`
-                })
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Response data:', data);
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `food_id=${foodId}&quantity=1`
+                    })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response data:', data);
 
-                    // Remove loading state
-                    this.classList.remove('btn-loading');
+                        // Remove loading state
+                        this.classList.remove('btn-loading');
 
-                    if (data.success) {
-                        this.innerHTML = '<i class="fas fa-check me-2"></i>Đã thêm';
-                        this.classList.remove('btn-primary', 'btn-luxury');
-                        this.classList.add('btn-success');
+                        if (data.success) {
+                            this.innerHTML = '<i class="fas fa-check me-2"></i>Đã thêm';
+                            this.classList.remove('btn-primary', 'btn-luxury');
+                            this.classList.add('btn-success');
 
-                        // Show success toast
-                        showToast('Thành công!', 'Đã thêm ' + foodName + ' vào giỏ hàng', 'success');
+                            // Show success toast
+                            showToast('Thành công!', 'Đã thêm ' + foodName + ' vào giỏ hàng', 'success');
 
-                        // Update cart count if exists
-                        const cartCount = document.querySelector('.cart-count');
-                        if (cartCount && data.cartInfo && data.cartInfo.itemCount) {
-                            cartCount.textContent = data.cartInfo.itemCount;
-                        }
+                            // Update cart count if exists
+                            const cartCount = document.querySelector('.cart-count');
+                            if (cartCount && data.cartInfo && data.cartInfo.itemCount) {
+                                cartCount.textContent = data.cartInfo.itemCount;
+                            }
 
-                        // Reset button after 2 seconds
-                        setTimeout(() => {
+                            // Reset button after 2 seconds
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                                this.classList.remove('btn-success');
+                                this.classList.add('btn-luxury');
+                                this.disabled = false;
+                            }, 2000);
+                        } else {
                             this.innerHTML = originalText;
-                            this.classList.remove('btn-success');
-                            this.classList.add('btn-luxury');
                             this.disabled = false;
-                        }, 2000);
-                    } else {
+                            showToast('Lỗi!', data.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.classList.remove('btn-loading');
                         this.innerHTML = originalText;
                         this.disabled = false;
-                        showToast('Lỗi!', data.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    this.classList.remove('btn-loading');
-                    this.innerHTML = originalText;
-                    this.disabled = false;
-                    showToast('Lỗi!', 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
-                });
+                        showToast('Lỗi!', 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
+                    });
             });
         });
 

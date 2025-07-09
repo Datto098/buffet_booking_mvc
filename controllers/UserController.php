@@ -31,10 +31,27 @@ class UserController extends BaseController {
         $user = $this->userModel->findById($_SESSION['user_id']);
         $active_tab = $_GET['tab'] ?? 'profile-info'; 
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
             'title' => 'Thông Tin Cá Nhân - ' . SITE_NAME,
             'user' => $user,
-            'active_tab' => $active_tab
+            'active_tab' => $active_tab,
+            'info' => $restaurantInfo // Thêm dòng này
         ];
        
 
@@ -44,6 +61,22 @@ class UserController extends BaseController {
     public function edit() {
         $this->requireLogin();
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->handleProfileUpdate();
         } else {
@@ -51,7 +84,8 @@ class UserController extends BaseController {
 
             $data = [
                 'title' => 'Chỉnh Sửa Thông Tin - ' . SITE_NAME,
-                'user' => $user
+                'user' => $user,
+                'info' => $restaurantInfo
             ];
 
             $this->loadView('customer/user/edit', $data);
@@ -78,11 +112,8 @@ class UserController extends BaseController {
         $this->requireLogin();
 
         $userId = $_SESSION['user_id'];
-
-        // Get comprehensive user data
         $user = $this->userModel->findById($userId);
 
-        // Get statistics
         $stats = [
             'totalOrders' => $this->orderModel->countUserOrders($userId),
             'totalBookings' => $this->bookingModel->countUserBookings($userId),
@@ -91,12 +122,25 @@ class UserController extends BaseController {
             'confirmedBookings' => $this->bookingModel->countUserBookingsByStatus($userId, 'confirmed')
         ];
 
-        // Get recent activities
         $recentOrders = $this->orderModel->getUserOrders($userId, 5);
         $recentBookings = $this->bookingModel->getUserBookings($userId, 5);
-
-        // Get monthly spending data for chart
         $monthlySpending = $this->orderModel->getUserMonthlySpending($userId, 6);
+
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
 
         $data = [
             'title' => 'Bảng Điều Khiển - ' . SITE_NAME,
@@ -104,7 +148,8 @@ class UserController extends BaseController {
             'stats' => $stats,
             'recentOrders' => $recentOrders,
             'recentBookings' => $recentBookings,
-            'monthlySpending' => $monthlySpending
+            'monthlySpending' => $monthlySpending,
+            'info' => $restaurantInfo
         ];
 
         $this->loadView('customer/user/dashboard', $data);
@@ -122,12 +167,29 @@ class UserController extends BaseController {
         $totalOrders = $this->orderModel->countUserOrders($userId);
         $totalPages = ceil($totalOrders / $limit);
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
             'title' => 'Đơn Hàng Của Tôi - ' . SITE_NAME,
             'orders' => $orders,
             'currentPage' => $page,
             'totalPages' => $totalPages,
-            'totalOrders' => $totalOrders
+            'totalOrders' => $totalOrders,
+            'info' => $restaurantInfo
         ];
 
         $this->loadView('customer/user/orders', $data);
@@ -145,12 +207,29 @@ class UserController extends BaseController {
         $totalBookings = $this->bookingModel->countUserBookings($userId);
         $totalPages = ceil($totalBookings / $limit);
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
             'title' => 'Lịch Sử Đặt Bàn - ' . SITE_NAME,
             'bookings' => $bookings,
             'currentPage' => $page,
             'totalPages' => $totalPages,
-            'totalBookings' => $totalBookings
+            'totalBookings' => $totalBookings,
+            'info' => $restaurantInfo
         ];
 
         $this->loadView('customer/user/bookings', $data);

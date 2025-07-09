@@ -1,41 +1,42 @@
-    </main>
-
+<?php if (!isset($info) && isset($data['info'])) $info = $data['info']; ?>
+</main>
     <!-- Footer -->
     <footer class="footer-luxury">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3><i class="fas fa-crown"></i> <?php echo SITE_NAME; ?></h3>
-                    <p>Nhà hàng buffet đẳng cấp quốc tế với không gian sang trọng và ẩm thực tinh tế. Chúng tôi mang đến trải nghiệm ẩm thực khó quên với hương vị đa dạng từ khắp nơi trên thế giới.</p>
+                    <h3><i class="fas fa-crown"></i> <?php echo htmlspecialchars($info['restaurant_name'] ?? SITE_NAME); ?></h3>
+                    <p><?php echo htmlspecialchars($info['description'] ?? ''); ?></p>
                     <div class="social-links">
-                        <a href="#" class="social-link" aria-label="Facebook">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="social-link" aria-label="Instagram">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="#" class="social-link" aria-label="YouTube">
-                            <i class="fab fa-youtube"></i>
-                        </a>
-                        <a href="#" class="social-link" aria-label="TikTok">
-                            <i class="fab fa-tiktok"></i>
-                        </a>
+                        <?php if (!empty($info['facebook'])): ?>
+                            <a href="<?php echo htmlspecialchars($info['facebook']); ?>" class="social-link" aria-label="Facebook" target="_blank">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                        <?php endif; ?>
+                        <?php if (!empty($info['instagram'])): ?>
+                            <a href="<?php echo htmlspecialchars($info['instagram']); ?>" class="social-link" aria-label="Instagram" target="_blank">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                        <?php endif; ?>
+                        <?php if (!empty($info['twitter'])): ?>
+                            <a href="<?php echo htmlspecialchars($info['twitter']); ?>" class="social-link" aria-label="Twitter" target="_blank">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
 
                 <div class="footer-section">
                     <h3><i class="fas fa-map-marker-alt"></i> Thông Tin Liên Hệ</h3>
-                    <p><i class="fas fa-home"></i> 123 Đường Nguyễn Huệ, Quận 1, TP.HCM</p>
-                    <p><i class="fas fa-phone"></i> <a href="tel:0123456789">0123-456-789</a></p>
-                    <p><i class="fas fa-envelope"></i> <a href="mailto:<?php echo ADMIN_EMAIL; ?>"><?php echo ADMIN_EMAIL; ?></a></p>
-                    <p><i class="fas fa-globe"></i> www.luxury-buffet.com</p>
+                    <p><i class="fas fa-home"></i> <?php echo htmlspecialchars($info['address'] ?? ''); ?></p>
+                    <p><i class="fas fa-phone"></i> <a href="tel:<?php echo htmlspecialchars($info['phone'] ?? ''); ?>"><?php echo htmlspecialchars($info['phone'] ?? ''); ?></a></p>
+                    <p><i class="fas fa-envelope"></i> <a href="mailto:<?php echo htmlspecialchars($info['email'] ?? ''); ?>"><?php echo htmlspecialchars($info['email'] ?? ''); ?></a></p>
+                    <p><i class="fas fa-globe"></i> <?php echo htmlspecialchars($info['website'] ?? ''); ?></p>
                 </div>
 
                 <div class="footer-section">
                     <h3><i class="fas fa-clock"></i> Giờ Hoạt Động</h3>
-                    <p><strong>Thứ 2 - Thứ 6:</strong> 11:00 - 22:00</p>
-                    <p><strong>Thứ 7 - Chủ Nhật:</strong> 10:00 - 23:00</p>
-                    <p><strong>Ngày Lễ:</strong> 10:00 - 23:30</p>
+                    <p><?php echo nl2br(htmlspecialchars($info['opening_hours'] ?? '')); ?></p>
                     <p class="mt-3"><i class="fas fa-info-circle"></i> <em>Phục vụ buffet liên tục</em></p>
                 </div>
 
@@ -64,10 +65,10 @@
 
     </html>
     </div>
-    <div class="col-md-6 text-end">
+    <!-- <div class="col-md-6 text-end">
         <a href="#" class="text-light me-3">Chính Sách Bảo Mật</a>
         <a href="#" class="text-light">Điều Khoản Dịch Vụ</a>
-    </div>
+    </div> -->
     </div>
     </div>
     </footer> <!-- Bootstrap JS -->
@@ -90,24 +91,37 @@
     </script>
     <script>
 document.addEventListener('DOMContentLoaded', function() {
-const heroImages = [
-    '<?php echo SITE_URL; ?>/assets/images/nha-hang-buffet-2.png',
-    '<?php echo SITE_URL; ?>/assets/images/nha-hang-buffet.jpg',
-];
-let currentHero = 0;
-const heroBg = document.getElementById('hero-bg');
-function setHeroBg(idx) {
-    heroBg.style.backgroundImage = 'url(' + heroImages[idx] + ')';
-}
-setHeroBg(currentHero);
-setInterval(() => {
-    currentHero = (currentHero + 1) % heroImages.length;
+    // Parse cover images from PHP
+    let heroImages = [];
+    <?php
+    $coverImages = [];
+    if (!empty($info['cover_images'])) {
+        $decoded = json_decode($info['cover_images'], true);
+        if (is_array($decoded)) {
+            foreach ($decoded as $img) {
+                // Nếu ảnh không có http thì thêm SITE_URL
+                $coverImages[] = (strpos($img, 'http') === 0) ? $img : SITE_URL . '/' . ltrim($img, '/');
+            }
+        }
+    }
+    ?>
+    heroImages = <?php echo json_encode($coverImages); ?>;
+    if (heroImages.length === 0) {
+        heroImages = [
+            '<?php echo SITE_URL; ?>/assets/images/nha-hang-buffet-2.png',
+            '<?php echo SITE_URL; ?>/assets/images/nha-hang-buffet.jpg'
+        ];
+    }
+    let currentHero = 0;
+    const heroBg = document.getElementById('hero-bg');
+    function setHeroBg(idx) {
+        if (heroBg) heroBg.style.backgroundImage = 'url(' + heroImages[idx] + ')';
+    }
     setHeroBg(currentHero);
-}, 3000); 
-console.log('heroBg:', heroBg);
-console.log('heroImages:', heroImages);
-setHeroBg(currentHero);
-console.log('Set background:', heroImages[currentHero]);
+    setInterval(() => {
+        currentHero = (currentHero + 1) % heroImages.length;
+        setHeroBg(currentHero);
+    }, 3000);
 });
 </script>
     </body>
