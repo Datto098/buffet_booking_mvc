@@ -9,7 +9,8 @@
                 <h1>
                     <i class="fas fa-store"></i>
                     Restaurant Information
-                </h1>                <div class="btn-toolbar">
+                </h1>
+                <div class="btn-toolbar">
                     <div class="ms-2">
                         <small class="text-muted">You can modify restaurant details and click "Save Changes"</small>
                     </div>
@@ -32,12 +33,12 @@
                             <?php echo csrf_token_field(); ?>
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="restaurant_name" class="form-label">Restaurant Name <span class="text-danger">*</span></label>                                    <input type="text" class="form-control" id="restaurant_name" name="restaurant_name"
+                                    <label for="restaurant_name" class="form-label">Restaurant Name <span class="text-danger">*</span></label> <input type="text" class="form-control" id="restaurant_name" name="restaurant_name"
                                         value="<?php echo htmlspecialchars($info['restaurant_name'] ?? 'Buffet Restaurant'); ?>"
                                         required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>                                    <input type="tel" class="form-control" id="phone" name="phone"
+                                    <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label> <input type="tel" class="form-control" id="phone" name="phone"
                                         value="<?php echo htmlspecialchars($info['phone'] ?? ''); ?>"
                                         required>
                                 </div>
@@ -45,12 +46,12 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>                                    <input type="email" class="form-control" id="email" name="email"
+                                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label> <input type="email" class="form-control" id="email" name="email"
                                         value="<?php echo htmlspecialchars($info['email'] ?? ''); ?>"
                                         required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="website" class="form-label">Website</label>                                    <input type="url" class="form-control" id="website" name="website"
+                                    <label for="website" class="form-label">Website</label> <input type="url" class="form-control" id="website" name="website"
                                         value="<?php echo htmlspecialchars($info['website'] ?? ''); ?>">
                                 </div>
                             </div>
@@ -67,15 +68,21 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="opening_hours" class="form-label">Opening Hours</label>                                    <input type="text" class="form-control" id="opening_hours" name="opening_hours"
-                                        value="<?php echo htmlspecialchars($info['opening_hours'] ?? '09:00 - 22:00'); ?>">
+                                    <label for="opening_hours" class="form-label">Opening Hours</label>
+                                    <textarea class="form-control" id="opening_hours" name="opening_hours" rows="4"><?php echo htmlspecialchars($info['opening_hours'] ?? "Thứ 2 - Thứ 6: 11:00 - 22:00\nThứ 7 - Chủ Nhật: 10:00 - 23:00\nNgày Lễ: 10:00 - 23:30"); ?></textarea>
+                                    <div class="form-text">Bạn có thể nhập nhiều dòng, ví dụ:<br>
+                                        Thứ 2 - Thứ 6: 11:00 - 22:00<br>
+                                        Thứ 7 - Chủ Nhật: 10:00 - 23:00<br>
+                                        Ngày Lễ: 10:00 - 23:30
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="capacity" class="form-label">Total Capacity</label>                                    <input type="number" class="form-control" id="capacity" name="capacity"
+                                    <label for="capacity" class="form-label">Total Capacity</label> <input type="number" class="form-control" id="capacity" name="capacity"
                                         value="<?php echo htmlspecialchars($info['capacity'] ?? '100'); ?>"
                                         min="1">
                                 </div>
-                            </div>                            <div class="mb-3">
+                            </div>
+                            <div class="mb-3">
                                 <label for="logo" class="form-label">Restaurant Logo</label>
                                 <?php if (!empty($info['logo_url'])): ?>
                                     <div class="mb-2">
@@ -87,21 +94,48 @@
                                 <div class="form-text">Supported formats: JPG, PNG, GIF (max 2MB)</div>
                             </div>
 
-                            <div class="mb-3">
+                            <!-- <div class="mb-3">
                                 <label for="cover_image" class="form-label">Cover Image</label>
-                                <?php if (!empty($info['cover_image'])): ?>
+                                <?php if (!empty($info['cover_images'])): ?>
                                     <div class="mb-2">
-                                        <img src="<?php echo $info['cover_image']; ?>" alt="Current Cover" class="img-thumbnail" style="max-width: 300px;">
+                                        <img src="<?php echo $info['cover_images'][0]; ?>" alt="Current Cover" class="img-thumbnail" style="max-width: 300px;">
                                         <small class="text-muted ms-2">Current cover image</small>
                                     </div>
                                 <?php endif; ?>
-                                <input type="file" class="form-control" id="cover_image" name="cover_image" accept="image/*">
-                                <div class="form-text">Supported formats: JPG, PNG, GIF (max 5MB)</div>
-                            </div>                            <div class="d-flex justify-content-end" id="formButtons">
+                                <input type="file" class="form-control" id="cover_images" name="cover_images[]" accept="image/*" multiple>
+                            </div> -->
+                            <div class="mb-3">
+                                <label for="cover_images" class="form-label">Banner Images (Slider)</label>
+                                <input type="file" class="form-control" id="cover_images" name="cover_images[]" accept="image/*" multiple>
+                                <div class="form-text">Bạn có thể chọn nhiều ảnh. Hỗ trợ JPG, PNG, GIF (tối đa 5MB/ảnh)</div>
+                                <?php
+                                if (!empty($info['cover_images'])) {
+                                    $coverImages = json_decode($info['cover_images'], true);
+                                    if (is_array($coverImages)) {
+                                        foreach ($coverImages as $img) {
+                                ?>
+                                            <div style="display:inline-block; position:relative; margin:4px;">
+                                                <img src="<?php echo htmlspecialchars($img); ?>" class="img-thumbnail" style="max-width:120px;">
+                                                <button type="button"
+                                                    class="btn btn-danger btn-sm"
+                                                    style="position:absolute;top:2px;right:2px;padding:2px 6px;font-size:14px;line-height:1;"
+                                                    onclick="removeBannerImage('<?php echo htmlspecialchars($img); ?>', event)">
+                                                    &times;
+                                                </button>
+                                            </div>
+                                <?php
+                                        }
+                                    }
+                                }
+                                ?>
+                            </div>
+                            <div class="d-flex justify-content-end" id="formButtons">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save"></i> Save Changes
                                 </button>
                             </div>
+                            <input type="hidden" id="cover_images_to_remove" name="cover_images_to_remove" value="">
+
                         </form>
                     </div>
                 </div>
@@ -115,17 +149,17 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label for="facebook" class="form-label">Facebook</label>                            <input type="url" class="form-control" id="facebook" name="facebook"
+                            <label for="facebook" class="form-label">Facebook</label> <input type="url" class="form-control" id="facebook" name="facebook"
                                 value="<?php echo htmlspecialchars($info['facebook'] ?? ''); ?>"
                                 form="restaurantForm">
                         </div>
                         <div class="mb-3">
-                            <label for="instagram" class="form-label">Instagram</label>                            <input type="url" class="form-control" id="instagram" name="instagram"
+                            <label for="instagram" class="form-label">Instagram</label> <input type="url" class="form-control" id="instagram" name="instagram"
                                 value="<?php echo htmlspecialchars($info['instagram'] ?? ''); ?>"
                                 form="restaurantForm">
                         </div>
                         <div class="mb-3">
-                            <label for="twitter" class="form-label">Twitter</label>                            <input type="url" class="form-control" id="twitter" name="twitter"
+                            <label for="twitter" class="form-label">Twitter</label> <input type="url" class="form-control" id="twitter" name="twitter"
                                 value="<?php echo htmlspecialchars($info['twitter'] ?? ''); ?>"
                                 form="restaurantForm">
                         </div>
@@ -228,7 +262,7 @@
     });
 
     // File validation for cover image
-    document.getElementById('cover_image').addEventListener('change', function(e) {
+    document.getElementById('cover_images').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
@@ -245,6 +279,41 @@
             }
         }
     });
+
+    // File validation for cover images (slider)
+    document.getElementById('cover_images').addEventListener('change', function(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            let valid = true;
+            Array.from(files).forEach(file => {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Each banner image file size must be less than 5MB');
+                    valid = false;
+                }
+
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Only JPG, PNG, and GIF files are allowed for banner images');
+                    valid = false;
+                }
+            });
+
+            if (!valid) {
+                this.value = '';
+            }
+        }
+    });
+
+    let removedBannerImages = [];
+
+    function removeBannerImage(imgUrl, event) {
+        if (!removedBannerImages.includes(imgUrl)) {
+            removedBannerImages.push(imgUrl);
+            document.getElementById('cover_images_to_remove').value = removedBannerImages.join('|');
+        }
+        // Ẩn phần ảnh trên giao diện
+        event.target.closest('div').style.display = 'none';
+    }
 </script>
 
 <?php require_once 'views/layouts/superadmin_footer.php'; ?>

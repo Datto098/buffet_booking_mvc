@@ -32,8 +32,13 @@
         <div class="container">
             <!-- Brand -->
             <a class="navbar-brand" href="<?php echo SITE_URL; ?>">
-                <i class="fas fa-crown me-2"></i>
-                <span class="brand-text"><?php echo SITE_NAME; ?></span>
+                <?php if (!empty($info['logo']) || !empty($info['logo_url'])): ?>
+                    <img src="<?php echo htmlspecialchars($info['logo_url'] ?? $info['logo']); ?>" alt="Logo" class="brand-logo" style="height:40px;max-width:120px;">
+                     <span class="brand-text"><?php echo htmlspecialchars($info['restaurant_name'] ?? SITE_NAME); ?></span>
+                <?php else: ?>
+                    <i class="fas fa-crown me-2"></i>
+                    <span class="brand-text"><?php echo htmlspecialchars($info['restaurant_name'] ?? SITE_NAME); ?></span>
+                <?php endif; ?>
             </a>
 
             <!-- Mobile Menu Button -->

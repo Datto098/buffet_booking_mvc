@@ -26,13 +26,30 @@ class NewsController extends BaseController {
         $totalNews = $this->newsModel->countNews(true); // Only published news
         $totalPages = ceil($totalNews / $limit);
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         // Data to pass to the view
         $data = [
             'title' => 'Tin Tức - ' . SITE_NAME,
             'news' => $news,
             'current_page' => $page,
             'total_pages' => $totalPages,
-            'total_news' => $totalNews
+            'total_news' => $totalNews,
+            'info' => $restaurantInfo // Thêm dòng này
         ];
 
         $this->loadView('customer/news/index', $data);
@@ -55,10 +72,27 @@ class NewsController extends BaseController {
         // Get related news
         $relatedNews = $this->newsModel->getRelatedNews($id, 3);
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
             'title' => $newsItem['title'] . ' - ' . SITE_NAME,
             'news_item' => $newsItem,
-            'related_news' => $relatedNews
+            'related_news' => $relatedNews,
+            'info' => $restaurantInfo // Thêm dòng này
         ];
 
         $this->loadView('customer/news/detail', $data);

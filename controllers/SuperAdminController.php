@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SuperAdmin Controller
  * Complete implementation for Super Admin system
@@ -34,7 +35,8 @@ class SuperAdminController extends BaseController
         $this->foodModel = new Food();
         $this->categoryModel = new Category();
         $this->orderModel = new Order();
-        $this->bookingModel = new Booking();        $this->tableModel = new Table();
+        $this->bookingModel = new Booking();
+        $this->tableModel = new Table();
         $this->promotionModel = new Promotion();
         $this->reviewModel = new Review();
         $this->notificationModel = new Notification();
@@ -63,7 +65,7 @@ class SuperAdminController extends BaseController
     // ==========================================
     // USER MANAGEMENT
     // ==========================================
-     public function users()
+    public function users()
     {
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
@@ -77,21 +79,21 @@ class SuperAdminController extends BaseController
 
         // Apply filters
         if ($search) {
-            $allUsers = array_filter($allUsers, function($user) use ($search) {
+            $allUsers = array_filter($allUsers, function ($user) use ($search) {
                 return stripos($user['first_name'] . ' ' . $user['last_name'], $search) !== false ||
-                       stripos($user['email'], $search) !== false ||
-                       stripos($user['phone'], $search) !== false;
+                    stripos($user['email'], $search) !== false ||
+                    stripos($user['phone'], $search) !== false;
             });
         }
 
         if ($role) {
-            $allUsers = array_filter($allUsers, function($user) use ($role) {
+            $allUsers = array_filter($allUsers, function ($user) use ($role) {
                 return $user['role'] === $role;
             });
         }
 
         if ($status !== '') {
-            $allUsers = array_filter($allUsers, function($user) use ($status) {
+            $allUsers = array_filter($allUsers, function ($user) use ($status) {
                 return (string)$user['is_active'] === $status;
             });
         }
@@ -104,7 +106,8 @@ class SuperAdminController extends BaseController
         $roleStats = [];
         foreach ($this->userModel->getAllForAdmin() as $user) {
             $roleStats[$user['role']] = ($roleStats[$user['role']] ?? 0) + 1;
-        }        $data = [
+        }
+        $data = [
             'title' => 'User Management',
             'users' => $users,
             'stats' => [
@@ -136,7 +139,8 @@ class SuperAdminController extends BaseController
                 $this->setFlash('error', 'Invalid security token.');
                 $this->redirect('/superadmin/users');
                 return;
-            }            $userData = [
+            }
+            $userData = [
                 'first_name' => $this->sanitize($_POST['first_name']),
                 'last_name' => $this->sanitize($_POST['last_name']),
                 'email' => $this->sanitize($_POST['email']),
@@ -149,8 +153,10 @@ class SuperAdminController extends BaseController
             ];
 
             // Validate required fields
-            if (empty($userData['first_name']) || empty($userData['last_name']) ||
-                empty($userData['email']) || empty($_POST['password'])) {
+            if (
+                empty($userData['first_name']) || empty($userData['last_name']) ||
+                empty($userData['email']) || empty($_POST['password'])
+            ) {
                 $this->setFlash('error', 'Please fill in all required fields.');
                 $this->redirect('/superadmin/users/create');
                 return;
@@ -177,7 +183,8 @@ class SuperAdminController extends BaseController
         ];
 
         $this->loadSuperAdminView('users/create', $data);
-    }    public function editUser($id)
+    }
+    public function editUser($id)
     {
         $user = $this->userModel->findById($id);
         if (!$user) {
@@ -206,7 +213,7 @@ class SuperAdminController extends BaseController
             // Update password only if provided
             if (!empty($_POST['password'])) {
                 $userData['password'] = password_hash($_POST['password'], PASSWORD_DEFAULT);
-            }// Check if email already exists for other users
+            } // Check if email already exists for other users
             $existingUser = $this->userModel->findByEmail($userData['email']);
             if ($existingUser && $existingUser['id'] != $id) {
                 $this->setFlash('error', 'Email already exists.');
@@ -291,20 +298,22 @@ class SuperAdminController extends BaseController
 
         // Calculate statistics from unfiltered data
         $allOrders = $this->orderModel->getAllOrdersWithCustomer();
-        $pendingOrders = count(array_filter($allOrders, function($order) {
+        $pendingOrders = count(array_filter($allOrders, function ($order) {
             return $order['status'] === 'pending';
         }));
 
-        $processingOrders = count(array_filter($allOrders, function($order) {
+        $processingOrders = count(array_filter($allOrders, function ($order) {
             return $order['status'] === 'processing';
         }));
 
-        $todayOrders = count(array_filter($allOrders, function($order) {
+        $todayOrders = count(array_filter($allOrders, function ($order) {
             return date('Y-m-d', strtotime($order['created_at'])) === date('Y-m-d');
-        }));$totalRevenue = array_sum(array_column($allOrders, 'total_amount'));
-        $completedOrders = count(array_filter($allOrders, function($order) {
+        }));
+        $totalRevenue = array_sum(array_column($allOrders, 'total_amount'));
+        $completedOrders = count(array_filter($allOrders, function ($order) {
             return in_array($order['status'], ['completed', 'delivered']);
-        }));        $data = [
+        }));
+        $data = [
             'title' => 'Order Management',
             'orders' => $orders,
             'currentPage' => $page,
@@ -348,7 +357,8 @@ class SuperAdminController extends BaseController
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to update order status'], 500);
             }
         }
-    }    public function orderDetails($id)
+    }
+    public function orderDetails($id)
     {
         $order = $this->orderModel->getOrderWithItems($id);
 
@@ -386,15 +396,15 @@ class SuperAdminController extends BaseController
 
         // Calculate statistics
         $allBookings = $this->bookingModel->getAllForAdmin();
-        $confirmedBookings = count(array_filter($allBookings, function($booking) {
+        $confirmedBookings = count(array_filter($allBookings, function ($booking) {
             return $booking['status'] === 'confirmed';
         }));
 
-        $pendingBookings = count(array_filter($allBookings, function($booking) {
+        $pendingBookings = count(array_filter($allBookings, function ($booking) {
             return $booking['status'] === 'pending';
         }));
 
-        $todayBookings = count(array_filter($allBookings, function($booking) {
+        $todayBookings = count(array_filter($allBookings, function ($booking) {
             return date('Y-m-d', strtotime($booking['reservation_time'])) === date('Y-m-d');
         }));
 
@@ -412,7 +422,8 @@ class SuperAdminController extends BaseController
         ];
 
         $this->loadSuperAdminView('bookings/index', $data);
-    }    public function updateBookingStatus($id)
+    }
+    public function updateBookingStatus($id)
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $status = $_POST['status'] ?? '';
@@ -450,7 +461,8 @@ class SuperAdminController extends BaseController
             'success' => true,
             'html' => $html
         ]);
-    }    public function assignTable($bookingId)
+    }
+    public function assignTable($bookingId)
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Handle table assignment save
@@ -482,7 +494,8 @@ class SuperAdminController extends BaseController
                 'success' => true,
                 'tables' => $availableTables,
                 'booking' => $booking
-            ]);        }
+            ]);
+        }
     }
 
     // ==========================================
@@ -504,22 +517,22 @@ class SuperAdminController extends BaseController
 
         // Apply filters
         if ($search) {
-            $allTables = array_filter($allTables, function($table) use ($search) {
+            $allTables = array_filter($allTables, function ($table) use ($search) {
                 return stripos($table['table_number'], $search) !== false ||
-                       stripos($table['location'], $search) !== false ||
-                       stripos($table['description'], $search) !== false;
+                    stripos($table['location'], $search) !== false ||
+                    stripos($table['description'], $search) !== false;
             });
         }
 
         if ($status !== '') {
-            $allTables = array_filter($allTables, function($table) use ($status) {
+            $allTables = array_filter($allTables, function ($table) use ($status) {
                 return ($status === 'available' && $table['is_available'] == 1) ||
-                       ($status === 'unavailable' && $table['is_available'] == 0);
+                    ($status === 'unavailable' && $table['is_available'] == 0);
             });
         }
 
         if ($location) {
-            $allTables = array_filter($allTables, function($table) use ($location) {
+            $allTables = array_filter($allTables, function ($table) use ($location) {
                 return $table['location'] === $location;
             });
         }
@@ -532,12 +545,13 @@ class SuperAdminController extends BaseController
 
         // Calculate statistics from unfiltered data
         $allTablesForStats = $this->tableModel->getAllTables();
-        $availableTables = count(array_filter($allTablesForStats, function($table) {
+        $availableTables = count(array_filter($allTablesForStats, function ($table) {
             return ($table['is_available'] ?? 1) == 1;
         }));
 
         $totalCapacity = array_sum(array_column($allTablesForStats, 'capacity'));
-        $locationStats = $this->tableModel->getTablesByLocation();        $data = [
+        $locationStats = $this->tableModel->getTablesByLocation();
+        $data = [
             'title' => 'Table Management',
             'tables' => $tables,
             'stats' => [
@@ -549,7 +563,8 @@ class SuperAdminController extends BaseController
             'locationStats' => $locationStats,
             'currentPage' => $page,
             'totalPages' => $totalPages,
-            'totalTables' => count($allTablesForStats),            'filteredCount' => $totalTables,
+            'totalTables' => count($allTablesForStats),
+            'filteredCount' => $totalTables,
             'availableTables' => $availableTables,
             'totalCapacity' => $totalCapacity,
             'csrf_token' => $this->generateCSRF()
@@ -627,8 +642,10 @@ class SuperAdminController extends BaseController
         $data = [
             'title' => 'Create Table',
             'csrf_token' => $this->generateCSRF()
-        ];        $this->loadSuperAdminView('tables/create', $data);
-    }    public function createTableAjax()
+        ];
+        $this->loadSuperAdminView('tables/create', $data);
+    }
+    public function createTableAjax()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tableData = [
@@ -792,6 +809,60 @@ class SuperAdminController extends BaseController
                     }
                 }
 
+                // 1. Lấy ảnh cũ từ DB
+                $coverImages = [];
+                $db = Database::getInstance()->getConnection();
+                $stmt = $db->prepare("SELECT cover_images FROM restaurant_info WHERE id = 1");
+                $stmt->execute();
+                $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!empty($restaurantInfo['cover_images'])) {
+                    $decoded = json_decode($restaurantInfo['cover_images'], true);
+                    if (is_array($decoded)) {
+                        $coverImages = $decoded;
+                    }
+                }
+
+                // 2. Xóa ảnh theo URL nếu có yêu cầu
+                if (!empty($_POST['cover_images_to_remove'])) {
+                    $imagesToRemove = explode('|', $_POST['cover_images_to_remove']);
+                    foreach ($imagesToRemove as $imgUrl) {
+                        $key = array_search($imgUrl, $coverImages);
+                        if ($key !== false) {
+                            // Xóa file vật lý (nếu cần)
+                            $path = str_replace(SITE_URL . '/', '', $coverImages[$key]);
+                            if (file_exists($path)) {
+                                unlink($path);
+                            }
+                            unset($coverImages[$key]);
+                        }
+                    }
+                    $coverImages = array_values($coverImages); // Re-index lại
+                }
+
+                // 3. Upload ảnh mới (nếu có)
+                if (!empty($_FILES['cover_images']['name'][0])) {
+                    foreach ($_FILES['cover_images']['tmp_name'] as $key => $tmp_name) {
+                        if ($_FILES['cover_images']['error'][$key] === UPLOAD_ERR_OK) {
+                            $coverPath = $this->handleRestaurantImageUpload([
+                                'name' => $_FILES['cover_images']['name'][$key],
+                                'type' => $_FILES['cover_images']['type'][$key],
+                                'tmp_name' => $tmp_name,
+                                'error' => $_FILES['cover_images']['error'][$key],
+                                'size' => $_FILES['cover_images']['size'][$key]
+                            ], 'cover');
+
+                            if ($coverPath) {
+                                $coverImages[] = $coverPath;
+                            }
+                        }
+                    }
+                }
+
+                // 4. Lưu lại vào DB
+                $restaurantData['cover_images'] = json_encode($coverImages);
+
+
                 // Update or create restaurant info
                 $db = Database::getInstance()->getConnection();
 
@@ -831,7 +902,6 @@ class SuperAdminController extends BaseController
                 } else {
                     throw new Exception('Failed to update restaurant information.');
                 }
-
             } catch (Exception $e) {
                 $this->setFlash('error', $e->getMessage());
             }
@@ -846,7 +916,8 @@ class SuperAdminController extends BaseController
 
         $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
         $stmt->execute();
-        $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);        if (!$restaurantInfo) {
+        $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$restaurantInfo) {
             $restaurantInfo = [
                 'restaurant_name' => 'Buffet Restaurant',
                 'phone' => '',
@@ -856,14 +927,14 @@ class SuperAdminController extends BaseController
                 'description' => '',
                 'opening_hours' => '09:00 - 22:00',
                 'capacity' => 100,
-                'logo_url' => '', // Sửa tên field khớp với database
-                'cover_image' => '',
+                'logo_url' => '', 
+                'cover_images' => '',
                 'facebook' => '',
                 'instagram' => '',
                 'twitter' => '',
                 'updated_at' => date('Y-m-d H:i:s')
             ];
-        }// Get statistics for restaurant info page
+        } // Get statistics for restaurant info page
         $stats = [
             'total_orders' => $this->orderModel->count(),
             'total_customers' => $this->userModel->count('role', 'customer'),
@@ -877,9 +948,17 @@ class SuperAdminController extends BaseController
             'stats' => $stats,
             'csrf_token' => $this->generateCSRF()
         ];
+        // echo '<pre>';
+        // print_r($data);
+        // echo '</pre>';
+
 
         $this->loadSuperAdminView('restaurant', $data);
+
+        
+
     }
+
 
     private function ensureRestaurantInfoTable($db)
     {
@@ -898,7 +977,7 @@ class SuperAdminController extends BaseController
                 opening_hours VARCHAR(100) DEFAULT '09:00 - 22:00',
                 capacity INT DEFAULT 100,
                 logo VARCHAR(255) DEFAULT '',
-                cover_image VARCHAR(255) DEFAULT '',
+                cover_images VARCHAR(255) DEFAULT '',
                 facebook VARCHAR(255) DEFAULT '',
                 instagram VARCHAR(255) DEFAULT '',
                 twitter VARCHAR(255) DEFAULT '',
@@ -913,36 +992,33 @@ class SuperAdminController extends BaseController
     {
         $uploadDir = "uploads/restaurant/";
 
-        // Create directory if it doesn't exist
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
 
-        // Validate file type
         $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
         if (!in_array($file['type'], $allowedTypes)) {
             throw new Exception("Invalid file type for $type. Only JPG, PNG, and GIF are allowed.");
         }
 
-        // Validate file size (2MB for logo, 5MB for cover)
         $maxSize = ($type === 'logo') ? 2 * 1024 * 1024 : 5 * 1024 * 1024;
         if ($file['size'] > $maxSize) {
             $maxSizeMB = $maxSize / (1024 * 1024);
             throw new Exception("File size for $type must be less than {$maxSizeMB}MB.");
         }
 
-        // Generate unique filename
+        // ✅ Sửa đoạn này: đặt tên duy nhất
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = $type . '_' . time() . '.' . $extension;
+        $filename = $type . '_' . time() . '_' . uniqid() . '.' . $extension;
         $filepath = $uploadDir . $filename;
 
-        // Move uploaded file
         if (move_uploaded_file($file['tmp_name'], $filepath)) {
             return SITE_URL . '/' . $filepath;
         }
 
         throw new Exception("Failed to upload $type image.");
     }
+
 
     public function updateRestaurantInfo()
     {
@@ -973,7 +1049,8 @@ class SuperAdminController extends BaseController
         $totalPages = ceil($totalPromotions / $limit);
 
         // Get statistics
-        $stats = $this->promotionModel->getStats();        $data = [
+        $stats = $this->promotionModel->getStats();
+        $data = [
             'title' => 'Promotion Management',
             'promotions' => $promotions,
             'stats' => $stats,
@@ -994,7 +1071,8 @@ class SuperAdminController extends BaseController
             if (!$this->validateCSRF()) {
                 $this->jsonResponse(['success' => false, 'message' => 'Invalid security token'], 403);
                 return;
-            }            $promotionData = [
+            }
+            $promotionData = [
                 'name' => $this->sanitize($_POST['name']),
                 'code' => strtoupper($this->sanitize($_POST['code'])),
                 'description' => $this->sanitize($_POST['description'] ?? ''),
@@ -1010,8 +1088,10 @@ class SuperAdminController extends BaseController
             ];
 
             // Validate required fields
-            if (empty($promotionData['name']) || empty($promotionData['code']) ||
-                empty($promotionData['type']) || $promotionData['discount_value'] <= 0) {
+            if (
+                empty($promotionData['name']) || empty($promotionData['code']) ||
+                empty($promotionData['type']) || $promotionData['discount_value'] <= 0
+            ) {
                 $this->jsonResponse(['success' => false, 'message' => 'Please fill in all required fields correctly.'], 400);
                 return;
             }
@@ -1026,8 +1106,10 @@ class SuperAdminController extends BaseController
                 $this->jsonResponse(['success' => true, 'message' => 'Promotion created successfully.']);
             } else {
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to create promotion.'], 500);
-            }        }
-    }    public function getPromotion($id)
+            }
+        }
+    }
+    public function getPromotion($id)
     {
         try {
             error_log("getPromotion called with ID: " . $id);
@@ -1107,7 +1189,8 @@ class SuperAdminController extends BaseController
         } catch (Exception $e) {
             error_log("Error creating promotion tables: " . $e->getMessage());
         }
-    }    public function editPromotion($id)
+    }
+    public function editPromotion($id)
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
@@ -1139,8 +1222,10 @@ class SuperAdminController extends BaseController
                 error_log("Promotion data: " . print_r($promotionData, true));
 
                 // Validate required fields
-                if (empty($promotionData['name']) || empty($promotionData['code']) ||
-                    empty($promotionData['type']) || $promotionData['discount_value'] <= 0) {
+                if (
+                    empty($promotionData['name']) || empty($promotionData['code']) ||
+                    empty($promotionData['type']) || $promotionData['discount_value'] <= 0
+                ) {
                     $this->jsonResponse(['success' => false, 'message' => 'Please fill in all required fields correctly.'], 400);
                     return;
                 }
@@ -1217,11 +1302,11 @@ class SuperAdminController extends BaseController
         $currentMonth = date('Y-m');
         $lastMonth = date('Y-m', strtotime('-1 month'));
 
-        $currentMonthUsers = count(array_filter($allUsers, function($user) use ($currentMonth) {
+        $currentMonthUsers = count(array_filter($allUsers, function ($user) use ($currentMonth) {
             return strpos($user['created_at'], $currentMonth) === 0;
         }));
 
-        $lastMonthUsers = count(array_filter($allUsers, function($user) use ($lastMonth) {
+        $lastMonthUsers = count(array_filter($allUsers, function ($user) use ($lastMonth) {
             return strpos($user['created_at'], $lastMonth) === 0;
         }));
 
@@ -1235,11 +1320,11 @@ class SuperAdminController extends BaseController
         $currentMonth = date('Y-m');
         $lastMonth = date('Y-m', strtotime('-1 month'));
 
-        $currentMonthBookings = count(array_filter($allBookings, function($booking) use ($currentMonth) {
+        $currentMonthBookings = count(array_filter($allBookings, function ($booking) use ($currentMonth) {
             return strpos($booking['created_at'], $currentMonth) === 0;
         }));
 
-        $lastMonthBookings = count(array_filter($allBookings, function($booking) use ($lastMonth) {
+        $lastMonthBookings = count(array_filter($allBookings, function ($booking) use ($lastMonth) {
             return strpos($booking['created_at'], $lastMonth) === 0;
         }));
 
@@ -1287,7 +1372,7 @@ class SuperAdminController extends BaseController
             'today_revenue' => $orderStats['today_revenue'] ?? 0,
             'pending_orders' => $this->orderModel->count('pending'),
             'pending_bookings' => $this->bookingModel->count('pending'),
-            'active_users' => count(array_filter($this->userModel->findAll(), function($user) {
+            'active_users' => count(array_filter($this->userModel->findAll(), function ($user) {
                 return ($user['is_active'] ?? 1) == 1;
             })),
             'monthly_revenue' => $monthlyRevenue,
@@ -1329,7 +1414,8 @@ class SuperAdminController extends BaseController
         ];
 
         $this->loadSuperAdminView('reviews/index', $data);
-    }    /**
+    }
+    /**
      * View review details
      */
     public function reviewDetails($id)
@@ -1342,7 +1428,8 @@ class SuperAdminController extends BaseController
             return;
         }        // Load the details view
         $this->loadSuperAdminView('reviews/details', ['reviewData' => $reviewData]);
-    }    /**
+    }
+    /**
      * Approve review
      */
     public function approveReview($id)
@@ -1355,7 +1442,8 @@ class SuperAdminController extends BaseController
                 'message' => $result ? 'Review approved successfully' : 'Failed to approve review'
             ]);
         }
-    }    /**
+    }
+    /**
      * Reject/Unapprove review
      */
     public function rejectReview($id)
@@ -1368,7 +1456,8 @@ class SuperAdminController extends BaseController
                 'message' => $result ? 'Review rejected successfully' : 'Failed to reject review'
             ]);
         }
-    }    /**
+    }
+    /**
      * Verify review
      */
     public function verifyReview($id)
@@ -1416,7 +1505,8 @@ class SuperAdminController extends BaseController
             }
 
             $result = false;
-            $message = '';            switch ($action) {
+            $message = '';
+            switch ($action) {
                 case 'approve':
                     $result = $this->reviewModel->bulkApproveReviews($reviewIds);
                     $message = $result ? 'Reviews approved successfully' : 'Failed to approve reviews';
@@ -1434,7 +1524,8 @@ class SuperAdminController extends BaseController
                 'message' => $message
             ]);
         }
-    }    /**
+    }
+    /**
      * Get review statistics for AJAX
      */
     public function reviewStats()
@@ -1512,7 +1603,7 @@ class SuperAdminController extends BaseController
         $notifications = $this->notificationModel->getRecentNotifications($userId, 10);
 
         // Format notifications for display
-        $formattedNotifications = array_map(function($notification) {
+        $formattedNotifications = array_map(function ($notification) {
             return [
                 'id' => $notification['id'],
                 'type' => $notification['type'],
@@ -1637,11 +1728,10 @@ class SuperAdminController extends BaseController
         $time = time() - strtotime($datetime);
 
         if ($time < 60) return 'just now';
-        if ($time < 3600) return floor($time/60) . ' minutes ago';
-        if ($time < 86400) return floor($time/3600) . ' hours ago';
-        if ($time < 2592000) return floor($time/86400) . ' days ago';
+        if ($time < 3600) return floor($time / 60) . ' minutes ago';
+        if ($time < 86400) return floor($time / 3600) . ' hours ago';
+        if ($time < 2592000) return floor($time / 86400) . ' days ago';
 
         return date('M j, Y', strtotime($datetime));
     }
 }
-?>
