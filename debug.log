@@ -1,0 +1,120 @@
+[10-Jul-2025 16:34:27 UTC] Main router handling superadmin route: Array
+(
+    [0] => superadmin
+    [1] => notifications
+    [2] => unread-count
+)
+
+[10-Jul-2025 16:34:27 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 5fd6e16aea9461abf2bfad8694bffe50c3508e5d91e500b1f7f0150e5bd9b80b
+    [user_id] => 4
+    [first_name] => Super
+    [last_name] => Admin
+    [user_email] => superadmin@buffet.com
+    [user_role] => super_admin
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 4
+            [first_name] => Super
+            [last_name] => Admin
+            [full_name] => Super Admin
+            [email] => superadmin@buffet.com
+            [role] => super_admin
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+[10-Jul-2025 16:34:27 UTC] Main router handling superadmin route: Array
+(
+    [0] => superadmin
+    [1] => notifications
+    [2] => recent
+)
+
+[10-Jul-2025 16:34:27 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 5fd6e16aea9461abf2bfad8694bffe50c3508e5d91e500b1f7f0150e5bd9b80b
+    [user_id] => 4
+    [first_name] => Super
+    [last_name] => Admin
+    [user_email] => superadmin@buffet.com
+    [user_role] => super_admin
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 4
+            [first_name] => Super
+            [last_name] => Admin
+            [full_name] => Super Admin
+            [email] => superadmin@buffet.com
+            [role] => super_admin
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+[10-Jul-2025 16:34:27 UTC] Main router handling superadmin route: Array
+(
+    [0] => superadmin
+    [1] => notifications
+    [2] => unread-count
+)
+
+[10-Jul-2025 16:34:27 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 5fd6e16aea9461abf2bfad8694bffe50c3508e5d91e500b1f7f0150e5bd9b80b
+    [user_id] => 4
+    [first_name] => Super
+    [last_name] => Admin
+    [user_email] => superadmin@buffet.com
+    [user_role] => super_admin
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 4
+            [first_name] => Super
+            [last_name] => Admin
+            [full_name] => Super Admin
+            [email] => superadmin@buffet.com
+            [role] => super_admin
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
+[10-Jul-2025 16:34:27 UTC] Main router handling superadmin route: Array
+(
+    [0] => superadmin
+    [1] => notifications
+    [2] => recent
+)
+
+[10-Jul-2025 16:34:27 UTC] Session in main router: Array
+(
+    [cart_count] => 0
+    [csrf_token] => 5fd6e16aea9461abf2bfad8694bffe50c3508e5d91e500b1f7f0150e5bd9b80b
+    [user_id] => 4
+    [first_name] => Super
+    [last_name] => Admin
+    [user_email] => superadmin@buffet.com
+    [user_role] => super_admin
+    [is_logged_in] => 1
+    [user] => Array
+        (
+            [id] => 4
+            [first_name] => Super
+            [last_name] => Admin
+            [full_name] => Super Admin
+            [email] => superadmin@buffet.com
+            [role] => super_admin
+        )
+
+    [success] => Đăng nhập thành công!
+)
+
