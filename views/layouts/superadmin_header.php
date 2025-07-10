@@ -1141,6 +1141,36 @@
             white-space: nowrap;
             border: 0;
         }
+        .banner-thumb {
+    display: inline-block;
+    position: relative;
+    margin: 4px;
+    vertical-align: top;
+}
+.banner-thumb img {
+    display: block;
+    max-width: 120px;
+    border-radius: 6px;
+}
+.banner-thumb .remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 2;
+    padding: 2px 6px;
+    font-size: 14px;
+    line-height: 1;
+    border-radius: 50%;
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+.banner-thumb .remove-btn:hover {
+    opacity: 1;
+}
     </style>
 
     <!-- Custom CSS -->

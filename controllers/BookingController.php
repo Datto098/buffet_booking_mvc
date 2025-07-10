@@ -24,8 +24,25 @@ class BookingController extends BaseController
 
     public function index()
     {
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
-            'title' => 'Đặt Bàn - ' . SITE_NAME
+            'title' => 'Đặt Bàn - ' . SITE_NAME,
+            'info' => $restaurantInfo
         ];
 
         $this->loadView('customer/booking/index', $data);
@@ -107,12 +124,29 @@ class BookingController extends BaseController
             }
         }
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
             'title' => 'Lịch Sử Đặt Bàn - ' . SITE_NAME,
             'bookings' => $bookings,
             'total_pages' => (int)$totalPages,
             'current_page' => (int)$currentPage,
             'filter_params' => '',
+            'info' => $restaurantInfo // Thêm dòng này
         ];
 
         $this->loadView('customer/booking/my_bookings', $data);
@@ -137,9 +171,26 @@ class BookingController extends BaseController
             redirect('/index.php?page=booking&action=myBookings');
         }
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
             'title' => 'Chi Tiết Đặt Bàn - ' . SITE_NAME,
-            'booking' => $booking
+            'booking' => $booking,
+            'info' => $restaurantInfo // Thêm dòng này
         ];
 
         $this->loadView('customer/booking/detail', $data);
@@ -455,9 +506,26 @@ class BookingController extends BaseController
             }
         }
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
             'title' => 'Sửa Đặt Bàn - ' . SITE_NAME,
-            'booking' => $booking
+            'booking' => $booking,
+            'info' => $restaurantInfo // Thêm dòng này
         ];
         $this->loadView('customer/booking/modify', $data);
     }

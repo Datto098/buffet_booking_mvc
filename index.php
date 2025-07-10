@@ -43,6 +43,12 @@ try {
 
 function routeRequest($segments)
 {
+    if (isset($segments[0], $segments[1]) && $segments[0] === 'promotion' && $segments[1] === 'foods') {
+        require_once 'controllers/HomeController.php';
+        $controller = new HomeController();
+        $controller->foods();
+        return;
+    }
     // Handle query parameters if no segments are provided
     if (count($segments) === 1 && $segments[0] === 'index.php') {
         $page = $_GET['page'] ?? 'home';
