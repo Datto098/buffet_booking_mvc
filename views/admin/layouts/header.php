@@ -24,6 +24,8 @@
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
       <!-- CKEditor 4 CDN - Stable Version -->
     <script src="https://cdn.ckeditor.com/4.14.1/standard/ckeditor.js"></script>
+    <!-- Realtime Notifications -->
+    <script src="<?= SITE_URL ?>/assets/js/realtime-notifications.js"></script>
 </head>
 <body class="admin-page">
     <div class="container-fluid">

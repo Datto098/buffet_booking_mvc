@@ -44,6 +44,12 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link <?= strpos(
+                    $requestUri, '/admin/dine-in-orders') !== false ? 'active' : '' ?>" href="<?= SITE_URL ?>/admin/dine-in-orders">
+                    <i class="fas fa-concierge-bell me-2"></i> Dine-in Orders
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link <?= strpos($requestUri, '/admin/bookings') !== false ? 'active' : '' ?>" href="<?= SITE_URL ?>/admin/bookings">
                     <i class="fas fa-calendar-check me-2"></i> Bookings
                 </a>
@@ -51,6 +57,24 @@
             <li class="nav-item">
                 <a class="nav-link <?= strpos($requestUri, '/admin/tables') !== false ? 'active' : '' ?>" href="<?= SITE_URL ?>/admin/tables">
                     <i class="fas fa-table me-2"></i> Tables
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <?= strpos($requestUri, '/admin/internal-messages') !== false ? 'active' : '' ?>" href="<?= SITE_URL ?>/admin/internal-messages">
+                    <i class="fas fa-envelope me-2"></i> Internal Messages
+                    <?php
+                    // Get unread count for internal messages
+                    if (isset($_SESSION['user']['id'])) {
+                        require_once __DIR__ . '/../../../models/InternalMessage.php';
+                        $internalMessageModel = new InternalMessage();
+                        $unreadCount = $internalMessageModel->getUnreadCount($_SESSION['user']['id']);
+                        if ($unreadCount > 0):
+                    ?>
+                        <span class="badge bg-danger ms-2"><?= $unreadCount ?></span>
+                    <?php
+                        endif;
+                    }
+                    ?>
                 </a>
             </li>
         </ul> <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'super_admin'): ?>

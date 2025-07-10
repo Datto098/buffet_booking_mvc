@@ -115,7 +115,7 @@
                         <div class="row g-3">
                             <?php foreach ($activePromotions as $promotion): ?>
                                 <div class="col-md-4">
-                                    <div class="promotion-summary-card">
+                                    <div class="promotion-summary-card" data-promotion-id="<?= $promotion['id'] ?>">
                                         <div class="promotion-summary-header">
                                             <h5><?= htmlspecialchars($promotion['name']) ?></h5>
                                             <span class="promotion-summary-code"><?= htmlspecialchars($promotion['code']) ?></span>
@@ -175,143 +175,9 @@
             <p class="section-subtitle">
                 Những món ăn tinh tế với mức giá ưu đãi đặc biệt. Thưởng thức đẳng cấp mà không cần lo chi phí.
             </p>
-        </div><?php if (!empty($promotionalFoods)): ?>
-            <div class="food-grid">
-                <?php foreach ($promotionalFoods as $index => $food): ?>
-                    <?php
-                        $discountPercent = (int)$food['discount_percent'];
-                        $originalPrice = (float)$food['original_price'];
-                        $discountedPrice = (float)$food['discounted_price'];
-                        $isHotDeal = $food['is_hot_deal'] ?? ($discountPercent >= 30);
-
-                        // Calculate end date for promotion display
-                        $endDate = $food['promotion_end_date'] ?? null;
-                        $daysLeft = null;
-                        if ($endDate) {
-                            $endDateTime = new DateTime($endDate);
-                            $now = new DateTime();
-                            $interval = $now->diff($endDateTime);
-                            $daysLeft = $interval->days;
-                        }
-                    ?>
-                    <div class="food-item promotion-food-item fade-in-up" style="animation-delay: <?php echo $index * 0.1; ?>s" data-delay="<?php echo $index * 0.1; ?>s">
-                        <div class="food-image">
-                            <?php if (!empty($food['image']) && $food['image'] !== 'placeholder.jpg'): ?>
-                                <img src="<?= SITE_URL ?>/uploads/food_images/<?= htmlspecialchars($food['image']) ?>"
-                                    class="card-img-luxury"
-                                    alt="<?= htmlspecialchars($food['name']) ?>">
-                            <?php else: ?>
-                                <img src="<?= SITE_URL ?>/assets/images/food-placeholder.svg"
-                                    class="card-img-luxury"
-                                    alt="<?= htmlspecialchars($food['name']) ?>">
-                            <?php endif; ?>
-
-                            <!-- Discount Badge -->
-                            <div class="food-badge discount-badge">
-                                 -<?= $discountPercent ?><i class="fas fa-percent"></i>
-                            </div>
-
-                            <!-- Hot Deal Badge -->
-                            <?php if ($isHotDeal): ?>
-                                <div class="food-badge hot-deal-badge-small">
-                                    <i class="fas fa-fire"></i> HOT
-                                </div>
-                            <?php endif; ?>
-
-                            <!-- Promotion Type Badge -->
-                            <?php if (isset($food['promotion_type']) && $food['promotion_type'] === 'buy_one_get_one'): ?>
-                                <div class="food-badge bogo-badge" style="top: 60px; right: -10px; background: linear-gradient(135deg, #e67e22, #d35400);">
-                                    <i class="fas fa-plus"></i> BOGO
-                                </div>
-                            <?php endif; ?>
-                        </div>
-
-                        <div class="food-content">
-                            <div class="food-category">
-                                <?= htmlspecialchars($food['category_name'] ?? 'Đặc sản'); ?>
-                            </div>
-
-                            <h3 class="food-title"><?= htmlspecialchars($food['name']) ?></h3>
-
-                            <!-- Promotion Name -->
-                            <?php if (isset($food['promotion_name'])): ?>
-                                <div class="promotion-tag mb-2">
-                                    <i class="fas fa-tag"></i> <?= htmlspecialchars($food['promotion_name']) ?>
-                                    <?php if (isset($food['promotion_code'])): ?>
-                                        <span class="promotion-code"><?= htmlspecialchars($food['promotion_code']) ?></span>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endif; ?>
-
-                            <p class="food-description">
-                                <?= !empty($food['description'])
-                                    ? htmlspecialchars(substr($food['description'], 0, 120)) . '...'
-                                    : 'Món ăn ngon, đầy đủ dinh dưỡng với hương vị đặc trưng tuyệt vời.' ?>
-                            </p>
-
-                            <!-- Price Section -->
-                            <div class="food-price promotion-price">
-                                <span class="price-original">
-                                    <?= number_format($originalPrice, 0, ',', '.') ?>đ
-                                </span>
-                                <span class="price-current">
-                                    <?= number_format($discountedPrice, 0, ',', '.') ?>đ
-                                </span>
-                                <div class="savings-text">
-                                    <i class="fas fa-piggy-bank"></i>
-                                    Tiết kiệm: <?= number_format($originalPrice - $discountedPrice, 0, ',', '.') ?>đ
-                                </div>
-                            </div>                            <div class="d-flex gap-2">
-                                <button class="btn btn-luxury add-to-cart-btn flex-grow-1"
-                                    data-food-id="<?= $food['id'] ?>"
-                                    data-food-name="<?= htmlspecialchars($food['name']) ?>"
-                                    data-food-price="<?= $discountedPrice ?>"
-                                    data-original-price="<?= $originalPrice ?>">
-                                    <i class="fas fa-cart-plus"></i> Thêm vào giỏ
-                                </button>
-                                <button class="btn btn-outline-luxury favorite-btn"
-                                    data-food-id="<?= $food['id'] ?>">
-                                    <i class="far fa-heart"></i>
-                                </button>
-                                <a href="<?= SITE_URL ?>/food/detail/<?= $food['id'] ?>"
-                                    class="btn btn-outline-luxury">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                            </div>
-
-                            <!-- Limited Time Notice -->
-                            <div class="limited-time">
-                                <?php if ($daysLeft !== null): ?>
-                                    Ưu đãi có hạn - Còn lại: <span class="text-danger fw-bold"><?= $daysLeft ?> ngày</span>
-                                <?php else: ?>
-                                    Ưu đãi có hạn - Đừng bỏ lỡ!
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-
-            <!-- Load More Button -->
-            <div class="text-center mt-5 fade-in-up" data-delay="300">
-                <button class="btn-luxury btn-outline-luxury btn-lg">
-                    <i class="fas fa-plus me-2"></i>
-                    <span>Xem Thêm Món Khuyến Mãi</span>                </button>
-            </div>
-        <?php else: ?>
-            <div class="text-center py-5 fade-in-up">
-                <div class="empty-state">
-                    <i class="fas fa-sad-tear fa-4x text-muted mb-4"></i>
-                    <h3 class="text-navy mb-3">Hiện Tại Chưa Có Món Ăn Khuyến Mãi</h3>
-                    <p class="text-muted mb-4">Vui lòng quay lại sau để khám phá những ưu đãi mới nhất!</p>
-                    <a href="<?= SITE_URL ?>/menu" class="btn-luxury btn-primary-luxury">
-                        <i class="fas fa-utensils me-2"></i>
-                        <span>Xem Menu Đầy Đủ</span>
-                    </a>
-                </div>
-            </div>
-        <?php endif; ?>
-</div>
+        </div>
+        <div class="food-grid" id="promotion-food-grid"></div>
+    </div>
 </section>
 
 <!-- Special Offers Banner -->
@@ -781,6 +647,15 @@
         box-shadow: var(--shadow-medium);
     }
 
+    .promotion-summary-card.active {
+           box-shadow:
+        0 0 0 3px var(--primary-gold, #d4af37) inset,
+        0 0 16px 4px rgba(212,175,55,0.25),
+        0 2px 8px rgba(212,175,55,0.10);
+    border: none;
+    transition: box-shadow 0.2s;
+}
+
     .promotion-summary-header {
         background: linear-gradient(135deg, var(--primary-navy), var(--primary-gold));
         color: white;
@@ -928,7 +803,8 @@
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {        // Add to cart functionality with loading state
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add to cart functionality with loading state
         document.querySelectorAll('.add-to-cart-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const foodId = this.dataset.foodId;
@@ -1026,6 +902,32 @@
             });
         });
 
+        // Promotion summary card click event
+        document.querySelectorAll('.promotion-summary-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const promotionId = this.getAttribute('data-promotion-id');
+                document.querySelectorAll('.promotion-summary-card').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                const foodGrid = document.getElementById('promotion-food-grid');
+                if (foodGrid) {
+                    foodGrid.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-gold"></div></div>';
+                }
+                fetch('<?= SITE_URL ?>/promotion/foods?promotion_id=' + promotionId)
+                    .then(res => res.json())
+                    .then(data => {
+                        foodGrid.innerHTML = data.html || '';
+                        // Thêm dòng này để hiện món ăn:
+                        foodGrid.querySelectorAll('.fade-in-up').forEach(el => el.classList.add('fade-in-active'));
+                        // Gắn lại sự kiện cho nút mới nếu cần
+                    })
+                    .catch(() => {
+                        if (foodGrid) {
+                            foodGrid.innerHTML = '<div class="text-center py-5 text-danger">Không thể tải dữ liệu!</div>';
+                        }
+                    });
+            });
+        });
+
         // Toast notification function
         function showToast(title, message, type = 'info') {
             // Create toast element
@@ -1047,6 +949,9 @@
                 }
             }, 3000);
         }
+
+        // Tự động click promotion đầu tiên khi vào trang
+        document.querySelector('.promotion-summary-card')?.click();
     });
 
     // Add pulse animation to CSS

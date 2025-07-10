@@ -172,6 +172,24 @@ class FoodController extends BaseController
         // print_r($data);
         // echo "</pre>";
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
+        $data['info'] = $restaurantInfo;
+
         $this->loadView('customer/menu/index', $data);
     }
     public function detail()
@@ -229,6 +247,24 @@ class FoodController extends BaseController
             'totalRating' => $totalRating,
             'isReviewed' => $isReviewed
         ];
+
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
+        $data['info'] = $restaurantInfo;
 
         $this->loadView('customer/menu/detail', $data);
     }
@@ -353,7 +389,19 @@ class FoodController extends BaseController
 
             // Lấy orderId của đơn hàng completed gần nhất có món này
             $orderId = $this->orderModel->getCompletedOrderIdByUserAndFood($userId, $foodId);
-
+           
+            //test data
+            // echo "User ID: $userId<br>";
+            // echo "Order ID: $orderId<br>";
+            // echo "Food ID: $foodId<br>";
+            // echo "Rating: $rating<br>";
+            // echo "Comment: $comment<br>";
+            // echo "Photos: " . implode(', ', $photos) . "<br>";
+            // Kiểm tra dữ liệu
+            if ($rating < 1 || $rating > 5) {
+                $this->jsonResponse(['error' => 'Invalid rating'], 400);
+            }
+            echo '</pre>';
             // Lưu vào DB
             $this->reviewModel->addReview($userId, $orderId, $foodId, $rating, $comment, $photos);
 

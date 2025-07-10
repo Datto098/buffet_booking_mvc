@@ -34,19 +34,20 @@ body.admin-page {
 .admin-page main.col-md-9,
 .admin-page main.col-lg-10,
 .admin-page main.col-md-9.ms-sm-auto.col-lg-10 {
-    margin-left: 240px !important;
+    /* margin-left: 240px !important; */
     width: calc(100% - 240px) !important;
     max-width: calc(100% - 240px) !important;
     min-height: 100vh !important;
-    padding: 1rem !important;
+    padding: 0.5rem !important;
     flex: none !important;
     position: relative !important;
 }
 
 /* Content area padding */
-.admin-page main .px-md-4 {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+.admin-page main .px-md-4,
+.admin-page main .px-md-2 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
 }
 
 /* Page header adjustments */
@@ -98,7 +99,7 @@ body.admin-page {
 
 /* Specific fixes for news create page */
 .admin-page main.col-md-9.ms-sm-auto.col-lg-10 {
-    margin-left: 240px !important;
+    /* margin-left: 240px !important; */
     width: calc(100% - 240px) !important;
     max-width: calc(100% - 240px) !important;
     padding: 1rem !important;

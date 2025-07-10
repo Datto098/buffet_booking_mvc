@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1:3306
--- Thời gian đã tạo: Th6 13, 2025 lúc 10:08 AM
--- Phiên bản máy phục vụ: 9.1.0
--- Phiên bản PHP: 8.3.14
+-- Thời gian đã tạo: Th7 08, 2025 lúc 01:32 PM
+-- Phiên bản máy phục vụ: 8.2.0
+-- Phiên bản PHP: 8.2.13
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -32,16 +32,16 @@ CREATE TABLE IF NOT EXISTS `bookings` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int DEFAULT NULL,
   `table_id` int DEFAULT NULL,
-  `customer_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `customer_email` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `customer_phone` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `customer_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `customer_email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `customer_phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `booking_date` date NOT NULL,
   `booking_time` time NOT NULL,
   `guest_count` int NOT NULL,
-  `special_requests` text COLLATE utf8mb4_unicode_ci,
-  `status` enum('pending','confirmed','seated','completed','cancelled','no_show') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
-  `booking_reference` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `notes` text COLLATE utf8mb4_unicode_ci,
+  `special_requests` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `status` enum('pending','confirmed','seated','completed','cancelled','no_show') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `booking_reference` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -63,11 +63,11 @@ CREATE TABLE IF NOT EXISTS `bookings` (
 DROP TABLE IF EXISTS `cart_items`;
 CREATE TABLE IF NOT EXISTS `cart_items` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `session_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `session_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `user_id` int DEFAULT NULL,
   `food_item_id` int NOT NULL,
   `quantity` int NOT NULL,
-  `special_instructions` text COLLATE utf8mb4_unicode_ci,
+  `special_instructions` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -85,9 +85,9 @@ CREATE TABLE IF NOT EXISTS `cart_items` (
 DROP TABLE IF EXISTS `categories`;
 CREATE TABLE IF NOT EXISTS `categories` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `sort_order` int DEFAULT '0',
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -116,16 +116,16 @@ CREATE TABLE IF NOT EXISTS `food_items` (
   `id` int NOT NULL AUTO_INCREMENT,
   `category_id` int NOT NULL,
   `subcategory_id` int DEFAULT NULL,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `price` decimal(10,2) NOT NULL,
-  `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `ingredients` text COLLATE utf8mb4_unicode_ci,
-  `allergens` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ingredients` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `allergens` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `dietary_info` json DEFAULT NULL,
   `nutrition_info` json DEFAULT NULL,
   `preparation_time` int DEFAULT NULL,
-  `spice_level` enum('none','mild','medium','hot','very_hot') COLLATE utf8mb4_unicode_ci DEFAULT 'none',
+  `spice_level` enum('none','mild','medium','hot','very_hot') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'none',
   `is_popular` tinyint(1) DEFAULT '0',
   `is_new` tinyint(1) DEFAULT '0',
   `is_seasonal` tinyint(1) DEFAULT '0',
@@ -171,15 +171,15 @@ INSERT INTO `food_items` (`id`, `category_id`, `subcategory_id`, `name`, `descri
 DROP TABLE IF EXISTS `news`;
 CREATE TABLE IF NOT EXISTS `news` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `content` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `excerpt` text COLLATE utf8mb4_unicode_ci,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `excerpt` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `author_id` int NOT NULL,
-  `image_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `image_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_published` tinyint(1) DEFAULT '0',
   `is_featured` tinyint(1) DEFAULT '0',
-  `meta_title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `meta_description` text COLLATE utf8mb4_unicode_ci,
+  `meta_title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `meta_description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `views_count` int DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -208,9 +208,9 @@ DROP TABLE IF EXISTS `notifications`;
 CREATE TABLE IF NOT EXISTS `notifications` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
-  `type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `message` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `data` json DEFAULT NULL,
   `is_read` tinyint(1) DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -218,7 +218,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   KEY `fk_notifications_user` (`user_id`),
   KEY `idx_unread` (`is_read`),
   KEY `idx_type` (`type`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `notifications`
@@ -231,7 +231,11 @@ INSERT INTO `notifications` (`id`, `user_id`, `type`, `title`, `message`, `data`
 (6, 4, 'new_order', 'New Order Received', 'New order #6 from Super Admin - 135,000.00 VND', '{\"url\": \"/superadmin/orders/view/6\", \"order_id\": \"6\", \"order_type\": \"delivery\", \"total_amount\": 135000, \"customer_name\": \"Super Admin\"}', 1, '2025-06-11 14:51:56'),
 (7, 4, 'new_order', 'New Order Received', 'New order #7 from Super Admin - 135,000.00 VND', '{\"url\": \"/superadmin/orders/view/7\", \"order_id\": \"7\", \"order_type\": \"delivery\", \"total_amount\": 135000, \"customer_name\": \"Super Admin\"}', 1, '2025-06-11 14:56:58'),
 (9, 4, 'new_order', 'New Order Received', 'New order #9 from Super Admin - 135,000.00 VND', '{\"url\": \"/superadmin/orders/view/9\", \"order_id\": \"9\", \"order_type\": \"delivery\", \"total_amount\": 135000, \"customer_name\": \"Super Admin\"}', 1, '2025-06-13 09:02:28'),
-(10, 4, 'new_order', 'New Order Received', 'New order #10 from Nguyen Dat - 145,500.00 VND', '{\"url\": \"/superadmin/orders/view/10\", \"order_id\": \"10\", \"order_type\": \"delivery\", \"total_amount\": 145500, \"customer_name\": \"Nguyen Dat\"}', 1, '2025-06-13 09:25:52');
+(10, 4, 'new_order', 'New Order Received', 'New order #10 from Nguyen Dat - 145,500.00 VND', '{\"url\": \"/superadmin/orders/view/10\", \"order_id\": \"10\", \"order_type\": \"delivery\", \"total_amount\": 145500, \"customer_name\": \"Nguyen Dat\"}', 1, '2025-06-13 09:25:52'),
+(11, 4, 'new_order', 'New Order Received', 'New order #11 from Đỗ Ngọc Hiếu - 40,500.00 VND', '{\"url\": \"/superadmin/orders/view/11\", \"order_id\": \"11\", \"order_type\": \"delivery\", \"total_amount\": 40500, \"customer_name\": \"Đỗ Ngọc Hiếu\"}', 1, '2025-06-14 14:27:59'),
+(12, 4, 'new_order', 'New Order Received', 'New order #12 from Đỗ Ngọc Hiếu - 187,500.00 VND', '{\"url\": \"/superadmin/orders/view/12\", \"order_id\": \"12\", \"order_type\": \"delivery\", \"total_amount\": 187500, \"customer_name\": \"Đỗ Ngọc Hiếu\"}', 1, '2025-06-14 15:42:59'),
+(13, 4, 'new_order', 'New Order Received', 'New order #13 from Đỗ Ngọc Hiếu - 40,500.00 VND', '{\"url\": \"/superadmin/orders/view/13\", \"order_id\": \"13\", \"order_type\": \"delivery\", \"total_amount\": 40500, \"customer_name\": \"Đỗ Ngọc Hiếu\"}', 0, '2025-07-07 10:58:01'),
+(14, 4, 'new_order', 'New Order Received', 'New order #14 from Đỗ Ngọc Hiếu - 40,500.00 VND', '{\"url\": \"/superadmin/orders/view/14\", \"order_id\": \"14\", \"order_type\": \"delivery\", \"total_amount\": 40500, \"customer_name\": \"Đỗ Ngọc Hiếu\"}', 0, '2025-07-07 11:18:39');
 
 -- --------------------------------------------------------
 
@@ -244,33 +248,33 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int DEFAULT NULL,
   `booking_id` int DEFAULT NULL,
-  `order_number` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `customer_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `customer_email` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `customer_phone` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `order_type` enum('dine_in','takeout','delivery') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `order_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `customer_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `customer_email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `customer_phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `order_type` enum('dine_in','takeout','delivery') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `subtotal` decimal(10,2) NOT NULL,
   `tax_amount` decimal(10,2) DEFAULT '0.00',
   `total_amount` decimal(10,2) NOT NULL,
   `payment_method` enum('cod','cash','credit_card','debit_card','digital_wallet','bank_transfer','vnpay') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `payment_status` enum('pending','paid','failed','refunded') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `payment_status` enum('pending','paid','failed','refunded') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
   `payment_id` int DEFAULT NULL,
-  `status` enum('pending','confirmed','preparing','ready','completed','delivered','cancelled') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
-  `special_instructions` text COLLATE utf8mb4_unicode_ci,
-  `delivery_address` text COLLATE utf8mb4_unicode_ci,
-  `order_notes` text COLLATE utf8mb4_unicode_ci,
+  `status` enum('pending','confirmed','preparing','ready','completed','delivered','cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `special_instructions` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `delivery_address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `order_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `estimated_ready_time` timestamp NULL DEFAULT NULL,
   `completed_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `delivery_ward` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `delivery_district` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `delivery_city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `delivery_notes` text COLLATE utf8mb4_unicode_ci,
+  `delivery_ward` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `delivery_district` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `delivery_city` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `delivery_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `delivery_fee` decimal(10,2) DEFAULT '0.00',
   `service_fee` decimal(10,2) DEFAULT '0.00',
   `discount_amount` decimal(10,2) DEFAULT '0.00',
-  `coupon_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `coupon_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `order_number` (`order_number`),
   KEY `fk_orders_user` (`user_id`),
@@ -281,7 +285,7 @@ CREATE TABLE IF NOT EXISTS `orders` (
   KEY `idx_customer_email` (`customer_email`),
   KEY `idx_orders_date_status` (`created_at`,`status`),
   KEY `fk_orders_payment` (`payment_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `orders`
@@ -297,7 +301,11 @@ INSERT INTO `orders` (`id`, `user_id`, `booking_id`, `order_number`, `customer_n
 (7, 4, NULL, 'ORD6849993aae8ed', 'Super Admin', 'superadmin@buffet.com', '+1234567890', 'delivery', 100000.00, 0.00, 135000.00, '', 'pending', NULL, 'pending', NULL, 'Xã Phước Kiển, Huyện Nhà Bè, Thành phố Hồ Chí Minh, 72915, Việt Nam', '', NULL, NULL, '2025-06-11 07:56:58', '2025-06-11 07:56:58', NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL),
 (8, 1, NULL, 'ORD684ba23656706', 'Adminn User', 'admin@buffet.com', '0000000000', 'delivery', 200000.00, 0.00, 240000.00, '', 'pending', NULL, 'pending', NULL, 'ACB, Đường Bình Tiên, Phường 8, Quận 6, Thành phố Hồ Chí Minh, 73118, Việt Nam', '', NULL, NULL, '2025-06-12 20:59:50', '2025-06-12 20:59:50', NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL),
 (9, 4, NULL, 'ORD684be92432e50', 'Super Admin', 'superadmin@buffet.com', '+1234567890', 'delivery', 100000.00, 0.00, 135000.00, 'vnpay', 'paid', 4, 'preparing', NULL, 'Khum Tralach, Treang District, Takeo, Cao Miên', '', NULL, NULL, '2025-06-13 02:02:28', '2025-06-13 02:20:01', NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL),
-(10, 8, NULL, 'ORD684beea0c522f', 'Nguyen Dat', 'dat61222@gmail.com', '0999999999', 'delivery', 110000.00, 0.00, 145500.00, 'vnpay', 'paid', 5, 'confirmed', NULL, 'Đường Tân Phước, Phường 7, Quận 11, Thành phố Hồ Chí Minh, 72415, Việt Nam', '', NULL, NULL, '2025-06-13 02:25:52', '2025-06-13 09:26:53', NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL);
+(10, 8, NULL, 'ORD684beea0c522f', 'Nguyen Dat', 'dat61222@gmail.com', '0999999999', 'delivery', 110000.00, 0.00, 145500.00, 'vnpay', 'paid', 5, 'confirmed', NULL, 'Đường Tân Phước, Phường 7, Quận 11, Thành phố Hồ Chí Minh, 72415, Việt Nam', '', NULL, NULL, '2025-06-13 02:25:52', '2025-06-13 09:26:53', NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL),
+(11, 9, NULL, 'ORD684d86efb457e', 'Đỗ Ngọc Hiếu', 'dongochieu333@gmail.com', '0384946973', 'delivery', 10000.00, 0.00, 40500.00, 'vnpay', 'paid', 6, 'confirmed', NULL, 'Đường Lý Thường Kiệt, Cư xá Diên Hồng, Phường 14, Quận 10, Thành phố Hồ Chí Minh, 72000, Việt Nam', '', NULL, NULL, '2025-06-14 07:27:59', '2025-06-14 14:31:39', NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL),
+(12, 9, NULL, 'ORD684d988388537', 'Đỗ Ngọc Hiếu', 'dongochieu333@gmail.com', '0384946973', 'delivery', 150000.00, 0.00, 187500.00, 'vnpay', 'paid', 7, 'cancelled', NULL, 'Hẻm 184/38/49/37 Âu Dương Lân, Phường Rạch Ông, Quận 8, Thành phố Hồ Chí Minh, 73009, Việt Nam', '', NULL, NULL, '2025-06-14 08:42:59', '2025-06-14 08:46:48', NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL),
+(13, 9, NULL, 'ORD686ba839e0918', 'Đỗ Ngọc Hiếu', 'dongochieu333@gmail.com', '00000000000', 'delivery', 10000.00, 0.00, 40500.00, 'cod', 'pending', NULL, 'completed', NULL, 'Lớp Học Nhạc - Hoạ Trí, 467/31, Hẻm 467 Lê Đại Hành, Quận 11, Thành phố Hồ Chí Minh, 70000, Việt Nam', '', NULL, NULL, '2025-07-07 03:58:01', '2025-07-07 08:31:50', NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL),
+(14, 9, NULL, 'ORD686bad0fd999f', 'Đỗ Ngọc Hiếu', 'dongochieu333@gmail.com', '00000000000', 'delivery', 10000.00, 0.00, 40500.00, 'cod', 'pending', NULL, 'completed', NULL, '38, Đường Hà Tôn Quyền, Phường Chợ Lớn, Quận 5, Thành phố Hồ Chí Minh, 72415, Việt Nam', '', NULL, NULL, '2025-07-07 04:18:39', '2025-07-07 08:32:06', NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL);
 
 -- --------------------------------------------------------
 
@@ -313,13 +321,13 @@ CREATE TABLE IF NOT EXISTS `order_items` (
   `quantity` int NOT NULL,
   `unit_price` decimal(10,2) NOT NULL,
   `total_price` decimal(10,2) NOT NULL,
-  `special_instructions` text COLLATE utf8mb4_unicode_ci,
+  `special_instructions` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_order_items_order` (`order_id`),
   KEY `fk_order_items_food` (`food_item_id`),
   KEY `idx_order_items_order_food` (`order_id`,`food_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `order_items`
@@ -338,7 +346,12 @@ INSERT INTO `order_items` (`id`, `order_id`, `food_item_id`, `quantity`, `unit_p
 (10, 8, 5, 2, 100000.00, 200000.00, NULL, '2025-06-12 20:59:50'),
 (11, 9, 5, 1, 100000.00, 100000.00, NULL, '2025-06-13 02:02:28'),
 (12, 10, 5, 1, 100000.00, 100000.00, NULL, '2025-06-13 02:25:52'),
-(13, 10, 13, 1, 10000.00, 10000.00, NULL, '2025-06-13 02:25:52');
+(13, 10, 13, 1, 10000.00, 10000.00, NULL, '2025-06-13 02:25:52'),
+(14, 11, 13, 1, 10000.00, 10000.00, NULL, '2025-06-14 07:27:59'),
+(15, 12, 13, 5, 10000.00, 50000.00, NULL, '2025-06-14 08:42:59'),
+(16, 12, 5, 1, 100000.00, 100000.00, NULL, '2025-06-14 08:42:59'),
+(17, 13, 14, 1, 10000.00, 10000.00, NULL, '2025-07-07 03:58:01'),
+(18, 14, 14, 1, 10000.00, 10000.00, NULL, '2025-07-07 04:18:39');
 
 -- --------------------------------------------------------
 
@@ -350,16 +363,16 @@ DROP TABLE IF EXISTS `payments`;
 CREATE TABLE IF NOT EXISTS `payments` (
   `id` int NOT NULL AUTO_INCREMENT,
   `order_id` int NOT NULL,
-  `payment_method` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'vnpay',
-  `vnp_txn_ref` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payment_method` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'vnpay',
+  `vnp_txn_ref` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `vnp_amount` bigint NOT NULL,
-  `vnp_order_info` text COLLATE utf8mb4_unicode_ci,
-  `vnp_response_code` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `vnp_transaction_no` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `vnp_bank_code` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `vnp_pay_date` varchar(14) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `vnp_secure_hash` text COLLATE utf8mb4_unicode_ci,
-  `payment_status` enum('pending','processing','completed','failed','cancelled','refunded') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `vnp_order_info` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `vnp_response_code` varchar(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `vnp_transaction_no` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `vnp_bank_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `vnp_pay_date` varchar(14) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `vnp_secure_hash` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `payment_status` enum('pending','processing','completed','failed','cancelled','refunded') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
   `payment_data` json DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -370,7 +383,7 @@ CREATE TABLE IF NOT EXISTS `payments` (
   KEY `idx_payment_status` (`payment_status`),
   KEY `idx_vnp_transaction_no` (`vnp_transaction_no`),
   KEY `idx_created_at` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `payments`
@@ -381,7 +394,9 @@ INSERT INTO `payments` (`id`, `order_id`, `payment_method`, `vnp_txn_ref`, `vnp_
 (2, 9, 'vnpay', '1749805724_9', 13500000, 'Thanh toán đơn hàng #ORD684be92432e50 tại Buffet Booking', NULL, NULL, NULL, NULL, NULL, 'pending', '{\"vnp_Amount\": 13500000, \"vnp_IpAddr\": \"::1\", \"vnp_Locale\": \"vn\", \"vnp_TxnRef\": \"1749805724_9\", \"vnp_Command\": \"pay\", \"vnp_TmnCode\": \"YOUR_TMN_CODE\", \"vnp_Version\": \"2.1.0\", \"vnp_BankCode\": \"NCB\", \"vnp_CurrCode\": \"VND\", \"vnp_OrderInfo\": \"Thanh toán đơn hàng #ORD684be92432e50 tại Buffet Booking\", \"vnp_OrderType\": \"billpayment\", \"vnp_ReturnUrl\": \"http://localhost/buffet_booking_mvc/payment/vnpay_return\", \"vnp_CreateDate\": \"20250613160844\", \"vnp_ExpireDate\": \"20250613162344\"}', '2025-06-13 09:08:44', '2025-06-13 09:08:44', NULL),
 (3, 9, 'vnpay', '1749806177_9', 13500000, 'Thanh toán đơn hàng #ORD684be92432e50 tại Buffet Booking', NULL, NULL, NULL, NULL, NULL, 'pending', '{\"vnp_Amount\": 13500000, \"vnp_IpAddr\": \"::1\", \"vnp_Locale\": \"vn\", \"vnp_TxnRef\": \"1749806177_9\", \"vnp_Command\": \"pay\", \"vnp_TmnCode\": \"YOUR_TMN_CODE\", \"vnp_Version\": \"2.1.0\", \"vnp_BankCode\": \"NCB\", \"vnp_CurrCode\": \"VND\", \"vnp_OrderInfo\": \"Thanh toán đơn hàng #ORD684be92432e50 tại Buffet Booking\", \"vnp_OrderType\": \"billpayment\", \"vnp_ReturnUrl\": \"http://localhost/buffet_booking_mvc/payment/vnpay_return\", \"vnp_CreateDate\": \"20250613161617\", \"vnp_ExpireDate\": \"20250613163117\"}', '2025-06-13 09:16:17', '2025-06-13 09:16:17', NULL),
 (4, 9, 'vnpay', '1749806270_9', 13500000, 'Thanh toán đơn hàng #ORD684be92432e50 tại Buffet Booking', '00', '15016588', 'NCB', '20250613161917', '06db863d18ddd9934bae3fc73e9d8d2a68afe133e5017cc709606a7db6b101546e3f1f24d99a59fbb5c78d62bae2a4ac5318643d10461592a8dadcf5ae91e4ce', 'completed', '{\"vnp_Amount\": \"13500000\", \"vnp_TxnRef\": \"1749806270_9\", \"vnp_PayDate\": \"20250613161917\", \"vnp_TmnCode\": \"NJJ0R8FS\", \"vnp_BankCode\": \"NCB\", \"vnp_CardType\": \"ATM\", \"vnp_OrderInfo\": \"Thanh toán đơn hàng #ORD684be92432e50 tại Buffet Booking\", \"vnp_BankTranNo\": \"VNP15016588\", \"vnp_SecureHash\": \"06db863d18ddd9934bae3fc73e9d8d2a68afe133e5017cc709606a7db6b101546e3f1f24d99a59fbb5c78d62bae2a4ac5318643d10461592a8dadcf5ae91e4ce\", \"vnp_ResponseCode\": \"00\", \"vnp_TransactionNo\": \"15016588\", \"vnp_TransactionStatus\": \"00\"}', '2025-06-13 09:17:50', '2025-06-13 02:18:48', '2025-06-13 02:18:48'),
-(5, 10, 'vnpay', '1749806759_10', 14550000, 'Thanh toán đơn hàng #ORD684beea0c522f tại Buffet Booking', '00', '15016606', 'NCB', '20250613162726', 'c1b1b79479e1ca646965ec0002fcd61fac19724d61ebfbade59a32256c5d684627dc87caccafe62336e8fd899057ce87aaff88fa10cbf3ff47d8c58773e59efd', 'completed', '{\"vnp_Amount\": \"14550000\", \"vnp_TxnRef\": \"1749806759_10\", \"vnp_PayDate\": \"20250613162726\", \"vnp_TmnCode\": \"NJJ0R8FS\", \"vnp_BankCode\": \"NCB\", \"vnp_CardType\": \"ATM\", \"vnp_OrderInfo\": \"Thanh toán đơn hàng #ORD684beea0c522f tại Buffet Booking\", \"vnp_BankTranNo\": \"VNP15016606\", \"vnp_SecureHash\": \"c1b1b79479e1ca646965ec0002fcd61fac19724d61ebfbade59a32256c5d684627dc87caccafe62336e8fd899057ce87aaff88fa10cbf3ff47d8c58773e59efd\", \"vnp_ResponseCode\": \"00\", \"vnp_TransactionNo\": \"15016606\", \"vnp_TransactionStatus\": \"00\"}', '2025-06-13 09:25:59', '2025-06-13 02:26:53', '2025-06-13 02:26:53');
+(5, 10, 'vnpay', '1749806759_10', 14550000, 'Thanh toán đơn hàng #ORD684beea0c522f tại Buffet Booking', '00', '15016606', 'NCB', '20250613162726', 'c1b1b79479e1ca646965ec0002fcd61fac19724d61ebfbade59a32256c5d684627dc87caccafe62336e8fd899057ce87aaff88fa10cbf3ff47d8c58773e59efd', 'completed', '{\"vnp_Amount\": \"14550000\", \"vnp_TxnRef\": \"1749806759_10\", \"vnp_PayDate\": \"20250613162726\", \"vnp_TmnCode\": \"NJJ0R8FS\", \"vnp_BankCode\": \"NCB\", \"vnp_CardType\": \"ATM\", \"vnp_OrderInfo\": \"Thanh toán đơn hàng #ORD684beea0c522f tại Buffet Booking\", \"vnp_BankTranNo\": \"VNP15016606\", \"vnp_SecureHash\": \"c1b1b79479e1ca646965ec0002fcd61fac19724d61ebfbade59a32256c5d684627dc87caccafe62336e8fd899057ce87aaff88fa10cbf3ff47d8c58773e59efd\", \"vnp_ResponseCode\": \"00\", \"vnp_TransactionNo\": \"15016606\", \"vnp_TransactionStatus\": \"00\"}', '2025-06-13 09:25:59', '2025-06-13 02:26:53', '2025-06-13 02:26:53'),
+(6, 11, 'vnpay', '1749911284_11', 4050000, 'Thanh toán đơn hàng #ORD684d86efb457e tại Buffet Booking', '00', '15018521', 'NCB', '20250614213212', 'bd07e8a6e9482cde0c334e4c4718ebdd2c28ddcd9ceff94eeccbe66c9c966dca134a8cbac4fdf2dfe67c273abdc14870465bbe7e3ba51604903b2aa69f4ade96', 'completed', '{\"vnp_Amount\": \"4050000\", \"vnp_TxnRef\": \"1749911284_11\", \"vnp_PayDate\": \"20250614213212\", \"vnp_TmnCode\": \"NJJ0R8FS\", \"vnp_BankCode\": \"NCB\", \"vnp_CardType\": \"ATM\", \"vnp_OrderInfo\": \"Thanh toán đơn hàng #ORD684d86efb457e tại Buffet Booking\", \"vnp_BankTranNo\": \"VNP15018521\", \"vnp_SecureHash\": \"bd07e8a6e9482cde0c334e4c4718ebdd2c28ddcd9ceff94eeccbe66c9c966dca134a8cbac4fdf2dfe67c273abdc14870465bbe7e3ba51604903b2aa69f4ade96\", \"vnp_ResponseCode\": \"00\", \"vnp_TransactionNo\": \"15018521\", \"vnp_TransactionStatus\": \"00\"}', '2025-06-14 14:28:04', '2025-06-14 07:31:39', '2025-06-14 07:31:39'),
+(7, 12, 'vnpay', '1749915809_12', 18750000, 'Thanh toán đơn hàng #ORD684d988388537 tại Buffet Booking', '00', '15018609', 'NCB', '20250614224519', '3d3503a367d59722874e82486df3cb12f3938664ca47cd3c4ba3b601dce3ca7f27215debea3a73ff64e42c4465f105ea16579bd5a7ccb82b80d545a09f96e7a5', 'completed', '{\"vnp_Amount\": \"18750000\", \"vnp_TxnRef\": \"1749915809_12\", \"vnp_PayDate\": \"20250614224519\", \"vnp_TmnCode\": \"NJJ0R8FS\", \"vnp_BankCode\": \"NCB\", \"vnp_CardType\": \"ATM\", \"vnp_OrderInfo\": \"Thanh toán đơn hàng #ORD684d988388537 tại Buffet Booking\", \"vnp_BankTranNo\": \"VNP15018609\", \"vnp_SecureHash\": \"3d3503a367d59722874e82486df3cb12f3938664ca47cd3c4ba3b601dce3ca7f27215debea3a73ff64e42c4465f105ea16579bd5a7ccb82b80d545a09f96e7a5\", \"vnp_ResponseCode\": \"00\", \"vnp_TransactionNo\": \"15018609\", \"vnp_TransactionStatus\": \"00\"}', '2025-06-14 15:43:29', '2025-06-14 08:44:46', '2025-06-14 08:44:46');
 
 -- --------------------------------------------------------
 
@@ -485,14 +500,39 @@ CREATE TABLE IF NOT EXISTS `reservations` (
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `table_id` (`table_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `reservations`
 --
 
 INSERT INTO `reservations` (`id`, `user_id`, `customer_name`, `phone_number`, `table_id`, `reservation_time`, `number_of_guests`, `status`, `notes`, `created_at`, `updated_at`) VALUES
-(1, NULL, 'sadf', '23434444', NULL, '2025-06-19 19:30:00', 17, 'confirmed', '', '2025-06-06 07:03:24', '2025-06-11 11:29:11');
+(1, NULL, 'sadf', '23434444', NULL, '2025-06-19 19:30:00', 17, 'cancelled', '', '2025-06-06 07:03:24', '2025-06-14 11:38:15'),
+(2, 4, 'Admin', '09999999', NULL, '2025-06-19 19:30:00', 5, 'confirmed', '', '2025-06-13 17:03:57', '2025-06-14 09:21:34'),
+(3, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-27 12:00:00', 13, 'cancelled', 'hello', '2025-06-14 06:48:32', '2025-06-14 11:44:48'),
+(4, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 12:30:00', 12, 'confirmed', 'jhfjhg', '2025-06-14 06:50:26', '2025-06-14 07:07:27'),
+(5, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 12:30:00', 12, 'confirmed', 'jhfjhg', '2025-06-14 06:51:08', '2025-06-14 08:11:28'),
+(6, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-20 11:30:00', 12, 'confirmed', 'ss', '2025-06-14 06:57:19', '2025-06-14 07:38:35'),
+(7, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 19:30:00', 4, 'confirmed', 's', '2025-06-14 07:03:30', '2025-06-14 07:42:18'),
+(8, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-26 17:00:00', 14, 'confirmed', 'ss', '2025-06-14 07:29:28', '2025-06-14 07:32:18'),
+(9, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 17:00:00', 11, 'confirmed', 'dad', '2025-06-14 07:48:23', '2025-06-14 07:48:43'),
+(10, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-19 17:30:00', 15, 'confirmed', '', '2025-06-14 08:20:52', '2025-06-14 09:08:40'),
+(11, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 13:30:00', 6, 'confirmed', 'ssd', '2025-06-14 08:23:37', '2025-06-14 09:38:37'),
+(12, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-18 20:00:00', 4, 'confirmed', 's', '2025-06-14 08:28:08', '2025-06-14 09:05:16'),
+(13, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-26 20:00:00', 10, 'confirmed', 's', '2025-06-14 08:36:42', '2025-06-14 09:22:33'),
+(14, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-27 11:30:00', 6, 'cancelled', 'a', '2025-06-14 08:40:14', '2025-06-14 11:47:15'),
+(15, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-25 19:00:00', 9, 'confirmed', 'nm', '2025-06-14 08:46:50', '2025-06-14 09:21:45'),
+(16, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-19 17:00:00', 9, 'confirmed', 's', '2025-06-14 08:51:27', '2025-06-14 09:21:25'),
+(17, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 17:00:00', 7, 'confirmed', 's', '2025-06-14 08:54:55', '2025-06-14 09:36:07'),
+(18, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-20 17:00:00', 14, 'confirmed', 'd', '2025-06-14 08:59:03', '2025-06-14 09:37:20'),
+(19, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-18 17:00:00', 4, 'confirmed', 's', '2025-06-14 09:29:00', '2025-06-14 09:40:14'),
+(20, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-18 17:00:00', 4, 'confirmed', 's', '2025-06-14 09:29:14', '2025-06-14 09:32:32'),
+(21, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-18 17:00:00', 4, 'pending', 's', '2025-06-14 09:31:06', NULL),
+(22, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-26 12:30:00', 12, 'pending', 's', '2025-06-14 10:00:10', NULL),
+(23, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-14 11:30:00', 11, 'pending', 's', '2025-06-14 10:02:08', NULL),
+(24, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-25 13:30:00', 7, 'pending', 'd', '2025-06-14 10:05:24', NULL),
+(25, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 11:30:00', 9, 'pending', 'dfd', '2025-06-14 10:59:03', NULL),
+(26, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-15 12:00:00', 6, 'pending', '', '2025-06-14 15:38:22', NULL);
 
 -- --------------------------------------------------------
 
@@ -541,46 +581,28 @@ CREATE TABLE IF NOT EXISTS `reviews` (
   `order_id` int DEFAULT NULL,
   `food_item_id` int DEFAULT NULL,
   `rating` int NOT NULL,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `comment` text COLLATE utf8mb4_unicode_ci,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `is_verified` tinyint(1) DEFAULT '0',
   `is_approved` tinyint(1) DEFAULT '0',
   `helpful_count` int DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `photos` varchar(200) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_reviews_user` (`user_id`),
   KEY `fk_reviews_order` (`order_id`),
   KEY `fk_reviews_food` (`food_item_id`),
   KEY `idx_rating` (`rating`),
   KEY `idx_approved` (`is_approved`)
-) ;
+) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `reviews`
 --
 
-INSERT INTO `reviews` (`id`, `user_id`, `order_id`, `food_item_id`, `rating`, `title`, `comment`, `is_verified`, `is_approved`, `helpful_count`, `created_at`, `updated_at`) VALUES
-(1, 5, NULL, 1, 5, 'Buffet tuyệt vời!', 'Deluxe Buffet thực sự xứng đáng với giá tiền. Đồ ăn đa dạng, tươi ngon, nhân viên phục vụ chu đáo. Nhất định sẽ quay lại!', 1, 1, 15, '2025-06-08 03:30:00', '2025-06-13 05:28:14'),
-(2, 1, NULL, 5, 4, 'Thịt bò Mỹ ngon', 'Ba chỉ bò Mỹ nướng vừa phải, thịt mềm và thấm gia vị. Tuy nhiên hơi mặn một chút theo ý kiến cá nhân.', 1, 1, 8, '2025-06-09 07:20:00', '2025-06-13 05:28:14'),
-(3, 7, NULL, 7, 5, 'Sushi tươi ngon', 'Sushi cá hồi tại đây rất tươi, cơm vừa phải, cá hồi béo ngậy. Giá cả hợp lý so với chất lượng.', 1, 1, 12, '2025-06-09 09:45:00', '2025-06-13 05:28:14'),
-(4, 5, NULL, 13, 5, 'Bánh flan hoàn hảo', 'Bánh flan mềm mượt, vị caramel đậm đà nhưng không quá ngọt. Món tráng miệng lý tưởng!', 0, 1, 6, '2025-06-09 12:15:00', '2025-06-13 05:28:14'),
-(5, 1, NULL, 2, 3, 'Buffet bình thường', 'Standard Buffet có đủ món nhưng không có gì đặc biệt. Phù hợp với ngân sách nhưng không có điểm nhấn.', 0, 1, 3, '2025-06-10 05:00:00', '2025-06-13 05:28:14'),
-(6, 7, NULL, 8, 4, 'Gimbap Hàn Quốc authentic', 'Gimbap làm khá giống với bên Hàn Quốc, nhân đầy đủ và cơm nêm vừa miệng. Chỉ tiếc là hơi nhỏ.', 1, 1, 9, '2025-06-10 06:30:00', '2025-06-13 05:28:14'),
-(7, 5, NULL, 14, 5, 'Trà đào cam sả tuyệt vời', 'Nước uống rất thơm và mát, vị chua ngọt hài hòa. Rất phù hợp với thời tiết nóng bức ở Sài Gòn.', 1, 1, 12, '2025-06-10 08:45:00', '2025-06-13 10:06:04'),
-(8, 1, NULL, 6, 4, 'Sườn bò non tuyệt', 'Sườn non nướng vừa tái vừa chín, ướp gia vị đậm đà. Thịt mềm và rất thơm, giá hơi cao nhưng xứng đáng.', 0, 1, 7, '2025-06-10 11:20:00', '2025-06-13 05:28:14'),
-(9, 7, NULL, 9, 3, 'Tempura tôm cần cải thiện', 'Vỏ bột hơi dày, tôm tươi nhưng chiên hơi kỹ. Cần cải thiện kỹ thuật chiên để giữ độ giòn.', 1, 1, 2, '2025-06-10 13:00:00', '2025-06-13 05:49:21'),
-(10, 5, NULL, 11, 4, 'Cơm chiên Nhật ngon', 'Cơm chiên không bị khô, trứng và rau củ tươi ngon. Phần ăn vừa phải, phù hợp cho bữa trưa nhẹ.', 1, 1, 5, '2025-06-11 04:30:00', '2025-06-13 05:28:14'),
-(11, 1, NULL, 12, 5, 'Mì udon tuyệt hảo', 'Mì dai ngon, thịt bò mềm và ngọt. Nước dùng đậm đà, một trong những món ngon nhất tại đây!', 1, 1, 13, '2025-06-11 05:45:00', '2025-06-13 05:28:14'),
-(12, 7, NULL, 3, 4, 'Buffet chay đa dạng', 'Vegetarian Special có nhiều lựa chọn cho người ăn chay. Món ăn tươi ngon, giá cả hợp lý.', 0, 1, 4, '2025-06-11 07:00:00', '2025-06-13 05:28:14'),
-(13, 5, NULL, 10, 3, 'Há cảo bình thường', 'Há cảo hấp ổn nhưng không có gì đặc biệt. Nhân tôm tươi nhưng vỏ hơi dày, cần cải thiện.', 1, 0, 1, '2025-06-11 09:30:00', '2025-06-13 05:28:14'),
-(14, 1, NULL, 15, 4, 'Trà tắc thanh mát', 'Trà tắc có vị chua nhẹ và thơm mùi trà. Thức uống phù hợp để kết thúc bữa ăn buffet.', 0, 1, 6, '2025-06-11 10:15:00', '2025-06-13 05:28:14'),
-(15, 7, NULL, 16, 2, 'Bia không đặc biệt', 'Bia lon thông thường, không có gì đặc sắc. Giá hơi cao so với chất lượng, nên cân nhắc.', 1, 1, 0, '2025-06-11 12:00:00', '2025-06-13 05:28:14'),
-(16, 5, NULL, 1, 5, 'Lần thứ hai vẫn tuyệt!', 'Quay lại lần thứ hai vẫn rất hài lòng với Deluxe Buffet. Chất lượng đồ ăn ổn định, dịch vụ tốt.', 1, 1, 10, '2025-06-11 13:30:00', '2025-06-13 05:28:14'),
-(17, 1, NULL, 7, 5, 'Sushi chuẩn Nhật', 'Sushi cá hồi ở đây làm rất chuẩn, cơm nêm vừa phải, cá tươi ngon. Một trong những món phải thử!', 1, 1, 14, '2025-06-11 14:00:00', '2025-06-13 05:28:14'),
-(18, 7, NULL, 5, 5, 'Ba chỉ bò xuất sắc', 'Thịt bò Mỹ nướng hoàn hảo, ướp gia vị đậm đà, mềm và juicy. Đây là lý do tôi quay lại nhà hàng!', 1, 1, 16, '2025-06-11 14:45:00', '2025-06-13 05:28:14'),
-(19, 5, NULL, 14, 4, 'Thức uống tốt', 'Trà đào cam sả rất ngon, hương vị tự nhiên không bị ngọt gắt. Rất thích hợp cho mùa hè.', 0, 1, 4, '2025-06-11 15:15:00', '2025-06-13 10:06:04'),
-(20, 1, NULL, 13, 5, 'Tráng miệng hoàn hảo', 'Bánh flan ở đây ngon nhất từ trước đến nay. Mềm mượt, ngọt vừa phải, caramel thơm lừng.', 1, 1, 9, '2025-06-11 15:30:00', '2025-06-13 05:28:14');
+INSERT INTO `reviews` (`id`, `user_id`, `order_id`, `food_item_id`, `rating`, `title`, `comment`, `is_verified`, `is_approved`, `helpful_count`, `created_at`, `updated_at`, `photos`) VALUES
+(22, 9, 13, 14, 1, '', 'á', 1, 1, 1, '2025-07-07 14:47:23', '2025-07-07 14:47:57', '[\"review_686bde194d3bb.jpg\"]');
 
 -- --------------------------------------------------------
 
@@ -598,15 +620,15 @@ CREATE TABLE IF NOT EXISTS `review_likes` (
   UNIQUE KEY `unique_user_review_like` (`user_id`,`review_id`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_review_id` (`review_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `review_likes`
 --
 
 INSERT INTO `review_likes` (`id`, `user_id`, `review_id`, `created_at`) VALUES
-(1, 4, 7, '2025-06-13 10:06:04'),
-(2, 4, 19, '2025-06-13 10:06:04');
+(9, 9, 21, '2025-07-07 12:01:34'),
+(10, 9, 22, '2025-07-07 14:47:57');
 
 -- --------------------------------------------------------
 
@@ -617,10 +639,10 @@ INSERT INTO `review_likes` (`id`, `user_id`, `review_id`, `created_at`) VALUES
 DROP TABLE IF EXISTS `settings`;
 CREATE TABLE IF NOT EXISTS `settings` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `key_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value` text COLLATE utf8mb4_unicode_ci,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `type` enum('string','integer','boolean','json') COLLATE utf8mb4_unicode_ci DEFAULT 'string',
+  `key_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `type` enum('string','integer','boolean','json') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'string',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -637,9 +659,9 @@ DROP TABLE IF EXISTS `subcategories`;
 CREATE TABLE IF NOT EXISTS `subcategories` (
   `id` int NOT NULL AUTO_INCREMENT,
   `category_id` int NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `sort_order` int DEFAULT '0',
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -686,12 +708,12 @@ INSERT INTO `sub_categories` (`id`, `category_id`, `name`, `description`, `creat
 DROP TABLE IF EXISTS `tables`;
 CREATE TABLE IF NOT EXISTS `tables` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `table_number` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `table_number` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `capacity` int NOT NULL,
-  `location` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `location` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `is_available` tinyint(1) DEFAULT '1',
-  `status` enum('available','occupied','reserved','maintenance') COLLATE utf8mb4_unicode_ci DEFAULT 'available',
+  `status` enum('available','occupied','reserved','maintenance') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'available',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -721,18 +743,18 @@ INSERT INTO `tables` (`id`, `table_number`, `capacity`, `location`, `description
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `first_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `last_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `email` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `first_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
-  `address` text COLLATE utf8mb4_unicode_ci,
-  `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `role` enum('customer','manager','super_admin') COLLATE utf8mb4_unicode_ci DEFAULT 'customer',
+  `address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `role` enum('customer','manager','super_admin') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'customer',
   `email_verified` tinyint(1) DEFAULT '0',
-  `email_verification_token` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `password_reset_token` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email_verification_token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `password_reset_token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `password_reset_expires` timestamp NULL DEFAULT NULL,
   `last_login` timestamp NULL DEFAULT NULL,
   `is_active` tinyint(1) DEFAULT '1',
@@ -743,7 +765,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `email` (`email`),
   KEY `idx_role` (`role`),
   KEY `idx_active` (`is_active`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `users`
@@ -754,7 +776,8 @@ INSERT INTO `users` (`id`, `first_name`, `last_name`, `email`, `password`, `phon
 (4, 'Super', 'Admin', 'superadmin@buffet.com', '$2y$10$2IA71pot7oZqhM5DTwMRteOACsDF1F5TIKA3FLfshyU/3zpFvYFPa', '+1234567890', NULL, NULL, NULL, 'super_admin', 0, NULL, NULL, NULL, NULL, 1, NULL, '2025-06-10 04:09:56', '2025-06-10 04:09:56'),
 (5, 'New', 'New', 'new@gmail.com', '$2y$10$xwTmHBrRyc/LGhDsM7QYwuPIJxZtaLqewWnQV8QxI/K.CQUTYRUI2', '009999999', NULL, 'HCM', NULL, 'customer', 0, NULL, NULL, NULL, NULL, 1, NULL, '2025-06-10 00:19:41', '2025-06-10 07:19:41'),
 (7, 'hehe', 'heheheh', 'hehe@gmail.com', '$2y$10$p48sD//5xANycMpPG1L5eurklilL12lG6rnaZWsNgKyusYqdewjhW', '0999999', NULL, '', NULL, 'manager', 0, NULL, NULL, NULL, NULL, 1, NULL, '2025-06-10 06:45:59', '2025-06-10 13:46:09'),
-(8, 'Nguyen', 'Dat', 'dat61222@gmail.com', '$2y$10$rFOl1nEFPjnedRtkSrlC1O5yCIwwkg3tcjtvY9SO0BNkJfOiKpEz2', '099999999', NULL, 'HCM', NULL, 'customer', 0, NULL, NULL, NULL, NULL, 1, NULL, '2025-06-13 02:24:20', '2025-06-13 09:24:20');
+(8, 'Nguyen', 'Dat', 'dat61222@gmail.com', '$2y$10$rFOl1nEFPjnedRtkSrlC1O5yCIwwkg3tcjtvY9SO0BNkJfOiKpEz2', '099999999', NULL, 'HCM', NULL, 'customer', 0, NULL, NULL, NULL, NULL, 1, NULL, '2025-06-13 02:24:20', '2025-06-13 09:24:20'),
+(9, 'Đỗ', 'Ngọc Hiếu', 'dongochieu333@gmail.com', '$2y$10$ovSlhNQssm1r3QLW1bXy9eGDVn99dorGAtfAT0/2HqsaIJtWIhgn.', '00000000000', '2004-06-16', '', NULL, 'customer', 0, NULL, NULL, NULL, NULL, 1, NULL, '2025-06-13 23:35:59', '2025-06-14 15:58:58');
 
 -- --------------------------------------------------------
 
@@ -766,7 +789,7 @@ DROP TABLE IF EXISTS `user_addresses`;
 CREATE TABLE IF NOT EXISTS `user_addresses` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
-  `address_line` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `address_line` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `is_default` tinyint(1) DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -781,26 +804,26 @@ CREATE TABLE IF NOT EXISTS `user_addresses` (
 --
 DROP VIEW IF EXISTS `v_bookings_with_details`;
 CREATE TABLE IF NOT EXISTS `v_bookings_with_details` (
-`booking_date` date
-,`booking_reference` varchar(20)
-,`booking_time` time
-,`created_at` timestamp
-,`customer_email` varchar(100)
+`id` int
+,`user_id` int
+,`table_id` int
 ,`customer_name` varchar(100)
+,`customer_email` varchar(100)
 ,`customer_phone` varchar(20)
-,`first_name` varchar(50)
+,`booking_date` date
+,`booking_time` time
 ,`guest_count` int
-,`id` int
-,`last_name` varchar(50)
-,`notes` text
 ,`special_requests` text
 ,`status` enum('pending','confirmed','seated','completed','cancelled','no_show')
-,`table_capacity` int
-,`table_id` int
-,`table_location` varchar(50)
-,`table_number` varchar(10)
+,`booking_reference` varchar(20)
+,`notes` text
+,`created_at` timestamp
 ,`updated_at` timestamp
-,`user_id` int
+,`table_number` varchar(10)
+,`table_capacity` int
+,`table_location` varchar(50)
+,`first_name` varchar(50)
+,`last_name` varchar(50)
 );
 
 -- --------------------------------------------------------
@@ -811,28 +834,28 @@ CREATE TABLE IF NOT EXISTS `v_bookings_with_details` (
 --
 DROP VIEW IF EXISTS `v_orders_with_totals`;
 CREATE TABLE IF NOT EXISTS `v_orders_with_totals` (
-`booking_id` int
-,`completed_at` timestamp
-,`created_at` timestamp
-,`customer_email` varchar(100)
-,`customer_name` varchar(100)
-,`customer_phone` varchar(20)
-,`estimated_ready_time` timestamp
-,`first_name` varchar(50)
-,`id` int
-,`last_name` varchar(50)
+`id` int
+,`user_id` int
+,`booking_id` int
 ,`order_number` varchar(20)
+,`customer_name` varchar(100)
+,`customer_email` varchar(100)
+,`customer_phone` varchar(20)
 ,`order_type` enum('dine_in','takeout','delivery')
-,`payment_method` enum('cod','cash','credit_card','debit_card','digital_wallet','bank_transfer','vnpay')
-,`payment_status` enum('pending','paid','failed','refunded')
-,`special_instructions` text
-,`status` enum('pending','confirmed','preparing','ready','completed','delivered','cancelled')
 ,`subtotal` decimal(10,2)
 ,`tax_amount` decimal(10,2)
 ,`total_amount` decimal(10,2)
-,`total_items` bigint
+,`payment_method` enum('cod','cash','credit_card','debit_card','digital_wallet','bank_transfer','vnpay')
+,`payment_status` enum('pending','paid','failed','refunded')
+,`status` enum('pending','confirmed','preparing','ready','completed','delivered','cancelled')
+,`special_instructions` text
+,`estimated_ready_time` timestamp
+,`completed_at` timestamp
+,`created_at` timestamp
 ,`updated_at` timestamp
-,`user_id` int
+,`total_items` bigint
+,`first_name` varchar(50)
+,`last_name` varchar(50)
 );
 
 -- --------------------------------------------------------
@@ -843,29 +866,29 @@ CREATE TABLE IF NOT EXISTS `v_orders_with_totals` (
 --
 DROP VIEW IF EXISTS `v_payments_with_orders`;
 CREATE TABLE IF NOT EXISTS `v_payments_with_orders` (
-`completed_at` timestamp
-,`created_at` timestamp
-,`customer_email` varchar(100)
-,`customer_name` varchar(100)
-,`customer_phone` varchar(20)
-,`id` int
-,`order_created_at` timestamp
+`id` int
 ,`order_id` int
-,`order_number` varchar(20)
-,`order_status` enum('pending','confirmed','preparing','ready','completed','delivered','cancelled')
-,`order_total` decimal(10,2)
-,`payment_data` json
 ,`payment_method` varchar(50)
-,`payment_status` enum('pending','processing','completed','failed','cancelled','refunded')
-,`updated_at` timestamp
-,`vnp_amount` bigint
-,`vnp_bank_code` varchar(20)
-,`vnp_order_info` text
-,`vnp_pay_date` varchar(14)
-,`vnp_response_code` varchar(2)
-,`vnp_secure_hash` text
-,`vnp_transaction_no` varchar(100)
 ,`vnp_txn_ref` varchar(100)
+,`vnp_amount` bigint
+,`vnp_order_info` text
+,`vnp_response_code` varchar(2)
+,`vnp_transaction_no` varchar(100)
+,`vnp_bank_code` varchar(20)
+,`vnp_pay_date` varchar(14)
+,`vnp_secure_hash` text
+,`payment_status` enum('pending','processing','completed','failed','cancelled','refunded')
+,`payment_data` json
+,`created_at` timestamp
+,`updated_at` timestamp
+,`completed_at` timestamp
+,`order_number` varchar(20)
+,`customer_name` varchar(100)
+,`customer_email` varchar(100)
+,`customer_phone` varchar(20)
+,`order_total` decimal(10,2)
+,`order_status` enum('pending','confirmed','preparing','ready','completed','delivered','cancelled')
+,`order_created_at` timestamp
 );
 
 -- --------------------------------------------------------
@@ -956,14 +979,6 @@ ALTER TABLE `payments`
   ADD CONSTRAINT `fk_payments_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE;
 
 --
--- Các ràng buộc cho bảng `reviews`
---
-ALTER TABLE `reviews`
-  ADD CONSTRAINT `fk_reviews_food` FOREIGN KEY (`food_item_id`) REFERENCES `food_items` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_reviews_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_reviews_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
-
---
 -- Các ràng buộc cho bảng `subcategories`
 --
 ALTER TABLE `subcategories`
@@ -979,3 +994,50 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `internal_messages`
+--
+
+DROP TABLE IF EXISTS `internal_messages`;
+CREATE TABLE IF NOT EXISTS `internal_messages` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `sender_id` int NOT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attachment_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `attachment_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `message_type` enum('system_update','policy_change','maintenance','personal','general') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'general',
+  `priority` enum('low','normal','high','urgent') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'normal',
+  `is_broadcast` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_internal_messages_sender` (`sender_id`),
+  KEY `idx_message_type` (`message_type`),
+  KEY `idx_priority` (`priority`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `internal_message_recipients`
+--
+
+DROP TABLE IF EXISTS `internal_message_recipients`;
+CREATE TABLE IF NOT EXISTS `internal_message_recipients` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `message_id` int NOT NULL,
+  `recipient_id` int NOT NULL,
+  `is_read` tinyint(1) DEFAULT '0',
+  `read_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_message_recipient` (`message_id`,`recipient_id`),
+  KEY `fk_message_recipients_message` (`message_id`),
+  KEY `fk_message_recipients_recipient` (`recipient_id`),
+  KEY `idx_is_read` (`is_read`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

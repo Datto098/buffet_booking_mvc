@@ -17,6 +17,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Internal Messages CSS -->
+    <link href="<?= SITE_URL ?>/assets/css/internal-messages.css" rel="stylesheet">
+
     <!-- Custom CSS -->
     <style>
         :root {
@@ -1138,10 +1141,45 @@
             white-space: nowrap;
             border: 0;
         }
+        .banner-thumb {
+    display: inline-block;
+    position: relative;
+    margin: 4px;
+    vertical-align: top;
+}
+.banner-thumb img {
+    display: block;
+    max-width: 120px;
+    border-radius: 6px;
+}
+.banner-thumb .remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 2;
+    padding: 2px 6px;
+    font-size: 14px;
+    line-height: 1;
+    border-radius: 50%;
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+.banner-thumb .remove-btn:hover {
+    opacity: 1;
+}
     </style>
+
+    <!-- Custom CSS -->
+    <link href="<?= SITE_URL ?>/assets/css/internal-messages.css" rel="stylesheet">
 
     <!-- Custom Super Admin JavaScript -->
     <script src="<?= SITE_URL ?>/assets/js/superadmin.js" defer></script>
+    <!-- Realtime Notifications -->
+    <script src="<?= SITE_URL ?>/assets/js/realtime-notifications.js"></script>
 </head>
 
 <body class="super-admin-body"> <!-- Top Navigation Bar -->

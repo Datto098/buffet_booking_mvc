@@ -1,0 +1,79 @@
+/**
+ * Styles for internal messages system
+ */
+
+/* Message badges */
+.message-type-badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+.priority-badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+/* Recipient items */
+.recipient-item {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    margin: 0.25rem;
+    display: inline-block;
+}
+
+.recipient-item .remove-recipient {
+    color: #dc3545;
+    cursor: pointer;
+    margin-left: 0.5rem;
+}
+
+/* File upload preview */
+.file-preview {
+    max-width: 200px;
+    max-height: 200px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+}
+
+/* Content box */
+.content-box {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin: 1rem 0;
+}
+
+/* Message card styling */
+.message-card {
+    transition: transform 0.2s;
+    border-left: 4px solid #dee2e6;
+}
+
+.message-card.unread {
+    border-left-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.message-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Notification badge */
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

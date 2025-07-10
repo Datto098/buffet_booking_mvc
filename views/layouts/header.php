@@ -25,15 +25,63 @@
     <!-- Leaflet CSS and JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        @media (min-width: 992px) {
+            .navbar-nav {
+                gap: 0.5rem;
+            }
+            .nav-link {
+                white-space: nowrap;
+                padding: 0.5rem 0.75rem !important;
+            }
+            .navbar-brand {
+                margin-right: 2rem;
+            }
+            .btn-booking {
+                padding: 0.5rem 1.25rem !important;
+                display: inline-flex !important;
+                align-items: center;
+                gap: 0.5rem;
+                white-space: nowrap;
+                min-width: auto !important;
+            }
+        }
+        @media (max-width: 991.98px) {
+            .navbar-nav {
+                padding: 1rem 0;
+            }
+            .nav-link {
+                padding: 0.75rem 1rem !important;
+            }
+            .navbar-actions {
+                padding: 1rem 0;
+                border-top: 1px solid rgba(255,255,255,0.1);
+            }
+            .btn-booking {
+                width: 100%;
+                padding: 0.75rem 1rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+        }
+    </style>
 </head>
 
-<body> <!-- Navigation -->
+<body>
+    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg fixed-top" id="mainNavbar">
         <div class="container">
             <!-- Brand -->
             <a class="navbar-brand" href="<?php echo SITE_URL; ?>">
-                <i class="fas fa-crown me-2"></i>
-                <span class="brand-text"><?php echo SITE_NAME; ?></span>
+                <?php if (!empty($info['logo']) || !empty($info['logo_url'])): ?>
+                    <img src="<?php echo htmlspecialchars($info['logo_url'] ?? $info['logo']); ?>" alt="Logo" class="brand-logo" style="height:40px;max-width:120px;">
+                     <span class="brand-text"><?php echo htmlspecialchars($info['restaurant_name'] ?? SITE_NAME); ?></span>
+                <?php else: ?>
+                    <i class="fas fa-crown me-2"></i>
+                    <span class="brand-text"><?php echo htmlspecialchars($info['restaurant_name'] ?? SITE_NAME); ?></span>
+                <?php endif; ?>
             </a>
 
             <!-- Mobile Menu Button -->
@@ -44,7 +92,7 @@
             <!-- Collapsible Content -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 <!-- Main Navigation -->
-                <ul class="navbar-nav me-auto" style="padding-left: 50px;">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="<?php echo SITE_URL; ?>">
                             <i class="fas fa-home"></i>
@@ -55,6 +103,12 @@
                         <a class="nav-link" href="<?php echo SITE_URL; ?>/menu">
                             <i class="fas fa-utensils"></i>
                             <span class="nav-text">Thực Đơn</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?php echo SITE_URL; ?>/dine-in">
+                            <i class="fas fa-chair"></i>
+                            <span class="nav-text">Đặt Món Tại Bàn</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -83,7 +137,7 @@
                 </ul>
 
                 <!-- Right Side Actions -->
-                <ul class="navbar-nav navbar-actions">
+                <ul class="navbar-nav navbar-actions align-items-center">
                     <!-- Cart -->
                     <li class="nav-item">
                         <a class="nav-link position-relative" href="<?php echo SITE_URL; ?>/cart">
@@ -99,7 +153,7 @@
                     </li>
 
                     <!-- Booking Button -->
-                    <li class="nav-item">
+                    <li class="nav-item ms-lg-2">
                         <a class="btn btn-booking" href="<?php echo SITE_URL; ?>/booking">
                             <i class="fas fa-calendar-check me-1"></i>
                             <span>Đặt Bàn</span>
@@ -108,7 +162,7 @@
 
                     <?php if (isLoggedIn()): ?>
                         <!-- User Menu -->
-                        <li class="nav-item dropdown">
+                        <li class="nav-item dropdown ms-lg-2">
                             <a class="nav-link dropdown-toggle user-menu" href="#" id="navbarUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-user-circle"></i>
                                 <span class="nav-text">
@@ -172,7 +226,7 @@
                         </li>
                     <?php else: ?>
                         <!-- Login/Register -->
-                        <li class="nav-item dropdown">
+                        <li class="nav-item dropdown ms-lg-2">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarAuth" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-user"></i>
                                 <span class="nav-text">Tài Khoản</span>

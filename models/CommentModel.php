@@ -2,7 +2,7 @@
 require_once 'BaseModel.php';
 
 class CommentModel extends BaseModel {
-    protected $table = 'comments'; // Đổi tên bảng nếu bảng bạn là tên khác
+    protected $table = 'comments'; 
 
     // Thêm comment mới
     public function add($data) {

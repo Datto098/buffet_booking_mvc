@@ -44,6 +44,29 @@ body {
     /* background: linear-gradient(135deg, var(--primary-color) 0%, #20c997 100%); */
     min-height: 100vh;
 }
+/* Trang home: hiệu ứng động */
+.hero-section--slider {
+    min-height: 90vh;
+    position: relative;
+    overflow: hidden;
+    /* KHÔNG set background ở đây */
+}
+
+.hero-section--slider .hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 1s ease;
+    z-index: 1;
+    filter: brightness(0.5) blur(2px);
+}
 
 /* Card Styles */
 .card {

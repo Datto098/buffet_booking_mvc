@@ -7,7 +7,7 @@
 $vnpayOrder = $_SESSION['vnpay_order'] ?? null;
 if (!$vnpayOrder) {
     $_SESSION['error'] = 'Không tìm thấy thông tin đơn hàng';
-    redirect('/index.php?page=order&action=checkout');
+    redirect(SITE_URL . '/index.php?page=order&action=checkout');
 }
 
 $orderId = $vnpayOrder['order_id'];
