@@ -7,5 +7,5 @@
 require_once 'config/config.php';
 
 // Redirect to the correct login URL
-redirect('/auth/login');
+redirect(SITE_URL . '/auth/login');
 ?>

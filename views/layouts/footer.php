@@ -58,11 +58,14 @@
     </footer>
 
     <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo SITE_URL; ?>/assets/js/luxury-effects.js"></script>
     <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>
-    </body>
 
+<<<<<<< HEAD
+    <!-- CSRF Token for AJAX requests -->
+=======
     </html>
     </div>
     <!-- <div class="col-md-6 text-end">
@@ -79,15 +82,19 @@
     <script src="<?php echo SITE_URL; ?>/assets/js/luxury-scroll.js"></script>
     <!-- Custom JS -->
     <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script> <!-- CSRF Token for AJAX requests -->
+>>>>>>> main
     <script>
         window.csrfToken = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
         window.siteUrl = '<?php echo SITE_URL; ?>';
+        window.SITE_URL = '<?php echo SITE_URL; ?>';
         <?php
         // Only generate token if none exists and we're not overwriting existing one
         if (!isset($_SESSION['csrf_token']) || empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = generateCSRFToken();
         }
         ?>
+<<<<<<< HEAD
+=======
     </script>
     <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -123,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setHeroBg(currentHero);
     }, 3000);
 });
+>>>>>>> main
 </script>
     </body>
-
     </html>

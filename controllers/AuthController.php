@@ -43,13 +43,13 @@ class AuthController extends BaseController
     public function logout()
     {
         session_destroy();
-        redirect('/');
+        redirect(SITE_URL . '/');
     }
     private function showLoginForm()
     {
         // Redirect if already logged in
         if (isLoggedIn()) {
-            redirect('/');
+            redirect(SITE_URL . '/');
         }
 
         // Lấy thông tin nhà hàng cho footer
@@ -79,7 +79,7 @@ class AuthController extends BaseController
     {
         // Redirect if already logged in
         if (isLoggedIn()) {
-            redirect('/');
+            redirect(SITE_URL . '/');
         }
 
         // Lấy thông tin nhà hàng cho footer
@@ -144,11 +144,11 @@ class AuthController extends BaseController
 
             // Redirect based on role
             if ($user['role'] === 'super_admin') {
-                redirect('/superadmin/');
+                redirect(SITE_URL . '/superadmin/');
             } elseif ($user['role'] === 'manager') {
-                redirect('/admin/');
+                redirect(SITE_URL . '/admin/');
             } else {
-                redirect('/');
+                redirect(SITE_URL . '/');
             }
         } else {
             $_SESSION['error'] = 'Email hoặc mật khẩu không đúng';
@@ -213,7 +213,7 @@ class AuthController extends BaseController
 
         if ($this->userModel->createUser($userData)) {
             $_SESSION['success'] = 'Đăng ký thành công! Vui lòng đăng nhập.';
-            redirect('/auth/login');
+            redirect(SITE_URL . '/auth/login');
         } else {
             $_SESSION['error'] = 'Có lỗi xảy ra khi đăng ký. Vui lòng thử lại.';
             $this->showRegisterForm();

@@ -59,143 +59,55 @@ function initializeAdmin() {
 
 /**
  * Initialize dashboard charts
- * @param {Object} chartData - Chart data containing revenue and booking statistics
+ * @param {Object} chartData - Chart data containing booking trend and statistics
  */
 function initializeCharts(chartData) {
-	// Initialize Revenue Chart (Line Chart)
-	initializeRevenueChart(chartData.monthly_revenue_data);
-
-	// Initialize Booking Status Chart (Pie Chart)
-	initializeBookingStatusChart(chartData.booking_stats);
+	// Initialize Booking Status Trend Chart (Line Chart)
+	initializeBookingStatusChart(chartData.booking_trend_data);
 }
 
 /**
- * Initialize revenue trend line chart
- * @param {Array} revenueData - Monthly revenue data for the past 12 months
+ * Initialize booking status trend line chart
+ * @param {Array} bookingTrendData - Booking trend data by date
  */
-function initializeRevenueChart(revenueData) {
-	const ctx = document.getElementById('revenueChart');
-	if (!ctx) return;
-
-	// Generate month labels for the past 12 months
-	const monthLabels = [];
-	const currentDate = new Date();
-	for (let i = 11; i >= 0; i--) {
-		const date = new Date(
-			currentDate.getFullYear(),
-			currentDate.getMonth() - i,
-			1
-		);
-		monthLabels.push(
-			date.toLocaleDateString('en-US', {
-				month: 'short',
-				year: '2-digit',
-			})
-		);
-	}
-
-	new Chart(ctx, {
-		type: 'line',
-		data: {
-			labels: monthLabels,
-			datasets: [
-				{
-					label: 'Revenue ($)',
-					data: revenueData || Array(12).fill(0),
-					borderColor: '#4e73df',
-					backgroundColor: 'rgba(78, 115, 223, 0.1)',
-					borderWidth: 2,
-					fill: true,
-					tension: 0.3,
-					pointBackgroundColor: '#4e73df',
-					pointBorderColor: '#ffffff',
-					pointBorderWidth: 2,
-					pointRadius: 4,
-					pointHoverRadius: 6,
-				},
-			],
-		},
-		options: {
-			responsive: true,
-			maintainAspectRatio: false,
-			plugins: {
-				legend: {
-					display: false,
-				},
-				tooltip: {
-					backgroundColor: 'rgba(0, 0, 0, 0.8)',
-					titleColor: '#ffffff',
-					bodyColor: '#ffffff',
-					borderColor: '#4e73df',
-					borderWidth: 1,
-					callbacks: {
-						label: function (context) {
-							return (
-								'Revenue: $' + context.parsed.y.toLocaleString()
-							);
-						},
-					},
-				},
-			},
-			scales: {
-				y: {
-					beginAtZero: true,
-					ticks: {
-						callback: function (value) {
-							return '$' + value.toLocaleString();
-						},
-					},
-					grid: {
-						color: 'rgba(0, 0, 0, 0.1)',
-					},
-				},
-				x: {
-					grid: {
-						display: false,
-					},
-				},
-			},
-			interaction: {
-				intersect: false,
-				mode: 'index',
-			},
-		},
-	});
-}
-
-/**
- * Initialize booking status pie chart
- * @param {Object} bookingStats - Booking statistics (confirmed, pending, cancelled)
- */
-function initializeBookingStatusChart(bookingStats) {
+function initializeBookingStatusChart(bookingTrendData) {
 	const ctx = document.getElementById('bookingStatusChart');
 	if (!ctx) return;
 
-	const stats = bookingStats || { confirmed: 0, pending: 0, cancelled: 0 };
-	const total = stats.confirmed + stats.pending + stats.cancelled;
+	// Default data structure if no data provided
+	const defaultData = {
+		labels: [],
+		total: [],
+	};
+
+	// Ensure bookingTrendData is an object with required properties
+	const data =
+		bookingTrendData && typeof bookingTrendData === 'object'
+			? bookingTrendData
+			: defaultData;
+
+	// Ensure all required arrays exist
+	if (!data.labels || !Array.isArray(data.labels)) data.labels = [];
+	if (!data.total || !Array.isArray(data.total)) data.total = [];
 
 	// Don't show chart if no data
-	if (total === 0) {
+	if (data.labels.length === 0) {
 		ctx.parentElement.innerHTML =
-			'<div class="text-center py-4"><i class="fas fa-chart-pie fa-3x text-muted mb-3"></i><br><span class="text-muted">No booking data available</span></div>';
+			'<div class="text-center py-4"><i class="fas fa-chart-line fa-3x text-muted mb-3"></i><br><span class="text-muted">No booking trend data available</span></div>';
 		return;
 	}
 
 	new Chart(ctx, {
-		type: 'doughnut',
+		type: 'bar',
 		data: {
-			labels: ['Confirmed', 'Pending', 'Cancelled'],
+			labels: data.labels,
 			datasets: [
 				{
-					data: [stats.confirmed, stats.pending, stats.cancelled],
-					backgroundColor: [
-						'#1cc88a', // Success green
-						'#f6c23e', // Warning yellow
-						'#e74a3b', // Danger red
-					],
-					borderColor: ['#17a673', '#dda20a', '#c0392b'],
-					borderWidth: 2,
-					hoverOffset: 4,
+					label: 'Tổng số booking',
+					data: data.total || [],
+					backgroundColor: 'rgba(78, 115, 223, 0.7)',
+					borderColor: '#4e73df',
+					borderWidth: 1,
 				},
 			],
 		},
@@ -217,27 +129,9 @@ function initializeBookingStatusChart(bookingStats) {
 					backgroundColor: 'rgba(0, 0, 0, 0.8)',
 					titleColor: '#ffffff',
 					bodyColor: '#ffffff',
-					callbacks: {
-						label: function (context) {
-							const percentage = (
-								(context.parsed / total) *
-								100
-							).toFixed(1);
-							return (
-								context.label +
-								': ' +
-								context.parsed +
-								' (' +
-								percentage +
-								'%)'
-							);
-						},
-					},
 				},
 			},
-			cutout: '60%',
 			animation: {
-				animateRotate: true,
 				duration: 1000,
 			},
 		},
@@ -2403,9 +2297,17 @@ function loadAvailableTables(bookingId) {
  * Save table assignment
  */
 function saveTableAssignment() {
+	console.log('Called admin.js saveTableAssignment');
 	const bookingId = document.getElementById('bookingIdForTable').value;
 	const tableId = document.getElementById('tableNumber').value;
-	const notes = document.getElementById('tableNotes').value;
+	const notes = document.getElementById('assignTableNotes').value;
+
+	console.log('admin.js Values:', {
+		bookingId,
+		tableId,
+		notes,
+		element: document.getElementById('assignTableNotes'),
+	});
 
 	if (!tableId) {
 		showAlert('Please select a table', 'warning');
@@ -2578,7 +2480,7 @@ function toggleTableStatus(tableId, isAvailable) {
 	button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
 
 	// Make AJAX request
-	fetch(`${SITE_URL || ''}/admin/tables/toggle-status`, {
+	fetch(`${window.SITE_URL || ''}/admin/tables/toggle-status`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -2644,7 +2546,7 @@ function viewTableHistory(tableId) {
 		bsModal.show();
 
 		// Load history data
-		fetch(`${SITE_URL || ''}/admin/tables/history/${tableId}`, {
+		fetch(`${window.SITE_URL || ''}/admin/tables/history/${tableId}`, {
 			headers: {
 				'X-Requested-With': 'XMLHttpRequest',
 			},
@@ -2870,7 +2772,9 @@ function applyFilters() {
 			}
 		}
 
-		window.location.href = `${SITE_URL}/admin/categories?${params.toString()}`;
+		window.location.href = `${
+			window.SITE_URL
+		}/admin/categories?${params.toString()}`;
 	}
 }
 
@@ -2878,7 +2782,7 @@ function applyFilters() {
  * Clear category filters
  */
 function clearFilters() {
-	window.location.href = `${SITE_URL}/admin/categories`;
+	window.location.href = `${window.SITE_URL}/admin/categories`;
 }
 
 /**
@@ -2899,7 +2803,7 @@ function viewCategoryFoods(categoryId) {
 		console.error('Category ID is required');
 		return;
 	}
-	window.location.href = `${SITE_URL}/admin/foods?category_id=${categoryId}`;
+	window.location.href = `${window.SITE_URL}/admin/foods?category_id=${categoryId}`;
 }
 
 /**
@@ -2910,7 +2814,7 @@ function addFoodToCategory(categoryId) {
 		console.error('Category ID is required');
 		return;
 	}
-	window.location.href = `${SITE_URL}/admin/foods/create?category_id=${categoryId}`;
+	window.location.href = `${window.SITE_URL}/admin/foods/create?category_id=${categoryId}`;
 }
 
 /**
@@ -2925,7 +2829,7 @@ function duplicateCategory(categoryId) {
 	if (confirm('Create a duplicate of this category?')) {
 		showLoadingOverlay();
 
-		fetch(`${SITE_URL}/admin/categories/get/${categoryId}`, {
+		fetch(`${window.SITE_URL}/admin/categories/get/${categoryId}`, {
 			method: 'GET',
 			headers: {
 				'X-Requested-With': 'XMLHttpRequest',
@@ -2946,7 +2850,9 @@ function duplicateCategory(categoryId) {
 						status: 'inactive', // Start as inactive for duplicates
 					});
 
-					window.location.href = `${SITE_URL}/admin/categories/create?${params.toString()}`;
+					window.location.href = `${
+						window.SITE_URL
+					}/admin/categories/create?${params.toString()}`;
 				} else {
 					showAlert(
 						'Failed to load category for duplication',
@@ -2984,7 +2890,7 @@ function toggleCategoryStatus(categoryId, status) {
 				?.getAttribute('content') || ''
 		);
 
-		fetch(`${SITE_URL}/admin/categories/update/${categoryId}`, {
+		fetch(`${window.SITE_URL}/admin/categories/update/${categoryId}`, {
 			method: 'POST',
 			headers: {
 				'X-Requested-With': 'XMLHttpRequest',
@@ -3070,6 +2976,29 @@ function previewCategory() {
 }
 
 // ==================== CATEGORY EVENT LISTENERS ====================
+
+/**
+ * Update selected count display
+ */
+function updateSelectedCount() {
+	const selectedCheckboxes = document.querySelectorAll(
+		'.category-checkbox:checked, .booking-checkbox:checked, .news-checkbox:checked'
+	);
+	const countDisplay = document.getElementById('selectedCount');
+	const bulkActionsBar = document.getElementById('bulkActionsBar');
+
+	if (countDisplay) {
+		const count = selectedCheckboxes.length;
+		countDisplay.textContent = count;
+		countDisplay.style.display = count > 0 ? 'inline' : 'none';
+	}
+
+	// Toggle bulk actions visibility
+	if (bulkActionsBar) {
+		bulkActionsBar.style.display =
+			selectedCheckboxes.length > 0 ? 'block' : 'none';
+	}
+}
 
 // Add event listeners when DOM is ready
 document.addEventListener('DOMContentLoaded', function () {

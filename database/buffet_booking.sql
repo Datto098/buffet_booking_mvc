@@ -994,3 +994,50 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `internal_messages`
+--
+
+DROP TABLE IF EXISTS `internal_messages`;
+CREATE TABLE IF NOT EXISTS `internal_messages` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `sender_id` int NOT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attachment_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `attachment_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `message_type` enum('system_update','policy_change','maintenance','personal','general') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'general',
+  `priority` enum('low','normal','high','urgent') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'normal',
+  `is_broadcast` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_internal_messages_sender` (`sender_id`),
+  KEY `idx_message_type` (`message_type`),
+  KEY `idx_priority` (`priority`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `internal_message_recipients`
+--
+
+DROP TABLE IF EXISTS `internal_message_recipients`;
+CREATE TABLE IF NOT EXISTS `internal_message_recipients` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `message_id` int NOT NULL,
+  `recipient_id` int NOT NULL,
+  `is_read` tinyint(1) DEFAULT '0',
+  `read_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_message_recipient` (`message_id`,`recipient_id`),
+  KEY `fk_message_recipients_message` (`message_id`),
+  KEY `fk_message_recipients_recipient` (`recipient_id`),
+  KEY `idx_is_read` (`is_read`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -104,11 +104,18 @@ class Category extends BaseModel {
             // Call parent count method for standard counting
             return parent::count();
         }
-    }public function getMainCategories() {
+    }    public function getMainCategories() {
         $sql = "SELECT * FROM {$this->table} ORDER BY name ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Get all categories (alias for getMainCategories)
+     */
+    public function getAllCategories() {
+        return $this->getMainCategories();
     }
 
     public function transformForStorage($data) {

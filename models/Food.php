@@ -160,6 +160,83 @@ class Food extends BaseModel {
         return $stmt->fetch();
     }
 
+    /**
+     * Get food by ID (alias for getFoodDetails)
+     */
+    public function getFoodById($id) {
+        return $this->getFoodDetails($id);
+    }
+
+    /**
+     * Get popular foods
+     */
+    public function getPopularFoods($limit = 8) {
+        $sql = "SELECT f.*, c.name as category_name
+                FROM {$this->table} f
+                JOIN categories c ON f.category_id = c.id
+                WHERE f.is_available = 1 AND f.is_popular = 1
+                ORDER BY f.created_at DESC
+                LIMIT :limit";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get new foods
+     */
+    public function getNewFoods($limit = 8) {
+        $sql = "SELECT f.*, c.name as category_name
+                FROM {$this->table} f
+                JOIN categories c ON f.category_id = c.id
+                WHERE f.is_available = 1 AND f.is_new = 1
+                ORDER BY f.created_at DESC
+                LIMIT :limit";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get available foods
+     */
+    public function getAvailableFoods($limit = null) {
+        $sql = "SELECT f.*, c.name as category_name
+                FROM {$this->table} f
+                JOIN categories c ON f.category_id = c.id
+                WHERE f.is_available = 1
+                ORDER BY f.name";
+
+        if ($limit) {
+            $sql .= " LIMIT :limit";
+        }
+
+        $stmt = $this->db->prepare($sql);
+        if ($limit) {
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get foods by category (alias for getFoodByCategory)
+     */
+    public function getFoodsByCategory($categoryId, $limit = null) {
+        return $this->getFoodByCategory($categoryId, $limit);
+    }
+
+    /**
+     * Search foods (alias for searchFood)
+     */
+    public function searchFoods($keyword, $limit = null) {
+        return $this->searchFood($keyword, $limit);
+    }
+
     public function getFoodReviews($foodId, $limit = 5) {
         $sql = "SELECT r.*, u.full_name
                 FROM reviews r
