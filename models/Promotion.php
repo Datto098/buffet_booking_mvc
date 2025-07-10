@@ -509,6 +509,71 @@ class Promotion extends BaseModel {
         return $promotions;
     }
 
-    // ...existing code...
+    public function getFoodsByPromotion($promotionId) {
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Lấy thông tin promotion
+            $sql = "SELECT * FROM promotions WHERE id = :promotion_id";
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam(':promotion_id', $promotionId, PDO::PARAM_INT);
+            $stmt->execute();
+            $promotion = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$promotion) return [];
+
+            if ($promotion['application_type'] === 'all') {
+                // Lấy tất cả món ăn đang bán
+                $sql = "SELECT f.*, c.name AS category_name
+                        FROM food_items f
+                        LEFT JOIN categories c ON f.category_id = c.id
+                        WHERE f.is_available = 1";
+                $stmt = $db->prepare($sql);
+                $stmt->execute();
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } elseif ($promotion['application_type'] === 'specific_items') {
+                // Lấy món ăn theo bảng liên kết
+                $sql = "SELECT f.*, c.name AS category_name
+                        FROM food_items f
+                        INNER JOIN promotion_food_items pfi ON f.id = pfi.food_item_id
+                        LEFT JOIN categories c ON f.category_id = c.id
+                        WHERE pfi.promotion_id = :promotion_id AND f.is_available = 1";
+                $stmt = $db->prepare($sql);
+                $stmt->bindParam(':promotion_id', $promotionId, PDO::PARAM_INT);
+                $stmt->execute();
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } elseif ($promotion['application_type'] === 'categories') {
+                // Lấy món ăn theo danh mục khuyến mãi
+                $sql = "SELECT f.*, c.name AS category_name
+                        FROM food_items f
+                        INNER JOIN promotion_categories pc ON f.category_id = pc.category_id
+                        LEFT JOIN categories c ON f.category_id = c.id
+                        WHERE pc.promotion_id = :promotion_id AND f.is_available = 1";
+                $stmt = $db->prepare($sql);
+                $stmt->bindParam(':promotion_id', $promotionId, PDO::PARAM_INT);
+                $stmt->execute();
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } else {
+                return [];
+            }
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+    /**
+     * Get promotion by ID
+     */
+    public function getPromotionById($id)
+    {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM promotions WHERE id = :id");
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
 }
 ?>

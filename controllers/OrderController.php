@@ -55,13 +55,30 @@ class OrderController extends BaseController {
             $userInfo = $this->userModel->findById($_SESSION['user_id']);
         }
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
             'cartItems' => $cartItems,
             'subtotal' => $subtotal,
             'serviceFee' => $serviceFee,
             'deliveryFee' => $deliveryFee,
             'total' => $total,
-            'userInfo' => $userInfo
+            'userInfo' => $userInfo,
+            'info' => $restaurantInfo // Thêm dòng này
         ];
         $this->loadView('customer/order/checkout', $data);
     }
@@ -214,12 +231,29 @@ class OrderController extends BaseController {
             $order['order_items'] = $this->orderModel->getOrderItems($order['id']);
         }
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
             'title' => 'Đơn Hàng Của Tôi - ' . SITE_NAME,
             'orders' => $orders,
             'total_pages' => $total_pages,
             'current_page' => $current_page,
-            'filter_params' => '' // hoặc build lại nếu có filter
+            'filter_params' => '',
+            'info' => $restaurantInfo // Thêm dòng này
         ];
 
         $this->loadView('customer/order/history', $data);
@@ -253,9 +287,26 @@ class OrderController extends BaseController {
         }
 
 
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
         $data = [
             'title' => 'Chi Tiết Đơn Hàng #' . $orderId . ' - ' . SITE_NAME,
-            'order' => $order
+            'order' => $order,
+            'info' => $restaurantInfo // Thêm dòng này
         ];
 
 
@@ -376,23 +427,39 @@ class OrderController extends BaseController {
         return $statusTexts[$status] ?? 'Không xác định';
     }
 
-    // public function history() {
-    //     $this->requireLogin();
-    //     $userId = $_SESSION['user_id'];
-    //     $orders = $this->orderModel->getOrdersByUser($userId);
+    public function history() {
+        $this->requireLogin();
+        $userId = $_SESSION['user_id'];
+        $orders = $this->orderModel->getOrdersByUser($userId);
 
-    //     // Lấy thêm các món ăn cho từng đơn
-    //     foreach ($orders as &$order) {
-    //         $order['order_items'] = $this->orderModel->getOrderItems($order['id']);
-    //     }
+        // Lấy thêm các món ăn cho từng đơn
+        foreach ($orders as &$order) {
+            $order['order_items'] = $this->orderModel->getOrderItems($order['id']);
+        }
 
-    //     $data = [
-    //         'title' => 'Lịch Sử Đơn Hàng - ' . SITE_NAME,
-    //         'orders' => $orders
-    //     ];
-    //     print_r($data);
-    //     echo '</pre>';
-    //     // $this->loadView('/index.php?page=order&action=history', $data);
-    // }
+        // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
+        $data = [
+            'title' => 'Lịch Sử Đơn Hàng - ' . SITE_NAME,
+            'orders' => $orders,
+            'info' => $restaurantInfo // Thêm dòng này
+        ];
+
+        $this->loadView('customer/order/history', $data);
+    }
 }
 ?>
