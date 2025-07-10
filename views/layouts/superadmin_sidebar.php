@@ -94,6 +94,12 @@
                                 Promotions
                             </a>
                         </li>
+                         <li class="nav-item">
+                    <a class="nav-link" href="<?= SITE_URL ?>/superadmin/address">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Address
+                    </a>
+                </li>
                     </ul>
                 </div>
             </li>
