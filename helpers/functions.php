@@ -3,6 +3,9 @@
  * Helper Functions
  */
 
+// Include configuration
+require_once __DIR__ . '/../config/config.php';
+
 /**
  * Sanitize output
  * @param string $string
@@ -52,6 +55,13 @@ function isAdmin() {
  * @param string $url
  */
 function redirect($url) {
+    // If the URL doesn't start with http or https, prepend SITE_URL
+    if ($url[0] === '/') {
+        $url = SITE_URL . $url;
+    } elseif (strpos($url, 'http') !== 0) {
+        $url = SITE_URL . '/' . $url;
+    }
+
     header("Location: $url");
     exit;
 }
@@ -197,4 +207,84 @@ function truncate($string, $length = 100, $suffix = '...') {
         return $string;
     }
     return substr($string, 0, $length) . $suffix;
+}
+
+/**
+ * Check if request is POST
+ * @return bool
+ */
+function isPost() {
+    return $_SERVER['REQUEST_METHOD'] === 'POST';
+}
+
+/**
+ * Send JSON response
+ * @param mixed $data
+ * @param int $statusCode
+ */
+function jsonResponse($data, $statusCode = 200) {
+    http_response_code($statusCode);
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    exit();
+}
+
+/**
+ * Check if user is manager
+ * @return bool
+ */
+function isManager() {
+    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'manager';
+}
+
+/**
+ * Check if user is logged in
+ * @return bool
+ */
+function isLoggedIn() {
+    return isset($_SESSION['user_id']);
+}
+
+/**
+ * Sanitize input data
+ * @param mixed $input Input data to sanitize
+ * @return mixed Sanitized input
+ */
+function sanitizeInput($input) {
+    if (is_array($input)) {
+        return array_map('sanitizeInput', $input);
+    }
+
+    if (is_string($input)) {
+        // Remove whitespace
+        $input = trim($input);
+
+        // Remove HTML tags
+        $input = strip_tags($input);
+
+        // Convert special characters to HTML entities
+        $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+
+        return $input;
+    }
+
+    // For non-string values, return as is
+    return $input;
+}
+
+/**
+ * Generate CSRF token field for forms
+ * @return string HTML input field with CSRF token
+ */
+function csrf_token_field() {
+    $token = csrf_token();
+    return '<input type="hidden" name="csrf_token" value="' . $token . '">';
+}
+
+/**
+ * Generate CSRF token (alias for csrf_token)
+ * @return string CSRF token
+ */
+function generateCSRFToken() {
+    return csrf_token();
 }

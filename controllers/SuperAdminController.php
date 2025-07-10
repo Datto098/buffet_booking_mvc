@@ -1672,6 +1672,9 @@ class SuperAdminController extends BaseController
      */
     public function processInternalMessage()
     {
+        // Check session structure and output for debugging
+        error_log("FULL SESSION DATA: " . print_r($_SESSION, true));
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('/superadmin/internal-messages/send');
         }
@@ -1680,6 +1683,9 @@ class SuperAdminController extends BaseController
             $this->setFlash('error', 'Token không hợp lệ');
             $this->redirect('/superadmin/internal-messages/send');
         }
+
+        // Log to help debug
+        error_log("Processing internal message - POST data: " . print_r($_POST, true));
 
         // Validate input
         $title = trim($_POST['title'] ?? '');
@@ -1722,7 +1728,7 @@ class SuperAdminController extends BaseController
 
         // Tạo thông báo
         $messageData = [
-            'sender_id' => $_SESSION['user_id'],
+            'sender_id' => $_SESSION['user']['id'], // Fix: Using correct session structure
             'title' => $title,
             'content' => $content,
             'attachment_path' => $attachmentPath,
@@ -1732,6 +1738,10 @@ class SuperAdminController extends BaseController
             'is_broadcast' => $isBroadcast,
             'recipients' => $recipients
         ];
+
+        // Additional logging
+        error_log("Message data before sending: " . print_r($messageData, true));
+        error_log("User session data: " . print_r($_SESSION, true));
 
         $messageId = $this->internalMessageModel->createMessage($messageData);
 
@@ -1797,21 +1807,46 @@ class SuperAdminController extends BaseController
      */
     public function deleteInternalMessage($messageId)
     {
+        // Validate request method
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->setFlash('error', 'Phương thức không hợp lệ');
             $this->redirect('/superadmin/internal-messages/sent');
         }
 
+        // Validate message ID
+        if (!$messageId || !is_numeric($messageId)) {
+            $this->setFlash('error', 'ID thông báo không hợp lệ');
+            $this->redirect('/superadmin/internal-messages/sent');
+        }
+
+        // Validate CSRF token
         if (!$this->validateCSRF()) {
-            $this->setFlash('error', 'Token không hợp lệ');
+            $this->setFlash('error', 'Token bảo mật không hợp lệ');
             $this->redirect('/superadmin/internal-messages/sent');
         }
 
-        $success = $this->internalMessageModel->deleteMessage($messageId, $_SESSION['user_id']);
+        // Get current user ID
+        if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
+            error_log("No user session found for message deletion");
+            $this->setFlash('error', 'Phiên làm việc không hợp lệ');
+            $this->redirect('/superadmin/internal-messages/sent');
+        }
 
-        if ($success) {
-            $this->setFlash('success', 'Thông báo đã được xóa thành công');
-        } else {
-            $this->setFlash('error', 'Không thể xóa thông báo này');
+        $userId = $_SESSION['user']['id'];
+        error_log("Attempting to delete message {$messageId} by user {$userId}");
+
+        try {
+            $success = $this->internalMessageModel->deleteMessage($messageId, $userId);
+
+            if ($success) {
+                $this->setFlash('success', 'Thông báo đã được xóa thành công');
+            } else {
+                error_log("Failed to delete message {$messageId}");
+                $this->setFlash('error', 'Không thể xóa thông báo này. Vui lòng kiểm tra quyền hạn hoặc tồn tại của thông báo.');
+            }
+        } catch (Exception $e) {
+            error_log("Error deleting message {$messageId}: " . $e->getMessage());
+            $this->setFlash('error', 'Đã xảy ra lỗi khi xóa thông báo. Vui lòng thử lại sau.');
         }
 
         $this->redirect('/superadmin/internal-messages/sent');

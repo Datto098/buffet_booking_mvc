@@ -167,13 +167,14 @@
                                             </div>
 
                                             <div class="col-md-4 text-end">
-                                                <div class="btn-group-vertical">
+                                                <div class="btn-group-vertical gap-1">
                                                     <a href="<?= SITE_URL ?>/superadmin/internal-messages/view/<?= $message['id'] ?>"
-                                                       class="btn btn-sm btn-outline-primary">
+                                                       class="btn btn-sm btn-outline-primary mb-1">
                                                         <i class="fas fa-eye"></i> Xem chi tiết
                                                     </a>
                                                     <button type="button" class="btn btn-sm btn-outline-danger"
-                                                            onclick="deleteMessage(<?= $message['id'] ?>)">
+                                                            onclick="deleteMessage(<?= $message['id'] ?>)"
+                                                            title="Xóa thông báo">
                                                         <i class="fas fa-trash"></i> Xóa
                                                     </button>
                                                 </div>
@@ -235,10 +236,14 @@
                     <p>Bạn có chắc chắn muốn xóa thông báo này? Hành động này không thể hoàn tác.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <form id="deleteForm" method="POST" style="display: inline;">
-                        <?= csrf_token() ?>
-                        <button type="submit" class="btn btn-danger">Xóa</button>
+                    <form id="deleteForm" method="POST" class="d-flex gap-2 w-100 justify-content-end">
+                        <?= csrf_token_field() ?>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Xác nhận xóa
+                        </button>
                     </form>
                 </div>
             </div>

@@ -873,11 +873,28 @@ class Order extends BaseModel
      */
     public function getTotalRevenue()
     {
-        $sql = "SELECT SUM(total_amount) as total_revenue FROM {$this->table}
-                WHERE status IN ('completed', 'delivered')";
+        $sql = "SELECT SUM(total_amount) FROM {$this->table} WHERE status = 'completed'";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
-        $result = $stmt->fetch();
-        return $result['total_revenue'] ?? 0;
+        return (float)$stmt->fetchColumn();
+    }
+
+    public function getOrdersByTableId($tableId, $limit = 5)
+    {
+        $sql = "SELECT * FROM dine_in_orders WHERE table_id = :table_id ORDER BY created_at DESC";
+
+        if ($limit) {
+            $sql .= " LIMIT :limit";
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':table_id', $tableId, PDO::PARAM_INT);
+
+        if ($limit) {
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

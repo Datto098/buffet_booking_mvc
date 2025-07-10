@@ -44,6 +44,12 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link <?= strpos(
+                    $requestUri, '/admin/dine-in-orders') !== false ? 'active' : '' ?>" href="<?= SITE_URL ?>/admin/dine-in-orders">
+                    <i class="fas fa-concierge-bell me-2"></i> Dine-in Orders
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link <?= strpos($requestUri, '/admin/bookings') !== false ? 'active' : '' ?>" href="<?= SITE_URL ?>/admin/bookings">
                     <i class="fas fa-calendar-check me-2"></i> Bookings
                 </a>

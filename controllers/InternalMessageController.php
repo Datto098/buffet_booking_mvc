@@ -10,7 +10,6 @@ class InternalMessageController extends BaseController {
     private $internalMessageModel;
 
     public function __construct() {
-        parent::__construct();
         $this->internalMessageModel = new InternalMessage();
     }
 
@@ -99,6 +98,9 @@ class InternalMessageController extends BaseController {
         $messageId = $this->internalMessageModel->createMessage($messageData);
 
         if ($messageId) {
+            // Log để debug
+            error_log("Internal message created: ID {$messageId}, Recipients: " . implode(',', $recipients));
+
             $this->setFlash('success', 'Thông báo đã được gửi thành công!');
             $this->redirect('/superadmin/internal-messages/sent');
         } else {
@@ -299,68 +301,124 @@ class InternalMessageController extends BaseController {
 
     /**
      * SSE endpoint để gửi thông báo realtime
+     * Phiên bản tối ưu để cải thiện hiệu năng
      */
     public function sse() {
-        // Set headers cho SSE
-        header('Content-Type: text/event-stream');
-        header('Cache-Control: no-cache');
-        header('Connection: keep-alive');
-        header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Headers: Cache-Control');
+        // Bắt đầu đo thời gian thực thi
+        $startTime = microtime(true);
 
-        // Disable output buffering
-        if (ob_get_level()) ob_end_clean();
+        // Prevent PHP from buffering the output
+        ini_set('output_buffering', 'off');
+        ini_set('zlib.output_compression', 'off');
 
-        // Gửi keep-alive mỗi 30 giây
-        $lastCheck = time();
+        // Ignore client abortions and allow the script to run until completion
+        ignore_user_abort(true);
 
-        while (true) {
-            // Kiểm tra kết nối client
-            if (connection_aborted()) {
-                break;
+        // Start session nếu chưa start
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // Kiểm tra đăng nhập
+        if (!isset($_SESSION['user_id'])) {
+            http_response_code(401);
+            error_log("SSE: Authentication required");
+            exit;
+        }
+
+        // Thiết lập timeout cho script
+        set_time_limit(30); // Giới hạn thời gian chạy tối đa 30 giây
+
+        // Lấy ID kết nối từ tham số truy vấn (để theo dõi)
+        $connectionId = isset($_GET['cid']) ? $_GET['cid'] : uniqid();
+
+        // Ghi log kết nối mới
+        error_log("SSE: New connection {$connectionId} for user {$_SESSION['user_id']}");
+
+        try {
+            // Set headers cho SSE
+            header('Content-Type: text/event-stream');
+            header('Cache-Control: no-cache, no-transform');
+            header('Connection: keep-alive');
+            header('X-Accel-Buffering: no'); // Disable buffering for Nginx
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Headers: Cache-Control');
+
+            // Disable output buffering
+            while (ob_get_level()) {
+                ob_end_clean();
             }
 
+            // Gửi ID kết nối về client để theo dõi
+            echo "data: " . json_encode(['type' => 'connection_id', 'id' => $connectionId]) . "\n\n";
+
+            // Flush ngay lập tức để đảm bảo client nhận được header và connection ID
+            flush();
+
+            // Gửi keep-alive
             $currentTime = time();
+            echo "data: " . json_encode(['type' => 'ping', 'time' => $currentTime]) . "\n\n";
+            flush();
 
-            // Gửi keep-alive mỗi 30 giây
-            if ($currentTime - $lastCheck >= 30) {
-                echo "data: " . json_encode(['type' => 'ping', 'time' => $currentTime]) . "\n\n";
-                $lastCheck = $currentTime;
-            }
+            // Kiểm tra thông báo mới một lần
+            $this->checkNewMessagesOptimized($_SESSION['user_id']);
 
-            // Kiểm tra thông báo mới (mỗi 5 giây)
-            if ($currentTime % 5 == 0) {
-                $this->checkNewMessages();
-            }
+            // Tính thời gian thực thi
+            $executionTime = microtime(true) - $startTime;
+            error_log("SSE: Connection {$connectionId} completed in " . round($executionTime, 3) . "s");
 
             // Flush output
             if (ob_get_level()) ob_flush();
             flush();
 
-            // Sleep 1 giây
-            sleep(1);
+            // Ghi log kết thúc kết nối
+            error_log("SSE: Connection {$connectionId} closed for user {$_SESSION['user_id']}");
+
+        } catch (Exception $e) {
+            error_log("SSE Critical Error: " . $e->getMessage());
+
+            // Thử gửi thông báo lỗi về client
+            try {
+                echo "data: " . json_encode([
+                    'type' => 'error',
+                    'message' => 'Server error encountered',
+                    'error_id' => uniqid()
+                ]) . "\n\n";
+                flush();
+            } catch (Exception $innerException) {
+                error_log("SSE Error: Failed to send error message: " . $innerException->getMessage());
+            }
         }
+
+        // Kết thúc kết nối sớm để tránh chiếm tài nguyên server
+        // Client sẽ tự động kết nối lại
+        exit;
     }
 
     /**
-     * Kiểm tra và gửi thông báo mới
+     * Kiểm tra và gửi thông báo mới - Phiên bản cũ
      */
-    private function checkNewMessages() {
+    private function checkNewMessages($userId) {
         try {
-            // Lấy thông báo mới trong 5 giây qua
+            // Lấy thông báo mới trong 30 giây qua cho user hiện tại
             $sql = "SELECT im.*, imr.recipient_id, imr.is_read,
                            CONCAT(u.first_name, ' ', u.last_name) as sender_name
                     FROM internal_messages im
                     INNER JOIN internal_message_recipients imr ON im.id = imr.message_id
                     INNER JOIN users u ON im.sender_id = u.id
-                    WHERE im.created_at >= DATE_SUB(NOW(), INTERVAL 5 SECOND)
+                    WHERE imr.recipient_id = :user_id
+                    AND im.created_at >= DATE_SUB(NOW(), INTERVAL 30 SECOND)
+                    AND imr.is_read = 0
                     ORDER BY im.created_at DESC";
 
             $stmt = $this->internalMessageModel->getDb()->prepare($sql);
+            $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
             $stmt->execute();
             $newMessages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             if (!empty($newMessages)) {
+                error_log("SSE: Found " . count($newMessages) . " new messages for user {$userId}");
+
                 foreach ($newMessages as $message) {
                     $data = [
                         'type' => 'new_message',
@@ -380,6 +438,8 @@ class InternalMessageController extends BaseController {
 
                     if (ob_get_level()) ob_flush();
                     flush();
+
+                    error_log("SSE: Sent message ID {$message['id']} to user {$userId}");
                 }
             }
         } catch (Exception $e) {
@@ -388,16 +448,106 @@ class InternalMessageController extends BaseController {
     }
 
     /**
+     * Kiểm tra và gửi thông báo mới - Phiên bản tối ưu
+     */
+    private function checkNewMessagesOptimized($userId) {
+        try {
+            // Lấy thông báo mới trong 120 giây qua cho user hiện tại
+            // Sử dụng LIMIT để đảm bảo không trả về quá nhiều kết quả
+            // Đã thêm trường content nhưng chỉ lấy đoạn đầu để hiển thị trong thông báo
+            $sql = "SELECT im.id, im.title, LEFT(im.content, 100) as content, im.message_type,
+                          im.priority, im.created_at, imr.recipient_id,
+                          CONCAT(u.first_name, ' ', u.last_name) as sender_name
+                    FROM internal_messages im
+                    INNER JOIN internal_message_recipients imr ON im.id = imr.message_id
+                    INNER JOIN users u ON im.sender_id = u.id
+                    WHERE imr.recipient_id = :user_id
+                    AND im.created_at >= DATE_SUB(NOW(), INTERVAL 120 SECOND)
+                    AND imr.is_read = 0
+                    ORDER BY im.created_at DESC
+                    LIMIT 5";
+
+            $stmt = $this->internalMessageModel->getDb()->prepare($sql);
+            $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+            $stmt->execute();
+            $newMessages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!empty($newMessages)) {
+                // Gộp tất cả thông báo vào một response để giảm số lần gửi dữ liệu
+                $data = [
+                    'type' => 'new_messages',
+                    'messages' => array_map(function($message) {
+                        return [
+                            'id' => $message['id'],
+                            'title' => $message['title'],
+                            'content' => $message['content'] . (strlen($message['content']) >= 100 ? '...' : ''),
+                            'sender_name' => $message['sender_name'],
+                            'message_type' => $message['message_type'],
+                            'priority' => $message['priority'],
+                            'created_at' => $message['created_at'],
+                            'recipient_id' => $message['recipient_id']
+                        ];
+                    }, $newMessages),
+                    'count' => count($newMessages)
+                ];
+
+                echo "data: " . json_encode($data) . "\n\n";
+
+                if (ob_get_level()) ob_flush();
+                flush();
+
+                // Ghi log để theo dõi
+                error_log("SSE: Sent " . count($newMessages) . " new messages to user {$userId}");
+            }
+        } catch (Exception $e) {
+            error_log("SSE Error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Hiển thị danh sách thông báo nội bộ (Admin)
+     * Phiên bản tối ưu để cải thiện tốc độ tải
+     */
+    public function internalMessages() {
+        $this->requireAdmin();
+
+        // Lấy tham số và cài đặt giá trị mặc định
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = isset($_GET['limit']) ? min((int)$_GET['limit'], 50) : 10; // Giới hạn tối đa 50 item mỗi trang
+        $offset = ($page - 1) * $limit;
+
+        // Cải thiện hiệu năng bằng việc phân tách các query
+        // 1. Chỉ lấy số lượng unread messages (nhẹ hơn việc đếm toàn bộ)
+        $unreadCount = $this->internalMessageModel->getUnreadCount($_SESSION['user_id']);
+
+        // 2. Chỉ lấy các cột cần thiết và dùng LIMIT để giới hạn số lượng record
+        $messages = $this->internalMessageModel->getReceivedMessagesOptimized($_SESSION['user_id'], $limit, $offset);
+
+        // 3. Đánh dấu trạng thái đã tải
+        $cacheKey = "internal_messages_loaded_{$_SESSION['user_id']}";
+        $_SESSION[$cacheKey] = time();
+
+        // Load view
+        $this->loadAdminView('internal_messages/received', [
+            'messages' => $messages,
+            'unreadCount' => $unreadCount,
+            'page' => $page,
+            'limit' => $limit,
+            'page_title' => 'Thông Báo Nội Bộ'
+        ]);
+    }
+
+    /**
      * API endpoint để đánh dấu đã đọc (cho AJAX)
      */
     public function markAsReadAjax() {
-        if (!isset($_SESSION['user']['id'])) {
+        if (!isset($_SESSION['user_id'])) {
             http_response_code(401);
             echo json_encode(['error' => 'Unauthorized']);
             return;
         }
 
-        $userId = $_SESSION['user']['id'];
+        $userId = $_SESSION['user_id'];
         $messageId = $_POST['message_id'] ?? null;
 
         if (!$messageId) {

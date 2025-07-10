@@ -57,59 +57,22 @@
     </footer>
 
     <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo SITE_URL; ?>/assets/js/luxury-effects.js"></script>
     <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>
-    </body>
 
-    </html>
-    </div>
-    <div class="col-md-6 text-end">
-        <a href="#" class="text-light me-3">Chính Sách Bảo Mật</a>
-        <a href="#" class="text-light">Điều Khoản Dịch Vụ</a>
-    </div>
-    </div>
-    </div>
-    </footer> <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Luxury Smooth Scrolling -->
-    <script src="<?php echo SITE_URL; ?>/assets/js/luxury-scroll.js"></script>
-    <!-- Custom JS -->
-    <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script> <!-- CSRF Token for AJAX requests -->
+    <!-- CSRF Token for AJAX requests -->
     <script>
         window.csrfToken = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
         window.siteUrl = '<?php echo SITE_URL; ?>';
+        window.SITE_URL = '<?php echo SITE_URL; ?>';
         <?php
         // Only generate token if none exists and we're not overwriting existing one
         if (!isset($_SESSION['csrf_token']) || empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = generateCSRFToken();
         }
         ?>
-    </script>
-    <script>
-document.addEventListener('DOMContentLoaded', function() {
-const heroImages = [
-    '<?php echo SITE_URL; ?>/assets/images/nha-hang-buffet-2.png',
-    '<?php echo SITE_URL; ?>/assets/images/nha-hang-buffet.jpg',
-];
-let currentHero = 0;
-const heroBg = document.getElementById('hero-bg');
-function setHeroBg(idx) {
-    heroBg.style.backgroundImage = 'url(' + heroImages[idx] + ')';
-}
-setHeroBg(currentHero);
-setInterval(() => {
-    currentHero = (currentHero + 1) % heroImages.length;
-    setHeroBg(currentHero);
-}, 3000); 
-console.log('heroBg:', heroBg);
-console.log('heroImages:', heroImages);
-setHeroBg(currentHero);
-console.log('Set background:', heroImages[currentHero]);
-});
 </script>
     </body>
-
     </html>

@@ -193,5 +193,33 @@ class Table extends BaseModel {
         $stmt->execute();
         return $stmt->fetch() ?: null;
     }
+
+    /**
+     * Get table by ID
+     * @param int $id Table ID
+     * @return array|null Table record or null if not found
+     */
+    public function getTableById($id) {
+        return $this->findByField('id', $id);
+    }
+
+    /**
+     * Get table by table number
+     * @param string|int $tableNumber Table number
+     * @return array|null Table record or null if not found
+     */
+    public function getTableByNumber($tableNumber) {
+        return $this->findByField('table_number', $tableNumber);
+    }
+
+    /**
+     * Update table status
+     * @param int $tableId Table ID
+     * @param string $status New status
+     * @return bool Success status
+     */
+    public function updateTableStatus($tableId, $status) {
+        return $this->updateTable($tableId, ['is_available' => $status === 'available' ? 1 : 0]);
+    }
 }
 ?>

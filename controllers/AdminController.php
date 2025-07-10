@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+
 require_once 'BaseController.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Food.php';
@@ -41,16 +43,31 @@ class AdminController extends BaseController
         $this->loadAdminView('dashboard', $data);
     }
 
-    public function dashboardStats()
-    {
-        header('Content-Type: application/json');
+    public function dashboardStats() {
+        try {
+            $pdo = $this->getDatabase();
 
-        $stats = $this->getDashboardStats();
+            // Lấy thống kê cơ bản
+            $stats = [
+                'total_orders' => $this->getTotalOrders($pdo),
+                'monthly_revenue' => $this->getMonthlyRevenue($pdo),
+                'active_bookings' => $this->getActiveBookings($pdo),
+                'total_users' => $this->getTotalUsers($pdo),
+                'confirmed_bookings' => $this->getBookingCountByStatus($pdo, 'confirmed'),
+                'pending_bookings' => $this->getBookingCountByStatus($pdo, 'pending'),
+                'cancelled_bookings' => $this->getBookingCountByStatus($pdo, 'cancelled'),
+                'recent_orders' => $this->getRecentOrders($pdo),
+                'recent_bookings' => $this->getRecentBookings($pdo),
+                'booking_trend_data' => BookingTrendHelper::getBookingTrendData($pdo)
+            ];
 
-        echo json_encode([
-            'success' => true,
-            'stats' => $stats
-        ]);
+            header('Content-Type: application/json');
+            echo json_encode($stats);
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
     }
     public function users()
     {
@@ -629,6 +646,13 @@ class AdminController extends BaseController
         $confirmedBookings = $bookingModel->count('confirmed');
         $pendingBookings = $bookingModel->count('pending');
         $todayBookings = $bookingModel->getTodayCount();
+
+        // Generate CSRF token and ensure it's set in the session
+        $csrfToken = $this->generateCSRF();
+
+        // Log the CSRF token (for debugging only)
+        error_log("Generated CSRF token for bookings page: " . $csrfToken);
+
         $data = [
             'title' => 'Booking Management',
             'bookings' => $bookings,
@@ -640,7 +664,7 @@ class AdminController extends BaseController
             'pendingBookings' => $pendingBookings,
             'todayBookings' => $todayBookings,
             'upcomingBookings' => count($bookingModel->getUpcomingBookings()),
-            'csrf_token' => $this->generateCSRF()
+            'csrf_token' => $csrfToken
         ];
 
         $this->loadAdminView('bookings/index', $data);
@@ -746,21 +770,123 @@ class AdminController extends BaseController
             return;
         }
 
-        if (!$this->validateCSRF()) {
+        // Check CSRF token from multiple possible sources
+        $token = null;
+
+        // Check for CSRF token in headers
+        $headers = getallheaders();
+        if (isset($headers['X-CSRF-Token'])) {
+            $token = $headers['X-CSRF-Token'];
+        } elseif (isset($headers['x-csrf-token'])) {
+            $token = $headers['x-csrf-token'];
+        }
+
+        // Log headers for debugging
+        error_log("Request headers: " . json_encode($headers));
+
+        // Also check for token in request body
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (!$token && isset($input['csrf_token'])) {
+            $token = $input['csrf_token'];
+        }
+
+        // Validate the token
+        if (!$this->validateCSRFToken($token)) {
+            error_log("CSRF validation failed in assignTable");
             echo json_encode(['success' => false, 'message' => 'Invalid security token']);
             return;
         }
 
-        $input = json_decode(file_get_contents('php://input'), true);
-        $bookingId = (int)$input['booking_id'];
-        $tableId = (int)$input['table_id'];
+        // Parse JSON input if not already parsed
+        if (!$input) {
+            $input = json_decode(file_get_contents('php://input'), true);
+        }
+
+        // Get and validate booking ID and table ID
+        $bookingId = (int)($input['booking_id'] ?? 0);
+        $tableId = (int)($input['table_id'] ?? 0);
+        $notes = $input['notes'] ?? '';
+
+        if (!$bookingId || !$tableId) {
+            echo json_encode(['success' => false, 'message' => 'Invalid booking or table ID']);
+            return;
+        }
+
+        // Log for debugging
+        error_log("Assigning table ID $tableId to booking ID $bookingId");
 
         $bookingModel = new Booking();
-        if ($bookingModel->assignTable($bookingId, $tableId)) {
-            echo json_encode(['success' => true, 'message' => 'Table assigned successfully']);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to assign table']);
+        $tableModel = new Table();
+
+        // Get database connection from model
+        $db = $bookingModel->getDb();
+
+        // Use a transaction if the database connection supports it
+        $useTransaction = ($db && method_exists($db, 'beginTransaction'));
+
+        if ($useTransaction) {
+            $db->beginTransaction();
         }
+
+        try {
+            // Assign table to booking
+            if ($bookingModel->assignTable($bookingId, $tableId)) {
+                // Update table availability to 0 (unavailable)
+                if ($tableModel->updateTableStatus($tableId, 'unavailable')) {
+                    // If there are notes, update the booking with admin_notes
+                    if (!empty($notes)) {
+                        $bookingModel->updateBooking($bookingId, ['admin_notes' => $notes]);
+                    }
+
+                    // Update booking status to confirmed if it's pending
+                    $booking = $bookingModel->getBookingDetails($bookingId);
+                    if ($booking && $booking['status'] === 'pending') {
+                        $bookingModel->updateStatus($bookingId, 'confirmed');
+                    }
+
+                    // Commit the transaction if using one
+                    if ($useTransaction) {
+                        $db->commit();
+                    }
+
+                    echo json_encode(['success' => true, 'message' => 'Table assigned successfully']);
+                } else {
+                    // Failed to update table status
+                    if ($useTransaction) {
+                        $db->rollBack();
+                    }
+                    error_log("Failed to update table status for table ID $tableId");
+                    echo json_encode(['success' => false, 'message' => 'Failed to update table status']);
+                }
+            } else {
+                // Failed to assign table
+                if ($useTransaction) {
+                    $db->rollBack();
+                }
+                error_log("Failed to assign table ID $tableId to booking ID $bookingId");
+                echo json_encode(['success' => false, 'message' => 'Failed to assign table to booking']);
+            }
+        } catch (Exception $e) {
+            // Log any exceptions and roll back
+            if ($useTransaction) {
+                $db->rollBack();
+            }
+            error_log("Exception in assignTable: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'An error occurred while processing your request']);
+        }
+    }
+
+    // Helper method to validate CSRF token from header
+    private function validateCSRFToken($token) {
+        // For debugging
+        error_log("Validating CSRF token: " . ($token ?? 'null') . " against session token: " . ($_SESSION['csrf_token'] ?? 'null'));
+
+        if (empty($token)) {
+            return false;
+        }
+
+        // Use hash_equals for secure comparison
+        return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
     }
 
     public function getBookingDetails($id)
@@ -807,16 +933,34 @@ class AdminController extends BaseController
 
     public function getAvailableTables()
     {
+        $bookingModel = new Booking();
+        $bookingId = $_GET['booking_id'] ?? null;
         $reservationTime = $_GET['reservation_time'] ?? '';
         $numberOfGuests = (int)($_GET['number_of_guests'] ?? 1);
+
+        // If we have a booking ID but no reservation time or number of guests,
+        // retrieve the booking details to get those values
+        if (!empty($bookingId) && (empty($reservationTime) || $numberOfGuests <= 1)) {
+            // Passing null as userId since this is an admin request
+            $booking = $bookingModel->getBookingDetails($bookingId, null);
+            if ($booking) {
+                $reservationTime = $booking['reservation_time'] ?? '';
+                $numberOfGuests = (int)($booking['number_of_guests'] ?? 1);
+
+                // Log for debugging
+                error_log("Using data from booking #$bookingId: time=$reservationTime, guests=$numberOfGuests");
+            } else {
+                error_log("No booking found with ID: $bookingId");
+            }
+        }
 
         if (empty($reservationTime)) {
             echo json_encode(['success' => false, 'message' => 'Reservation time is required']);
             return;
         }
 
-        $bookingModel = new Booking();
         $availableTables = $bookingModel->getAvailableTables($reservationTime, $numberOfGuests);
+        error_log("Found " . count($availableTables) . " available tables for time: $reservationTime, guests: $numberOfGuests");
 
         echo json_encode(['success' => true, 'tables' => $availableTables]);
     }
@@ -1958,6 +2102,8 @@ class AdminController extends BaseController
                         <td><strong>Trạng Thái:</strong></td>
                         <td>
                             <?php
+require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+
                             $statusClass = [
                                 'pending' => 'warning',
                                 'completed' => 'success',
@@ -1975,7 +2121,9 @@ class AdminController extends BaseController
             </div>
             <div class="col-md-6">
                 <h6>Thông Tin Đơn Hàng</h6>
-                <?php if ($order): ?>
+                <?php
+require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+ if ($order): ?>
                     <table class="table table-sm">
                         <tr>
                             <td><strong>Mã Đơn Hàng:</strong></td>
@@ -2002,19 +2150,29 @@ class AdminController extends BaseController
                             <td><?= ucfirst($order['status']) ?></td>
                         </tr>
                     </table>
-                <?php else: ?>
+                <?php
+require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+ else: ?>
                     <p class="text-muted">Không tìm thấy thông tin đơn hàng</p>
-                <?php endif; ?>
+                <?php
+require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+ endif; ?>
             </div>
         </div>
 
-        <?php if (!empty($payment['payment_data'])): ?>
+        <?php
+require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+ if (!empty($payment['payment_data'])): ?>
             <div class="mt-3">
                 <h6>Dữ Liệu Raw VNPay</h6>
                 <pre class="bg-light p-3 rounded small"><?= htmlspecialchars(json_encode(json_decode($payment['payment_data']), JSON_PRETTY_PRINT)) ?></pre>
             </div>
-        <?php endif; ?>
+        <?php
+require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+ endif; ?>
 <?php
+require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+
         return ob_get_clean();
     }
 
@@ -2147,6 +2305,9 @@ class AdminController extends BaseController
         $recentOrders = $orderModel->getRecentOrdersWithCustomer(5);
         $recentBookings = $bookingModel->getRecentBookingsWithCustomer(5);
 
+        // Lấy kết nối PDO trực tiếp
+        $pdoBooking = new \PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASS);
+
         return [
             'total_users' => $totalUsers,
             'total_foods' => $foodModel->count(),
@@ -2161,6 +2322,7 @@ class AdminController extends BaseController
             'today_revenue' => $orderStats['today_revenue'],
             'monthly_revenue' => $monthlyRevenue,
             'monthly_revenue_data' => $monthlyRevenueData,
+            'booking_trend_data' => BookingTrendHelper::getBookingTrendData($pdoBooking),
             'recent_orders' => $recentOrders,
             'recent_bookings' => $recentBookings
         ];

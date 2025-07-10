@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Test SSE Connection</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				max-width: 800px;
+				margin: 0 auto;
+				padding: 20px;
+			}
+			.status {
+				padding: 10px;
+				margin: 10px 0;
+				border-radius: 5px;
+			}
+			.connected {
+				background: #d4edda;
+				color: #155724;
+			}
+			.disconnected {
+				background: #f8d7da;
+				color: #721c24;
+			}
+			.message {
+				background: #d1ecf1;
+				color: #0c5460;
+			}
+			.error {
+				background: #f8d7da;
+				color: #721c24;
+			}
+			#messages {
+				height: 400px;
+				overflow-y: auto;
+				border: 1px solid #ddd;
+				padding: 10px;
+				background: #f8f9fa;
+			}
+			.message-item {
+				margin: 5px 0;
+				padding: 5px;
+				border-left: 3px solid #007bff;
+				background: white;
+			}
+			button {
+				padding: 10px 20px;
+				margin: 5px;
+				border: none;
+				border-radius: 5px;
+				cursor: pointer;
+			}
+			.connect {
+				background: #28a745;
+				color: white;
+			}
+			.disconnect {
+				background: #dc3545;
+				color: white;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>🧪 Test SSE Connection</h1>
+
+		<div id="status" class="status disconnected">❌ Disconnected</div>
+
+		<div>
+			<button class="connect" onclick="connectSSE()">Connect SSE</button>
+			<button class="disconnect" onclick="disconnectSSE()">
+				Disconnect SSE
+			</button>
+			<button onclick="clearMessages()">Clear Messages</button>
+		</div>
+
+		<h3>Messages:</h3>
+		<div id="messages"></div>
+
+		<h3>Test Instructions:</h3>
+		<ol>
+			<li>Đăng nhập vào Admin hoặc Super Admin trong tab khác</li>
+			<li>Click "Connect SSE" để kết nối</li>
+			<li>Gửi thông báo từ tab khác</li>
+			<li>Xem thông báo xuất hiện ở đây</li>
+		</ol>
+
+		<script>
+			let eventSource = null;
+			let isConnected = false;
+
+			function updateStatus(message, type = 'disconnected') {
+				const status = document.getElementById('status');
+				status.textContent = message;
+				status.className = `status ${type}`;
+			}
+
+			function addMessage(message, type = 'message') {
+				const messages = document.getElementById('messages');
+				const messageDiv = document.createElement('div');
+				messageDiv.className = `message-item ${type}`;
+				messageDiv.innerHTML = `
+                <strong>${new Date().toLocaleTimeString()}</strong>: ${message}
+            `;
+				messages.appendChild(messageDiv);
+				messages.scrollTop = messages.scrollHeight;
+			}
+
+			function connectSSE() {
+				if (isConnected) {
+					addMessage('Already connected!', 'error');
+					return;
+				}
+
+				// Xác định role để chọn endpoint phù hợp
+				const isSuperAdmin =
+					window.location.pathname.includes('/superadmin/');
+				const sseUrl = isSuperAdmin
+					? '/superadmin/internal-messages/sse'
+					: '/admin/internal-messages/sse';
+
+				addMessage(`Connecting to: ${sseUrl}`, 'message');
+
+				try {
+					eventSource = new EventSource(sseUrl);
+
+					eventSource.onopen = () => {
+						isConnected = true;
+						updateStatus('✅ Connected to SSE', 'connected');
+						addMessage('SSE connection established', 'connected');
+					};
+
+					eventSource.onmessage = (event) => {
+						try {
+							const data = JSON.parse(event.data);
+							addMessage(
+								`Received: ${JSON.stringify(data, null, 2)}`,
+								'message'
+							);
+						} catch (error) {
+							addMessage(
+								`Error parsing message: ${error.message}`,
+								'error'
+							);
+						}
+					};
+
+					eventSource.onerror = (error) => {
+						isConnected = false;
+						updateStatus('❌ SSE Error', 'disconnected');
+						addMessage(`SSE Error: ${error}`, 'error');
+					};
+				} catch (error) {
+					addMessage(
+						`Error creating EventSource: ${error.message}`,
+						'error'
+					);
+				}
+			}
+
+			function disconnectSSE() {
+				if (eventSource) {
+					eventSource.close();
+					eventSource = null;
+				}
+				isConnected = false;
+				updateStatus('❌ Disconnected', 'disconnected');
+				addMessage('SSE disconnected', 'disconnected');
+			}
+
+			function clearMessages() {
+				document.getElementById('messages').innerHTML = '';
+			}
+
+			// Auto-connect when page loads
+			window.addEventListener('load', () => {
+				addMessage(
+					'Page loaded. Click "Connect SSE" to start testing.',
+					'message'
+				);
+			});
+
+			// Cleanup when page unloads
+			window.addEventListener('beforeunload', () => {
+				if (eventSource) {
+					eventSource.close();
+				}
+			});
+		</script>
+	</body>
+</html>

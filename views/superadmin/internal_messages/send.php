@@ -3,36 +3,6 @@
 
 <div class="main-content fade-in">
     <div class="container-fluid">
-        <style>
-            .message-type-badge {
-                font-size: 0.8rem;
-                padding: 0.25rem 0.5rem;
-            }
-            .priority-badge {
-                font-size: 0.8rem;
-                padding: 0.25rem 0.5rem;
-            }
-            .recipient-item {
-                background: #f8f9fa;
-                border: 1px solid #dee2e6;
-                border-radius: 0.375rem;
-                padding: 0.5rem;
-                margin: 0.25rem;
-                display: inline-block;
-            }
-            .recipient-item .remove-recipient {
-                color: #dc3545;
-                cursor: pointer;
-                margin-left: 0.5rem;
-            }
-            .file-preview {
-                max-width: 200px;
-                max-height: 200px;
-                border: 1px solid #dee2e6;
-                border-radius: 0.375rem;
-            }
-        </style>
-
         <!-- Page Header -->
         <div class="page-header">
             <div class="d-flex justify-content-between align-items-center">
@@ -70,7 +40,7 @@
                             </div>
                             <div class="card-body">
                                 <form action="<?= SITE_URL ?>/superadmin/internal-messages/process" method="POST" enctype="multipart/form-data">
-                                    <?= csrf_token() ?>
+                                    <?= csrf_token_field() ?>
 
                                     <div class="row">
                                         <div class="col-md-8">

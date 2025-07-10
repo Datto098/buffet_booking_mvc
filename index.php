@@ -11,6 +11,7 @@ error_reporting(E_ALL);
 session_start();
 
 require_once 'config/config.php';
+require_once 'helpers/functions.php';
 
 // Get the current URI and remove query string
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -112,11 +113,11 @@ function routeRequest($segments)
 
 function handleAdminRoute($segments)
 {
-    // Debug logging for admin authentication
-    file_put_contents('debug.log', "handleAdminRoute called with segments: " . print_r($segments, true) . "\n", FILE_APPEND);
-    file_put_contents('debug.log', "Session user_id: " . ($_SESSION['user_id'] ?? 'not set') . "\n", FILE_APPEND);
-    file_put_contents('debug.log', "Session user_role: " . ($_SESSION['user_role'] ?? 'not set') . "\n", FILE_APPEND);
-    file_put_contents('debug.log', "Role check result: " . (in_array($_SESSION['user_role'] ?? '', ['manager', 'super_admin']) ? 'pass' : 'fail') . "\n", FILE_APPEND);
+    // Debug logging for admin authentication (tạm thời tắt)
+    // file_put_contents('debug.log', "handleAdminRoute called with segments: " . print_r($segments, true) . "\n", FILE_APPEND);
+    // file_put_contents('debug.log', "Session user_id: " . ($_SESSION['user_id'] ?? 'not set') . "\n", FILE_APPEND);
+    // file_put_contents('debug.log', "Session user_role: " . ($_SESSION['user_role'] ?? 'not set') . "\n", FILE_APPEND);
+    // file_put_contents('debug.log', "Role check result: " . (in_array($_SESSION['user_role'] ?? '', ['manager', 'super_admin']) ? 'pass' : 'fail') . "\n", FILE_APPEND);
       // Require admin authentication - check both possible session structures
     $isAuthenticated = false;
     $userRole = null;
@@ -133,15 +134,15 @@ function handleAdminRoute($segments)
         $isAuthenticated = in_array($userRole, ['manager', 'super_admin', 'admin']);
     }
 
-    file_put_contents('debug.log', "Authentication check - role: $userRole, authenticated: " . ($isAuthenticated ? 'yes' : 'no') . "\n", FILE_APPEND);
+    // file_put_contents('debug.log', "Authentication check - role: $userRole, authenticated: " . ($isAuthenticated ? 'yes' : 'no') . "\n", FILE_APPEND);
 
     if (!$isAuthenticated) {
-        file_put_contents('debug.log', "Admin authentication failed - redirecting to login\n", FILE_APPEND);
+        // file_put_contents('debug.log', "Admin authentication failed - redirecting to login\n", FILE_APPEND);
         header('Location: ' . SITE_URL . '/auth/login');
         exit;
     }
 
-    file_put_contents('debug.log', "Admin authentication passed - proceeding with routing\n", FILE_APPEND);
+    // file_put_contents('debug.log', "Admin authentication passed - proceeding with routing\n", FILE_APPEND);
 
     require_once 'controllers/AdminController.php';
     $controller = new AdminController();
@@ -189,7 +190,13 @@ function handleAdminRoute($segments)
             handleAdminLogsRoute($controller, $action, $param);
             break;
         case 'internal-messages':
-            handleAdminInternalMessagesRoute($controller, $action, $param);
+            // Sử dụng InternalMessageController cho internal-messages
+            require_once 'controllers/InternalMessageController.php';
+            $internalMessageController = new InternalMessageController();
+            handleAdminInternalMessagesRoute($internalMessageController, $action, $param);
+            break;
+        case 'dine-in-orders':
+            handleAdminDineInOrdersRoute($controller, $action, $param);
             break;
         default:
             $controller->dashboard();    }
@@ -263,7 +270,10 @@ function handleSuperAdminRoute($segments)
             handleSuperAdminNotificationsRoute($controller, $action, $param);
             break;
         case 'internal-messages':
-            handleSuperAdminInternalMessagesRoute($controller, $action, $param);
+            // Sử dụng InternalMessageController cho internal-messages
+            require_once 'controllers/InternalMessageController.php';
+            $internalMessageController = new InternalMessageController();
+            handleSuperAdminInternalMessagesRoute($internalMessageController, $action, $param);
             break;
         case 'statistics':
             $controller->statistics();
@@ -442,19 +452,19 @@ function handleSuperAdminInternalMessagesRoute($controller, $action, $param)
 {
     switch ($action) {
         case 'send':
-            $controller->sendInternalMessage();
+            $controller->sendMessage();
             break;
         case 'process':
-            $controller->processInternalMessage();
+            $controller->processSendMessage();
             break;
         case 'sent':
-            $controller->sentInternalMessages();
+            $controller->sentMessages();
             break;
         case 'view':
-            $controller->viewInternalMessage($param);
+            $controller->viewMessage($param);
             break;
         case 'delete':
-            $controller->deleteInternalMessage($param);
+            $controller->deleteMessage($param);
             break;
         case 'sse':
             $controller->sse();
@@ -466,7 +476,7 @@ function handleSuperAdminInternalMessagesRoute($controller, $action, $param)
             $controller->markAsReadAjax();
             break;
         default:
-            $controller->sendInternalMessage();
+            $controller->sendMessage();
     }
 }
 
@@ -695,13 +705,10 @@ function handleAdminInternalMessagesRoute($controller, $action, $param)
 {
     switch ($action) {
         case 'view':
-            $controller->viewInternalMessage($param);
+            $controller->viewMessage($param);
             break;
         case 'download-attachment':
-            $controller->downloadInternalMessageAttachment($param);
-            break;
-        case 'unread-count':
-            $controller->getUnreadInternalMessageCount();
+            $controller->downloadAttachment($param);
             break;
         case 'sse':
             $controller->sse();
@@ -714,6 +721,23 @@ function handleAdminInternalMessagesRoute($controller, $action, $param)
             break;
         default:
             $controller->internalMessages();
+    }
+}
+
+function handleAdminDineInOrdersRoute($controller, $action, $param)
+{
+    require_once 'controllers/DineInOrderAdminController.php';
+    $dineInOrderAdmin = new DineInOrderAdminController();
+    switch ($action) {
+        case 'view':
+            $dineInOrderAdmin->view();
+            break;
+        case 'update-status':
+            $dineInOrderAdmin->updateStatus();
+            break;
+        default:
+            $dineInOrderAdmin->index();
+            break;
     }
 }
 
@@ -870,14 +894,16 @@ function handleCustomerRoute($page, $action, $param)
         'about' => 'controllers/HomeController.php',
         'promotions' => 'controllers/HomeController.php',
         'menu' => 'controllers/FoodController.php',
-        'food' => 'controllers/FoodController.php',        'cart' => 'controllers/CartController.php',
+        'food' => 'controllers/FoodController.php',
+        'cart' => 'controllers/CartController.php',
         'order' => 'controllers/OrderController.php',
         'payment' => 'controllers/PaymentController.php',
         'booking' => 'controllers/BookingController.php',
         'user' => 'controllers/UserController.php',
         'auth' => 'controllers/AuthController.php',
         'news' => 'controllers/NewsController.php',
-         'review' => 'controllers/ReviewController.php'
+        'review' => 'controllers/ReviewController.php',
+        'dine-in' => 'controllers/DineInController.php'
     ];
 
     if (!isset($routes[$page])) {
@@ -899,6 +925,7 @@ function handleCustomerRoute($page, $action, $param)
         'promotions' => 'HomeController',
         'menu' => 'FoodController',
         'food' => 'FoodController',
+        'dine-in' => 'DineInController',
     ];
 
     $controllerClass = isset($controllerMap[$page]) ? $controllerMap[$page] : ucfirst($page) . 'Controller';
@@ -920,6 +947,31 @@ function handleCustomerRoute($page, $action, $param)
     } elseif ($action === 'forgot-password' || $action === 'forgotPassword') {
         $controller->forgotPassword();
         exit;
+    } elseif ($page === 'dine-in') {
+        // Handle dine-in specific routes
+        switch ($action) {
+            case 'add-to-cart':
+                $controller->addToCart();
+                break;
+            case 'get-cart':
+                $controller->getCart();
+                break;
+            case 'update-cart-item':
+                $controller->updateCartItem();
+                break;
+            case 'clear-cart':
+                $controller->clearCart();
+                break;
+            case 'submit-order':
+                $controller->submitOrder();
+                break;
+            case 'get-order-status':
+                $controller->getOrderStatus();
+                break;
+            default:
+                $controller->index();
+                break;
+        }
     } elseif ($page === 'about' && method_exists($controller, 'about')) {
         $controller->about();
     } elseif ($page === 'promotions' && method_exists($controller, 'promotions')) {

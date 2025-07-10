@@ -3,32 +3,6 @@
 
 <div class="main-content fade-in">
     <div class="container-fluid">
-        <style>
-            .message-type-badge {
-                font-size: 0.9rem;
-                padding: 0.5rem 1rem;
-            }
-            .priority-badge {
-                font-size: 0.9rem;
-                padding: 0.5rem 1rem;
-            }
-            .recipient-item {
-                background: #f8f9fa;
-                border: 1px solid #dee2e6;
-                border-radius: 0.375rem;
-                padding: 0.75rem;
-                margin: 0.25rem;
-                display: inline-block;
-            }
-            .content-box {
-                background: #f8f9fa;
-                border: 1px solid #dee2e6;
-                border-radius: 0.5rem;
-                padding: 1.5rem;
-                margin: 1rem 0;
-            }
-        </style>
-
         <!-- Page Header -->
         <div class="page-header">
             <div class="d-flex justify-content-between align-items-center">

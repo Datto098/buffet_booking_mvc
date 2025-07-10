@@ -3,6 +3,9 @@
  * Base Controller Class
  */
 
+// Include configuration
+require_once __DIR__ . '/../config/config.php';
+
 class BaseController {
     protected function loadView($view, $data = []) {
         // Extract variables from data array
@@ -18,7 +21,8 @@ class BaseController {
 
         // Include footer
         include 'views/layouts/footer.php';
-    }    protected function loadAdminView($view, $data = []) {
+    }
+    protected function loadAdminView($view, $data = []) {
         // Extract variables from data array
         if (!empty($data)) {
             extract($data);
@@ -30,8 +34,8 @@ class BaseController {
         // Include admin sidebar
         include 'views/admin/layouts/sidebar.php';
 
-        // Start main content area
-        echo '<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">';
+        // Start main content area with reduced left margin
+        echo '<main class="col-md-9 ms-sm-auto col-lg-10 px-md-2">';
 
         // Include the specific view
         include "views/admin/$view.php";
@@ -59,21 +63,24 @@ class BaseController {
         include 'views/layouts/superadmin_footer.php';
     }    protected function requireLogin() {
         if (!isLoggedIn()) {
-            redirect('/auth/login');
+            redirect(SITE_URL . '/auth/login');
         }
     }
 
     protected function requireAdmin() {
         $this->requireLogin();
         if (!isAdmin() && !isManager()) {
-            redirect('/index.php');
+            redirect(SITE_URL . '/index.php');
         }
     }
 
     protected function requireSuperAdmin() {
         $this->requireLogin();
-        if (!isAdmin()) {
-            redirect('/index.php');
+
+        // Kiểm tra role cụ thể cho super_admin
+        if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'super_admin') {
+            error_log("requireSuperAdmin failed - user_role: " . ($_SESSION['user_role'] ?? 'not set'));
+            $this->redirect('/auth/login');
         }
     }
 

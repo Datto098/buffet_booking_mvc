@@ -12,6 +12,11 @@ class InternalMessage extends BaseModel {
      */
     public function createMessage($data) {
         try {
+            // Ensure tables exist before proceeding
+            $this->ensureTables();
+
+            error_log("Creating internal message with data: " . print_r($data, true));
+
             $this->db->beginTransaction();
 
             // Tạo thông báo chính
@@ -26,23 +31,41 @@ class InternalMessage extends BaseModel {
                 'is_broadcast' => $data['is_broadcast'] ?? 0
             ];
 
+            error_log("Prepared message data: " . print_r($messageData, true));
+
             $sql = "INSERT INTO {$this->table} (sender_id, title, content, attachment_path, attachment_name, message_type, priority, is_broadcast)
                     VALUES (:sender_id, :title, :content, :attachment_path, :attachment_name, :message_type, :priority, :is_broadcast)";
 
             $stmt = $this->db->prepare($sql);
-            $stmt->execute($messageData);
+            error_log("Executing SQL: " . $sql);
+
+            $result = $stmt->execute($messageData);
+            error_log("SQL execution result: " . ($result ? "success" : "failed"));
+
             $messageId = $this->db->lastInsertId();
+            error_log("Generated message ID: " . $messageId);
 
             // Thêm người nhận
             if (!empty($data['recipients'])) {
+                error_log("Adding recipients: " . print_r($data['recipients'], true));
                 $this->addRecipients($messageId, $data['recipients']);
+            } else {
+                error_log("No recipients to add");
             }
 
             $this->db->commit();
+            error_log("Transaction committed successfully");
             return $messageId;
         } catch (Exception $e) {
             $this->db->rollBack();
             error_log("Error creating internal message: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+
+            // Log any database-specific errors
+            if ($stmt && $stmt->errorInfo()[2]) {
+                error_log("Database error: " . print_r($stmt->errorInfo(), true));
+            }
+
             return false;
         }
     }
@@ -91,6 +114,32 @@ class InternalMessage extends BaseModel {
     public function getReceivedMessages($recipientId, $limit = 20, $offset = 0) {
         $sql = "SELECT im.*, imr.is_read, imr.read_at,
                        CONCAT(u.first_name, ' ', u.last_name) as sender_name, u.email as sender_email
+                FROM {$this->table} im
+                INNER JOIN internal_message_recipients imr ON im.id = imr.message_id
+                INNER JOIN users u ON im.sender_id = u.id
+                WHERE imr.recipient_id = :recipient_id
+                ORDER BY im.created_at DESC
+                LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':recipient_id', $recipientId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Lấy danh sách thông báo đã nhận theo recipient ID - Phiên bản tối ưu
+     */
+    public function getReceivedMessagesOptimized($recipientId, $limit = 10, $offset = 0) {
+        // Chỉ lấy các trường cần thiết để hiển thị danh sách
+        // Bỏ qua nội dung thông báo đầy đủ và các thông tin không cần thiết để tăng tốc
+        $sql = "SELECT im.id, im.title, LEFT(im.content, 150) as content, im.message_type, im.priority,
+                       im.attachment_path, im.attachment_name, im.created_at,
+                       imr.is_read, imr.read_at,
+                       CONCAT(u.first_name, ' ', u.last_name) as sender_name
                 FROM {$this->table} im
                 INNER JOIN internal_message_recipients imr ON im.id = imr.message_id
                 INNER JOIN users u ON im.sender_id = u.id
@@ -200,29 +249,53 @@ class InternalMessage extends BaseModel {
      */
     public function deleteMessage($messageId, $senderId) {
         try {
+            error_log("Attempting to delete message ID: {$messageId} by sender ID: {$senderId}");
+
             $this->db->beginTransaction();
 
             // Kiểm tra người gửi
             $message = $this->findById($messageId);
+            error_log("Found message: " . ($message ? "YES" : "NO"));
+            if ($message) {
+                error_log("Message sender_id: {$message['sender_id']}, requesting user: {$senderId}");
+            }
+
             if (!$message || $message['sender_id'] != $senderId) {
+                error_log("Delete validation failed: " . (!$message ? "Message not found" : "Sender mismatch"));
                 return false;
             }
 
             // Xóa người nhận trước
             $sql = "DELETE FROM internal_message_recipients WHERE message_id = :message_id";
+            error_log("Deleting recipients with SQL: " . $sql);
             $stmt = $this->db->prepare($sql);
-            $stmt->execute(['message_id' => $messageId]);
+            $result = $stmt->execute(['message_id' => $messageId]);
+            error_log("Delete recipients result: " . ($result ? "success" : "failed"));
+
+            if (!$result) {
+                error_log("Recipients delete error: " . print_r($stmt->errorInfo(), true));
+                throw new Exception("Failed to delete message recipients");
+            }
 
             // Xóa thông báo
             $sql = "DELETE FROM {$this->table} WHERE id = :id";
+            error_log("Deleting message with SQL: " . $sql);
             $stmt = $this->db->prepare($sql);
-            $stmt->execute(['id' => $messageId]);
+            $result = $stmt->execute(['id' => $messageId]);
+            error_log("Delete message result: " . ($result ? "success" : "failed"));
+
+            if (!$result) {
+                error_log("Message delete error: " . print_r($stmt->errorInfo(), true));
+                throw new Exception("Failed to delete message");
+            }
 
             $this->db->commit();
+            error_log("Message deletion transaction committed successfully");
             return true;
         } catch (Exception $e) {
             $this->db->rollBack();
             error_log("Error deleting internal message: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             return false;
         }
     }
@@ -243,6 +316,58 @@ class InternalMessage extends BaseModel {
         $stmt->execute();
 
         return $stmt->fetch();
+    }
+
+    /**
+     * Ensure required database tables exist
+     */
+    private function ensureTables() {
+        try {
+            // Check if internal_messages table exists
+            $stmt = $this->db->query("SHOW TABLES LIKE '{$this->table}'");
+            if ($stmt->rowCount() == 0) {
+                error_log("Creating internal_messages table");
+                $sql = "CREATE TABLE {$this->table} (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    sender_id INT NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    content TEXT NOT NULL,
+                    attachment_path VARCHAR(255),
+                    attachment_name VARCHAR(255),
+                    message_type ENUM('general', 'system_update', 'policy_change', 'maintenance', 'personal') DEFAULT 'general',
+                    priority ENUM('low', 'normal', 'high', 'urgent') DEFAULT 'normal',
+                    is_broadcast TINYINT(1) DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX (sender_id),
+                    INDEX (message_type),
+                    INDEX (priority),
+                    INDEX (created_at)
+                )";
+                $this->db->exec($sql);
+            }
+
+            // Check if internal_message_recipients table exists
+            $stmt = $this->db->query("SHOW TABLES LIKE 'internal_message_recipients'");
+            if ($stmt->rowCount() == 0) {
+                error_log("Creating internal_message_recipients table");
+                $sql = "CREATE TABLE internal_message_recipients (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    message_id INT NOT NULL,
+                    recipient_id INT NOT NULL,
+                    is_read TINYINT(1) DEFAULT 0,
+                    read_at TIMESTAMP NULL DEFAULT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX (message_id),
+                    INDEX (recipient_id),
+                    INDEX (is_read)
+                )";
+                $this->db->exec($sql);
+            }
+        } catch (Exception $e) {
+            error_log("Error ensuring tables exist: " . $e->getMessage());
+            throw $e;
+        }
     }
 }
 ?>

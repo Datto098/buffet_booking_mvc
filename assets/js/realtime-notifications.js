@@ -82,20 +82,65 @@ class RealtimeNotifications {
 	}
 
 	startSSE() {
+		// Nếu đã có kết nối, đóng kết nối cũ trước khi tạo mới
+		if (this.eventSource) {
+			try {
+				this.eventSource.close();
+			} catch (e) {
+				console.warn('Error closing previous EventSource:', e);
+			}
+			this.eventSource = null;
+		}
+
+		// Verify if we're still on a page that needs SSE
+		if (
+			!window.location.pathname.includes('/admin/internal-messages') &&
+			!window.location.pathname.includes('/superadmin/internal-messages')
+		) {
+			console.log('Not on a notifications page, skipping SSE connection');
+			return;
+		}
+
 		try {
 			// Xác định role để chọn endpoint phù hợp
 			const isSuperAdmin =
 				window.location.pathname.includes('/superadmin/');
-			const sseUrl = isSuperAdmin
-				? '/superadmin/internal-messages/sse'
-				: '/admin/internal-messages/sse';
+			const baseUrl = window.location.origin + '/buffet_booking_mvc';
 
+			// Tạo một connection ID duy nhất để theo dõi kết nối
+			const connectionId =
+				Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+			// Thêm connectionId và timestamp vào URL để tránh cache và theo dõi kết nối
+			const sseUrl = `${
+				isSuperAdmin
+					? baseUrl + '/superadmin/internal-messages/sse'
+					: baseUrl + '/admin/internal-messages/sse'
+			}?t=${Date.now()}&cid=${connectionId}`;
+
+			console.log(`Starting SSE connection ${connectionId}`);
+
+			// Define timeout to abort connection if it doesn't connect
+			const connectionTimeout = setTimeout(() => {
+				console.warn('SSE connection timeout');
+				if (this.eventSource && this.eventSource.readyState !== 2) {
+					// Not CLOSED
+					this.eventSource.close();
+					this.eventSource = null;
+					this.reconnect();
+				}
+			}, 10000); // 10 second timeout
+
+			// Tạo EventSource với URL có timestamp để tránh cache
 			this.eventSource = new EventSource(sseUrl);
 
 			this.eventSource.onopen = () => {
-				console.log('SSE Connected');
+				console.log(`SSE Connected: ${connectionId}`);
 				this.isConnected = true;
 				this.reconnectAttempts = 0;
+
+				// Clear the connection timeout
+				clearTimeout(connectionTimeout);
 			};
 
 			this.eventSource.onmessage = (event) => {
@@ -108,10 +153,60 @@ class RealtimeNotifications {
 			};
 
 			this.eventSource.onerror = (error) => {
+				// Log details about the error
 				console.error('SSE Error:', error);
+				console.log('Connection state:', this.eventSource.readyState);
+
+				// Clear connection timeout if it exists
+				clearTimeout(connectionTimeout);
+
+				// Mark connection as disconnected
 				this.isConnected = false;
-				this.reconnect();
+
+				// Only close and reconnect if the connection is in CONNECTING (0) or OPEN (1) state
+				// If it's already CLOSED (2), no need to close again
+				if (this.eventSource.readyState !== 2) {
+					this.eventSource.close();
+				}
+
+				this.eventSource = null;
+
+				// Check if we're still on the page that needs this connection
+				if (
+					window.location.pathname.includes(
+						'/admin/internal-messages'
+					) ||
+					window.location.pathname.includes(
+						'/superadmin/internal-messages'
+					)
+				) {
+					this.reconnect();
+				} else {
+					console.log('Page changed, not reconnecting SSE');
+				}
 			};
+
+			// Đặt hẹn giờ tự đóng kết nối sau 30 giây và kết nối lại
+			// Điều này giúp tránh kết nối kéo dài quá lâu và gây tắc nghẽn server
+			setTimeout(() => {
+				if (this.eventSource && this.eventSource.readyState !== 2) {
+					console.log('Cycling SSE connection for performance');
+					this.eventSource.close();
+					this.eventSource = null;
+
+					// Only reconnect if we're still on a relevant page
+					if (
+						window.location.pathname.includes(
+							'/admin/internal-messages'
+						) ||
+						window.location.pathname.includes(
+							'/superadmin/internal-messages'
+						)
+					) {
+						this.reconnect();
+					}
+				}
+			}, 30000);
 		} catch (error) {
 			console.error('Error starting SSE:', error);
 			this.reconnect();
@@ -120,12 +215,31 @@ class RealtimeNotifications {
 
 	handleSSEMessage(data) {
 		switch (data.type) {
+			case 'connection_id':
+				// Lưu lại ID kết nối để debugging
+				console.log(`Connection ID received: ${data.id}`);
+				break;
+
 			case 'ping':
 				// Keep-alive message, không làm gì
 				break;
 
 			case 'new_message':
 				this.handleNewMessage(data.message);
+				break;
+
+			case 'new_messages':
+				// Xử lý nhiều thông báo cùng lúc (phiên bản tối ưu)
+				if (data.messages && Array.isArray(data.messages)) {
+					// Cập nhật số lượng thông báo
+					this.notificationCount += data.count;
+					this.updateNotificationBadge();
+
+					// Hiển thị các thông báo
+					data.messages.forEach((message) => {
+						this.handleNewMessage(message);
+					});
+				}
 				break;
 
 			default:
@@ -193,7 +307,9 @@ class RealtimeNotifications {
                         font-size: 12px;
                         margin-bottom: 8px;
                         line-height: 1.4;
-                    ">${this.escapeHtml(message.content)}</div>
+                    ">${this.escapeHtml(
+						message.content || 'Bạn có thông báo mới.'
+					)}</div>
                     <div style="
                         display: flex;
                         justify-content: space-between;
@@ -269,9 +385,10 @@ class RealtimeNotifications {
 		try {
 			const isSuperAdmin =
 				window.location.pathname.includes('/superadmin/');
+			const baseUrl = window.location.origin + '/buffet_booking_mvc';
 			const url = isSuperAdmin
-				? '/superadmin/internal-messages/get-unread-count'
-				: '/admin/internal-messages/get-unread-count';
+				? baseUrl + '/superadmin/internal-messages/get-unread-count'
+				: baseUrl + '/admin/internal-messages/get-unread-count';
 
 			const response = await fetch(url);
 			const data = await response.json();
@@ -289,9 +406,10 @@ class RealtimeNotifications {
 		try {
 			const isSuperAdmin =
 				window.location.pathname.includes('/superadmin/');
+			const baseUrl = window.location.origin + '/buffet_booking_mvc';
 			const url = isSuperAdmin
-				? '/superadmin/internal-messages/mark-as-read'
-				: '/admin/internal-messages/mark-as-read';
+				? baseUrl + '/superadmin/internal-messages/mark-as-read'
+				: baseUrl + '/admin/internal-messages/mark-as-read';
 
 			const response = await fetch(url, {
 				method: 'POST',
@@ -316,9 +434,10 @@ class RealtimeNotifications {
 
 	getViewMessageUrl(messageId) {
 		const isSuperAdmin = window.location.pathname.includes('/superadmin/');
+		const baseUrl = window.location.origin + '/buffet_booking_mvc';
 		return isSuperAdmin
-			? `/superadmin/internal-messages/view/${messageId}`
-			: `/admin/internal-messages/view/${messageId}`;
+			? baseUrl + `/superadmin/internal-messages/view/${messageId}`
+			: baseUrl + `/admin/internal-messages/view/${messageId}`;
 	}
 
 	playNotificationSound() {
@@ -352,21 +471,159 @@ class RealtimeNotifications {
 	}
 
 	reconnect() {
+		// Check if the current page still needs SSE
+		if (
+			!window.location.pathname.includes('/admin/internal-messages') &&
+			!window.location.pathname.includes('/superadmin/internal-messages')
+		) {
+			console.log(
+				'No longer on a notifications page, skipping reconnection'
+			);
+			return;
+		}
+
 		if (this.reconnectAttempts < this.maxReconnectAttempts) {
 			this.reconnectAttempts++;
+
+			// Sử dụng exponential backoff để tăng dần thời gian chờ giữa các lần kết nối lại
+			// Công thức: delay = base_delay * (2 ^ attempt) + random
+			const backoffDelay =
+				this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1);
+			const jitter = Math.floor(Math.random() * 1000); // Thêm random jitter để tránh thundering herd
+			const finalDelay = Math.min(backoffDelay + jitter, 30000); // Giới hạn tối đa 30 giây
+
 			console.log(
-				`Reconnecting... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`
+				`Reconnecting... Attempt ${this.reconnectAttempts}/${
+					this.maxReconnectAttempts
+				} (delay: ${Math.round(finalDelay / 1000)}s)`
 			);
 
-			setTimeout(() => {
+			// Create a cleanup function for this reconnection attempt
+			const cleanupAndReconnect = () => {
 				if (this.eventSource) {
-					this.eventSource.close();
+					try {
+						this.eventSource.close();
+					} catch (e) {
+						console.warn('Error during connection cleanup:', e);
+					}
+					this.eventSource = null;
 				}
-				this.startSSE();
-			}, this.reconnectDelay);
+
+				// Nếu tab không hiển thị, trì hoãn kết nối
+				if (document.hidden) {
+					console.log('Tab không hiển thị, trì hoãn kết nối SSE');
+
+					// Thiết lập một sự kiện để kết nối lại khi tab được kích hoạt
+					const visibilityHandler = () => {
+						if (!document.hidden) {
+							console.log(
+								'Tab hiển thị lại, khôi phục kết nối SSE'
+							);
+							this.startSSE();
+							document.removeEventListener(
+								'visibilitychange',
+								visibilityHandler
+							);
+						}
+					};
+
+					document.addEventListener(
+						'visibilitychange',
+						visibilityHandler
+					);
+				} else {
+					// Check again if we're still on a notifications page
+					if (
+						window.location.pathname.includes(
+							'/admin/internal-messages'
+						) ||
+						window.location.pathname.includes(
+							'/superadmin/internal-messages'
+						)
+					) {
+						this.startSSE();
+					} else {
+						console.log(
+							'No longer on notifications page, aborting reconnection'
+						);
+					}
+				}
+			};
+
+			setTimeout(cleanupAndReconnect, finalDelay);
 		} else {
 			console.error('Max reconnection attempts reached');
+
+			// Reset the connection completely
+			if (this.eventSource) {
+				this.eventSource.close();
+				this.eventSource = null;
+			}
+
+			// Show a visible error to the user
+			this.showConnectionError();
+
+			// Sau 1 phút, reset lại số lần thử kết nối để cho phép thử lại sau
+			setTimeout(() => {
+				this.reconnectAttempts = 0;
+				// Only reconnect if still on relevant page
+				if (
+					window.location.pathname.includes(
+						'/admin/internal-messages'
+					) ||
+					window.location.pathname.includes(
+						'/superadmin/internal-messages'
+					)
+				) {
+					console.log('Resuming connection attempts after timeout');
+					this.reconnect();
+				}
+			}, 60000);
 		}
+	}
+
+	// Show connection error message to user
+	showConnectionError() {
+		const container = document.getElementById('notification-container');
+		if (!container) return;
+
+		const errorNotification = document.createElement('div');
+		errorNotification.className = 'notification-popup';
+		errorNotification.style.cssText = `
+			background: white;
+			border: 1px solid #dc3545;
+			border-radius: 8px;
+			padding: 15px;
+			margin-bottom: 10px;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+			pointer-events: auto;
+			max-width: 350px;
+			animation: slideInRight 0.3s ease-out;
+		`;
+
+		errorNotification.innerHTML = `
+			<div style="display: flex; flex-direction: column; gap: 10px;">
+				<div style="font-weight: bold; color: #dc3545;">
+					<i class="fas fa-exclamation-triangle"></i> Lỗi kết nối
+				</div>
+				<div style="color: #666; font-size: 13px;">
+					Không thể kết nối đến hệ thống thông báo. Thử làm mới trang để kết nối lại.
+				</div>
+				<div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 5px;">
+					<button onclick="window.location.reload()" style="
+						background: #dc3545;
+						color: white;
+						border: none;
+						padding: 6px 12px;
+						border-radius: 4px;
+						font-size: 12px;
+						cursor: pointer;
+					">Làm mới trang</button>
+				</div>
+			</div>
+		`;
+
+		container.appendChild(errorNotification);
 	}
 
 	disconnect() {
@@ -403,8 +660,8 @@ class RealtimeNotifications {
 }
 
 // Thêm CSS animations
-const style = document.createElement('style');
-style.textContent = `
+const notificationsStyle = document.createElement('style');
+notificationsStyle.textContent = `
     @keyframes slideInRight {
         from {
             transform: translateX(100%);
@@ -427,16 +684,20 @@ style.textContent = `
         }
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(notificationsStyle);
 
 // Khởi tạo khi trang load xong
 document.addEventListener('DOMContentLoaded', () => {
-	// Chỉ khởi tạo cho Admin và Super Admin
+	// Chỉ khởi tạo cho Admin và Super Admin khi đang ở trang thông báo nội bộ
 	if (
-		window.location.pathname.includes('/admin/') ||
-		window.location.pathname.includes('/superadmin/')
+		window.location.pathname.includes('/admin/internal-messages') ||
+		window.location.pathname.includes('/superadmin/internal-messages')
 	) {
-		window.realtimeNotifications = new RealtimeNotifications();
+		// Kiểm tra xem đã khởi tạo hay chưa để tránh khởi tạo nhiều lần
+		if (!window.realtimeNotifications) {
+			console.log('Initializing realtime notifications system');
+			window.realtimeNotifications = new RealtimeNotifications();
+		}
 	}
 });
 
