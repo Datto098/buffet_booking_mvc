@@ -17,6 +17,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Internal Messages CSS -->
+    <link href="<?= SITE_URL ?>/assets/css/internal-messages.css" rel="stylesheet">
+
     <!-- Custom CSS -->
     <style>
         :root {
@@ -1170,8 +1173,13 @@
 }
     </style>
 
+    <!-- Custom CSS -->
+    <link href="<?= SITE_URL ?>/assets/css/internal-messages.css" rel="stylesheet">
+
     <!-- Custom Super Admin JavaScript -->
     <script src="<?= SITE_URL ?>/assets/js/superadmin.js" defer></script>
+    <!-- Realtime Notifications -->
+    <script src="<?= SITE_URL ?>/assets/js/realtime-notifications.js"></script>
 </head>
 
 <body class="super-admin-body"> <!-- Top Navigation Bar -->

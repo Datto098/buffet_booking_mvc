@@ -108,5 +108,9 @@ class BaseModel {
         $stmt->execute();
         return $stmt->fetchColumn();
     }
+
+    public function getDb() {
+        return $this->db;
+    }
 }
 ?>

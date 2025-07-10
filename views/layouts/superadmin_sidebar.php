@@ -69,6 +69,13 @@
                     <span class="badge bg-danger notification-badge" style="display: none; margin-left: 10px;"></span>
                 </a>
             </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="<?= SITE_URL ?>/superadmin/internal-messages">
+                    <i class="fas fa-envelope"></i>
+                    Internal Messages
+                </a>
+            </li>
         </ul><div class="sidebar-heading">
             Configuration
         </div>

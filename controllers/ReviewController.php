@@ -3,7 +3,7 @@ require_once 'BaseController.php';
 require_once __DIR__ . '/../models/Review.php';
 class ReviewController extends BaseController {
     protected $reviewModel;
-     
+
     public function __construct() {
         $this->reviewModel = new Review();
     }
@@ -18,7 +18,7 @@ class ReviewController extends BaseController {
             $_SESSION['error'] = 'Bạn không có quyền xóa bình luận này!';
         }
 
-        redirect('/food/detail/' . $review['food_item_id']);
+        redirect(SITE_URL . '/food/detail/' . $review['food_item_id']);
     }
     public function like($reviewId) {
         if (!isset($_SESSION['user_id'])) {
@@ -44,7 +44,7 @@ public function update($id)
         $review = $this->reviewModel->getReviewById($id);
         if (!$review || $review['user_id'] != $_SESSION['user_id']) {
             $_SESSION['error'] = 'Bạn không có quyền sửa bình luận này!';
-            redirect('/food/detail/' . ($review['food_item_id'] ?? ''));
+            redirect(SITE_URL . '/food/detail/' . ($review['food_item_id'] ?? ''));
             return;
         }
 
@@ -76,10 +76,10 @@ public function update($id)
         $this->reviewModel->updateReview($id, $content, $rate, json_encode(array_values($photos)));
 
         $_SESSION['message'] = 'Cập nhật bình luận thành công!';
-        redirect('/food/detail/' . $review['food_item_id']);
+        redirect(SITE_URL . '/food/detail/' . $review['food_item_id']);
     } else {
         $_SESSION['error'] = 'Yêu cầu không hợp lệ!';
-        redirect('/');
+        redirect(SITE_URL . '/');
     }
 }
 }
