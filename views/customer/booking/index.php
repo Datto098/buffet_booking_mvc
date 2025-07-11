@@ -96,7 +96,7 @@
                                         class="form-control"
                                         id="booking_date"
                                         name="booking_date"
-                                        value="<?= $_SESSION['form_data']['booking_date'] ?? '' ?>"
+                                        value="<?= $_SESSION['form_data']['booking_date'] ?? date('Y-m-d') ?>"
                                         min="<?= date('Y-m-d') ?>"
                                         required>
                                 </div>
@@ -199,8 +199,8 @@
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
                         <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Đặt bàn trước ít nhất 2 giờ
+                            <i class="fas fa-clock text-warning me-2"></i>
+                            <strong>Bắt buộc:</strong> Đặt bàn trước ít nhất 2 giờ
                         </li>
                         <li class="mb-2">
                             <i class="fas fa-check text-success me-2"></i>
@@ -222,6 +222,23 @@
                             </a>
                         </li>
                     </ul>
+                </div>
+            </div>
+
+            <!-- Real-time Booking Info -->
+            <div class="card mb-3" id="timeInfoCard">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-clock text-info"></i> Thông tin thời gian</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <small class="text-muted">Thời gian hiện tại:</small><br>
+                        <strong id="currentTime"><?= date('d/m/Y H:i:s') ?></strong>
+                    </div>
+                    <div class="mb-0">
+                        <small class="text-muted">Có thể đặt bàn từ:</small><br>
+                        <strong id="minimumTime" class="text-success"><?= date('d/m/Y H:i', time() + 2*3600) ?></strong>
+                    </div>
                 </div>
             </div>
 
@@ -270,21 +287,38 @@
         const bookingTimeSelect = document.getElementById('booking_time');
         const partySizeSelect = document.getElementById('party_size');
         const availabilityResult = document.getElementById('availabilityResult');
-        const bookingForm = document.getElementById('bookingForm');
-
-        // Generate time slots
+        const bookingForm = document.getElementById('bookingForm');        // Generate time slots
         function generateTimeSlots() {
             const slots = [];
+            const now = new Date();
+            const selectedDate = bookingDateInput.value;
+            const isToday = selectedDate === now.toISOString().split('T')[0];
+            const minimumTime = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 tiếng sau
 
             // Lunch slots: 11:00 - 14:30
             for (let hour = 11; hour <= 14; hour++) {
                 for (let minute = 0; minute < 60; minute += 30) {
                     if (hour === 14 && minute > 30) break;
                     const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+
+                    // Kiểm tra xem time slot này có nằm trong vòng 2 tiếng không
+                    let isDisabled = false;
+                    let disableReason = '';
+
+                    if (isToday) {
+                        const slotDateTime = new Date(selectedDate + 'T' + time + ':00');
+                        if (slotDateTime <= minimumTime) {
+                            isDisabled = true;
+                            const timeLeft = Math.ceil((minimumTime - slotDateTime) / (1000 * 60)); // phút
+                            disableReason = timeLeft > 0 ? `Cần đặt trước ${Math.ceil(timeLeft/60)} tiếng` : 'Đã qua';
+                        }
+                    }
+
                     slots.push({
                         value: time,
-                        text: time,
-                        period: 'lunch'
+                        text: time + (isDisabled ? ` (${disableReason})` : ''),
+                        period: 'lunch',
+                        disabled: isDisabled
                     });
                 }
             }
@@ -294,18 +328,31 @@
                 for (let minute = 0; minute < 60; minute += 30) {
                     if (hour === 21 && minute > 30) break;
                     const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+
+                    // Kiểm tra xem time slot này có nằm trong vòng 2 tiếng không
+                    let isDisabled = false;
+                    let disableReason = '';
+
+                    if (isToday) {
+                        const slotDateTime = new Date(selectedDate + 'T' + time + ':00');
+                        if (slotDateTime <= minimumTime) {
+                            isDisabled = true;
+                            const timeLeft = Math.ceil((minimumTime - slotDateTime) / (1000 * 60)); // phút
+                            disableReason = timeLeft > 0 ? `Cần đặt trước ${Math.ceil(timeLeft/60)} tiếng` : 'Đã qua';
+                        }
+                    }
+
                     slots.push({
                         value: time,
-                        text: time,
-                        period: 'dinner'
+                        text: time + (isDisabled ? ` (${disableReason})` : ''),
+                        period: 'dinner',
+                        disabled: isDisabled
                     });
                 }
             }
 
             return slots;
-        }
-
-        // Populate time slots
+        }        // Populate time slots
         function populateTimeSlots() {
             const slots = generateTimeSlots();
             bookingTimeSelect.innerHTML = '<option value="">Chọn giờ</option>';
@@ -320,8 +367,16 @@
                 }
 
                 const option = document.createElement('option');
-                option.value = slot.value;
+                option.value = slot.disabled ? '' : slot.value; // Không set value nếu disabled
                 option.textContent = slot.text;
+                option.disabled = slot.disabled;
+
+                // Thêm styling cho disabled options
+                if (slot.disabled) {
+                    option.style.color = '#999';
+                    option.style.fontStyle = 'italic';
+                }
+
                 bookingTimeSelect.lastElementChild.appendChild(option);
             });
         }
@@ -401,10 +456,43 @@
             return isValid;
         }
 
-        // Event listeners
-        populateTimeSlots();
+        // Update real-time clock and minimum booking time
+        function updateTimeInfo() {
+            const now = new Date();
+            const minimumBookingTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
-        bookingDateInput.addEventListener('change', checkAvailability);
+            // Format current time
+            const currentTimeStr = now.toLocaleDateString('vi-VN') + ' ' +
+                                   now.toLocaleTimeString('vi-VN', {hour12: false});
+
+            // Format minimum booking time
+            const minimumTimeStr = minimumBookingTime.toLocaleDateString('vi-VN') + ' ' +
+                                   minimumBookingTime.toLocaleTimeString('vi-VN', {hour12: false, hour: '2-digit', minute: '2-digit'});
+
+            document.getElementById('currentTime').textContent = currentTimeStr;
+            document.getElementById('minimumTime').textContent = minimumTimeStr;
+
+            // Re-populate time slots if today is selected to update disabled states
+            const selectedDate = bookingDateInput.value;
+            const today = now.toISOString().split('T')[0];
+            if (selectedDate === today) {
+                populateTimeSlots();
+            }
+        }
+
+        // Event listeners
+        // Ensure elements are ready
+        setTimeout(() => {
+            populateTimeSlots();
+            updateTimeInfo(); // Initial update
+        }, 100);
+
+        setInterval(updateTimeInfo, 1000); // Update every second
+
+        bookingDateInput.addEventListener('change', function() {
+            populateTimeSlots(); // Regenerate time slots when date changes
+            checkAvailability();
+        });
         bookingTimeSelect.addEventListener('change', checkAvailability);
         partySizeSelect.addEventListener('change', checkAvailability);
         document.getElementById('booking_location').addEventListener('change', checkAvailability);

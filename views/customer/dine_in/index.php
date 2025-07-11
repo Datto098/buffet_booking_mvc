@@ -81,6 +81,7 @@ if ($table_id) {
                         <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
                             <h5 class="mb-0 text-primary">
                                 <i class="fas fa-list-check me-2"></i>Tình trạng đơn hàng của bạn
+                                <span id="orders-count-badge" class="badge bg-secondary ms-2" style="display: none;">0</span>
                             </h5>
                             <div class="d-flex gap-2">
                                 <button class="btn btn-sm btn-outline-primary" onclick="refreshOrderStatus()">
@@ -109,8 +110,11 @@ if ($table_id) {
             <div class="container">
                 <div class="menu-categories mb-4">
                     <div class="d-flex justify-content-center align-items-center flex-wrap">
-                        <button class="btn btn-outline-primary m-1 category-btn active" data-category="all">
-                            Tất cả
+                        <button class="btn btn-outline-success m-1 category-btn active" data-category="buffet">
+                            <i class="fas fa-utensils me-2"></i>Buffet Miễn Phí
+                        </button>
+                        <button class="btn btn-outline-primary m-1 category-btn" data-category="all">
+                            Tất cả món
                         </button>
                         <?php foreach ($categories as $category): ?>
                         <button class="btn btn-outline-primary m-1 category-btn"
@@ -124,34 +128,86 @@ if ($table_id) {
 
             <!-- Menu Items -->
             <div class="container">
-                <div class="menu-section">
-                    <div class="food-grid">
-                        <?php foreach ($foods as $food): ?>
-                        <div class="food-card" data-category="<?php echo $food['category_id']; ?>">
-                            <img src="<?= SITE_URL ?>/uploads/food_images/<?= $food['image'] ?>"
-                                 alt="<?php echo $food['name']; ?>" class="food-image">
-                            <div class="food-info">
-                                <h3 class="food-name"><?php echo $food['name']; ?></h3>
-                                <p class="food-description"><?php echo $food['description']; ?></p>
-                                <div class="food-meta">
-                                    <div class="food-price">
-                                        <?php echo number_format($food['price'], 0, ',', '.'); ?> ₫
-                                    </div>
-                                    <div class="food-badges">
-                                        <?php if ($food['is_popular']): ?>
-                                        <span class="badge badge-popular">Phổ biến</span>
-                                        <?php endif; ?>
-                                        <?php if ($food['is_new']): ?>
-                                        <span class="badge badge-new">Mới</span>
-                                        <?php endif; ?>
-                                    </div>
+                <!-- Buffet Items Section -->
+                <div id="buffet-section" class="buffet-section mb-5">
+                    <div class="section-header text-center mb-4">
+                        <h3 class="text-success">
+                            <i class="fas fa-utensils me-2"></i>BUFFET MIỄN PHÍ
+                        </h3>
+                        <p class="text-muted">Các món ăn buffet đã bao gồm trong giá vé vào cửa - Gọi thoải mái!</p>
+                    </div>
+                    <div class="food-grid" id="buffet-foods">
+                        <?php if (isset($buffet_foods) && !empty($buffet_foods)): ?>
+                            <?php foreach ($buffet_foods as $food): ?>
+                            <div class="food-card buffet-card" data-category="buffet">
+                                <div class="buffet-badge">
+                                    <span class="badge bg-success">MIỄN PHÍ</span>
                                 </div>
-                                <button class="add-to-cart-btn" onclick="addToDineInCart(<?php echo $food['id']; ?>)">
-                                    <i class="fas fa-plus me-2"></i>Thêm vào giỏ
-                                </button>
+                                <img src="<?= SITE_URL ?>/uploads/food_images/<?= $food['image'] ?>"
+                                     alt="<?php echo $food['name']; ?>" class="food-image">
+                                <div class="food-info">
+                                    <h3 class="food-name"><?php echo $food['name']; ?></h3>
+                                    <p class="food-description"><?php echo $food['description']; ?></p>
+                                    <div class="food-meta">
+                                        <div class="food-price text-success">
+                                            <i class="fas fa-gift me-1"></i>MIỄN PHÍ
+                                        </div>
+                                    </div>
+                                    <button class="add-to-cart-btn buffet-btn" onclick="addToDineInCart(<?php echo $food['id']; ?>)">
+                                        <i class="fas fa-plus me-2"></i>Gọi món buffet
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="text-center text-muted p-4">
+                                <p>Hiện tại chưa có món buffet nào.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Regular Menu Items Section -->
+                <div id="regular-section" class="regular-section" style="display: none;">
+                    <div class="section-header text-center mb-4">
+                        <h3 class="text-primary">
+                            <i class="fas fa-restaurant me-2"></i>THỰC ĐƠN THÊM
+                        </h3>
+                        <p class="text-muted">Các món ăn đặc biệt - Tính phí theo giá niêm yết</p>
+                    </div>
+                    <div class="food-grid" id="regular-foods">
+                        <?php if (isset($regular_foods) && !empty($regular_foods)): ?>
+                            <?php foreach ($regular_foods as $food): ?>
+                            <div class="food-card regular-card" data-category="<?php echo $food['category_id']; ?>">
+                                <img src="<?= SITE_URL ?>/uploads/food_images/<?= $food['image'] ?>"
+                                     alt="<?php echo $food['name']; ?>" class="food-image">
+                                <div class="food-info">
+                                    <h3 class="food-name"><?php echo $food['name']; ?></h3>
+                                    <p class="food-description"><?php echo $food['description']; ?></p>
+                                    <div class="food-meta">
+                                        <div class="food-price">
+                                            <?php echo number_format($food['price'], 0, ',', '.'); ?> ₫
+                                        </div>
+                                        <div class="food-badges">
+                                            <?php if ($food['is_popular']): ?>
+                                            <span class="badge badge-popular">Phổ biến</span>
+                                            <?php endif; ?>
+                                            <?php if ($food['is_new']): ?>
+                                            <span class="badge badge-new">Mới</span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <button class="add-to-cart-btn" onclick="addToDineInCart(<?php echo $food['id']; ?>)">
+                                        <i class="fas fa-plus me-2"></i>Thêm vào giỏ
+                                    </button>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="text-center text-muted p-4">
+                                <p>Hiện tại chưa có món ăn nào.</p>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -299,7 +355,15 @@ function addToDineInCart(foodId) {
 }
 
 function resetButton(button) {
-    button.innerHTML = '<i class="fas fa-plus me-2"></i>Thêm vào giỏ';
+    // Determine if this is a buffet button
+    const isBuffetBtn = button.classList.contains('buffet-btn');
+
+    if (isBuffetBtn) {
+        button.innerHTML = '<i class="fas fa-plus me-2"></i>Gọi món buffet';
+    } else {
+        button.innerHTML = '<i class="fas fa-plus me-2"></i>Thêm vào giỏ';
+    }
+
     button.disabled = false;
     button.classList.remove('loading');
     button.style.background = '';
@@ -356,12 +420,23 @@ function updateCart() {
                 `;
             } else {
                 data.cart_items.forEach(item => {
+                    const priceDisplay = item.is_buffet_item
+                        ? '<span class="text-success"><i class="fas fa-gift"></i> MIỄN PHÍ</span>'
+                        : `${formatCurrency(item.price)} ₫`;
+
+                    const totalDisplay = item.is_buffet_item
+                        ? '<span class="text-success">0 ₫</span>'
+                        : `${formatCurrency(item.total)} ₫`;
+
+                    const itemClass = item.is_buffet_item ? 'cart-item buffet-item' : 'cart-item';
+
                     cartItems.innerHTML += `
-                        <div class="cart-item">
+                        <div class="${itemClass}">
                             <img src="<?php echo SITE_URL; ?>/uploads/food_images/${item.image}" alt="${item.name}" class="cart-item-image">
                             <div class="cart-item-info">
                                 <h4>${item.name}</h4>
-                                <div class="cart-item-price">${formatCurrency(item.price)} ₫</div>
+                                ${item.is_buffet_item ? '<span class="badge bg-success mb-1">BUFFET</span>' : ''}
+                                <div class="cart-item-price">${priceDisplay}</div>
                                 <div class="cart-item-quantity">
                                     <button onclick="updateQuantity(${item.id}, ${item.quantity - 1})"
                                             ${item.quantity <= 1 ? 'disabled' : ''}>-</button>
@@ -369,7 +444,7 @@ function updateCart() {
                                     <button onclick="updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
                                 </div>
                             </div>
-                            <div class="cart-item-total">${formatCurrency(item.total)} ₫</div>
+                            <div class="cart-item-total">${totalDisplay}</div>
                             <button class="cart-item-remove" onclick="removeFromCart(${item.id})" title="Xóa món này">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -542,14 +617,39 @@ document.querySelectorAll('.category-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const categoryId = this.dataset.category;
 
-        document.querySelectorAll('.food-card').forEach(card => {
-            if (categoryId === 'all' || card.dataset.category === categoryId) {
+        // Handle buffet vs regular sections
+        const buffetSection = document.getElementById('buffet-section');
+        const regularSection = document.getElementById('regular-section');
+
+        if (categoryId === 'buffet') {
+            // Show only buffet section
+            buffetSection.style.display = 'block';
+            regularSection.style.display = 'none';
+        } else if (categoryId === 'all') {
+            // Show both sections
+            buffetSection.style.display = 'block';
+            regularSection.style.display = 'block';
+
+            // Show all cards in regular section
+            document.querySelectorAll('#regular-foods .food-card').forEach(card => {
                 card.style.display = 'block';
                 card.style.animation = 'fadeIn 0.3s ease';
-            } else {
-                card.style.display = 'none';
-            }
-        });
+            });
+        } else {
+            // Show only regular section with filtered category
+            buffetSection.style.display = 'none';
+            regularSection.style.display = 'block';
+
+            // Filter regular menu by category
+            document.querySelectorAll('#regular-foods .food-card').forEach(card => {
+                if (card.dataset.category === categoryId) {
+                    card.style.display = 'block';
+                    card.style.animation = 'fadeIn 0.3s ease';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
 
         // Highlight selected category
         document.querySelectorAll('.category-btn').forEach(b =>
@@ -619,6 +719,7 @@ function loadOrderStatus() {
         .then(data => {
             if (data.success) {
                 orderStatusData = data.orders || [];
+                currentPage = 1; // Reset to first page when loading new data
                 displayOrderStatus(orderStatusData);
                 updateOrderStatusBadge(); // Update badge after loading
 
@@ -776,6 +877,8 @@ window.addEventListener('beforeunload', function() {
 
 // Global variables for order status tracking
 let orderStatusData = [];
+let currentPage = 1;
+const ordersPerPage = 3; // Hiển thị 3 đơn hàng mỗi trang để gọn gàng hơn
 
 // Status mapping functions
 function getStatusClass(status) {
@@ -800,10 +903,21 @@ function getStatusText(status) {
     return statusTexts[status] || 'Không xác định';
 }
 
-// Display order status function
+// Display order status function with pagination
 function displayOrderStatus(orders) {
     const container = document.getElementById('orderStatusList');
     if (!container) return;
+
+    // Update orders count badge
+    const countBadge = document.getElementById('orders-count-badge');
+    if (countBadge) {
+        if (orders && orders.length > 0) {
+            countBadge.textContent = orders.length;
+            countBadge.style.display = 'inline';
+        } else {
+            countBadge.style.display = 'none';
+        }
+    }
 
     if (!orders || orders.length === 0) {
         container.innerHTML = `
@@ -816,7 +930,14 @@ function displayOrderStatus(orders) {
         return;
     }
 
-    container.innerHTML = orders.map(order => {
+    // Calculate pagination
+    const totalPages = Math.ceil(orders.length / ordersPerPage);
+    const startIndex = (currentPage - 1) * ordersPerPage;
+    const endIndex = startIndex + ordersPerPage;
+    const currentOrders = orders.slice(startIndex, endIndex);
+
+    // Display orders for current page
+    const ordersHtml = currentOrders.map(order => {
         const statusClass = getStatusClass(order.status);
         const statusText = getStatusText(order.status);
         const isPreparing = order.status === 'preparing';
@@ -855,13 +976,120 @@ function displayOrderStatus(orders) {
                             Ghi chú: ${order.notes}
                         ` : ''}
                     </small>
-                    <div class="fw-bold text-end">
-                        Tổng: <span class="text-primary">${formatCurrency(order.total)} ₫</span>
-                    </div>
+                    ${order.total !== null ? `
+                        <div class="fw-bold text-end">
+                            Tổng: <span class="text-primary">${formatCurrency(order.total)} ₫</span>
+                        </div>
+                    ` : `
+                        <div class="text-muted text-end">
+                            <small><i class="fas fa-info-circle me-1"></i>Chưa tạo hóa đơn</small>
+                        </div>
+                    `}
                 </div>
+
+                ${(order.has_invoice && (order.status === 'completed' || order.status === 'paid')) ? `
+                    <div class="mt-2 text-end">
+                        <button class="btn btn-outline-primary btn-sm" onclick="downloadInvoice(${order.id})" title="Tải hóa đơn">
+                            <i class="fas fa-download me-1"></i>
+                            Tải hóa đơn
+                        </button>
+                    </div>
+                ` : ''}
             </div>
         `;
     }).join('');
+
+    // Create pagination controls - show if more than 3 orders
+    const paginationHtml = totalPages > 1 ? `
+        <div class="order-pagination-container mt-4 pt-3 border-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="pagination-info">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Hiển thị ${startIndex + 1}-${Math.min(endIndex, orders.length)} trong ${orders.length} đơn hàng
+                    </small>
+                </div>
+                <nav aria-label="Order pagination">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                            <button class="page-link" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} title="Trang trước">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        </li>
+                        ${generatePageNumbers(currentPage, totalPages)}
+                        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                            <button class="page-link" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} title="Trang sau">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    ` : '';
+
+    container.innerHTML = ordersHtml + paginationHtml;
+}
+
+// Pagination helper functions
+function generatePageNumbers(current, total) {
+    let pages = '';
+    const maxVisible = 5; // Maximum visible page numbers
+
+    let start = Math.max(1, current - Math.floor(maxVisible / 2));
+    let end = Math.min(total, start + maxVisible - 1);
+
+    // Adjust start if we're near the end
+    if (end - start + 1 < maxVisible) {
+        start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+        pages += `
+            <li class="page-item ${i === current ? 'active' : ''}">
+                <button class="page-link" onclick="changePage(${i})">${i}</button>
+            </li>
+        `;
+    }
+
+    return pages;
+}
+
+function changePage(page) {
+    const totalPages = Math.ceil(orderStatusData.length / ordersPerPage);
+
+    if (page < 1 || page > totalPages) return;
+
+    currentPage = page;
+    displayOrderStatus(orderStatusData);
+
+    // Scroll to top of order status section
+    const orderSection = document.getElementById('orderStatusSection');
+    if (orderSection) {
+        orderSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Download invoice function
+function downloadInvoice(orderId) {
+    // Show loading state
+    showNotification('Đang chuẩn bị tải hóa đơn...', 'info');
+
+    // Create a temporary link to trigger download
+    const downloadUrl = `<?= SITE_URL ?>/customer_invoice_download.php?order_id=${orderId}`;
+
+    // Create temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Show success message after a short delay
+    setTimeout(() => {
+        showNotification('Hóa đơn đang được tải xuống...', 'success');
+    }, 500);
 }
 
 // Refresh order status function
@@ -948,6 +1176,8 @@ function refreshOrderStatus() {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
     padding: 20px 0;
+    position: relative;
+    z-index: 2;
 }
 
 .food-card {
@@ -1242,191 +1472,147 @@ function refreshOrderStatus() {
     box-shadow: 0 4px 12px rgba(40,167,69,0.3);
 }
 
-/* Order status badge animations */
-#order-status-badge {
-    animation: none;
-    transition: all 0.3s ease;
+/* Buffet Section Styles */
+.buffet-section {
+    background: linear-gradient(135deg, #f8fff8 0%, #e8f8e8 100%);
+    border-radius: 15px;
+    padding: 30px;
+    border: 2px solid #d4edda;
+    position: relative;
+    overflow: hidden;
 }
 
-#order-status-badge.bg-warning {
-    animation: pulse-warning 2s infinite;
-}
-
-@keyframes pulse-warning {
-    0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.7;
-        transform: scale(1.1);
-    }
-}
-
-.btn-outline-primary.position-relative {
-    overflow: visible;
-}
-
-.btn-outline-primary:hover #order-status-badge {
-    transform: translate(-50%, -50%) scale(1.1);
-}
-
-/* Responsive badge positioning */
-@media (max-width: 768px) {
-    #order-status-badge {
-        top: -5px;
-        right: -10px;
-        transform: none;
-    }
-
-    .btn-outline-primary:hover #order-status-badge {
-        transform: scale(1.1);
-    }
-}
-
-/* Pulse animation for processing status */
-.pulse-animation {
-    animation: pulse-warning 2s infinite;
-}
-
-/* Enhanced order status styling */
-.order-status-item {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-}
-
-.order-status-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-}
-
-.order-items-list {
-    list-style: none;
-    padding: 0;
-    margin: 0.5rem 0;
-}
-
-.order-items-list li {
-    padding: 0.25rem 0;
-    font-size: 0.9rem;
-    color: #6c757d;
-}
-
-.order-items-list li .fw-bold {
-    color: #495057;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .cart-sidebar {
-        width: 100%;
-        right: -100%;
-    }
-
-    .food-grid {
-        grid-template-columns: 1fr;
-        padding: 10px;
-    }
-
-    .table-info {
-        margin: 10px;
-        padding: 15px;
-    }
-
-    .table-info .row > div {
-        text-align: center !important;
-        margin-bottom: 15px;
-    }
-
-    .menu-categories {
-        margin: 10px;
-        padding: 15px;
-    }
-
-    .category-btn {
-        margin: 3px;
-        padding: 6px 15px;
-        font-size: 0.9rem;
-    }
-
-    .floating-cart-btn {
-        bottom: 20px;
-        right: 20px;
-        width: 60px;
-        height: 60px;
-    }
-}
-
-@media (max-width: 576px) {
-    .food-card {
-        margin: 0 10px;
-    }
-
-    .cart-header {
-        padding: 20px;
-    }
-
-    .cart-header h3 {
-        font-size: 1.1rem;
-    }
-}
-
-/* Animation cho loading */
-.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-.loading::after {
+.buffet-section::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 2px solid #007bff;
-    border-top: 2px solid transparent;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(40,167,69,0.1) 0%, transparent 70%);
+    animation: buffetGlow 4s ease-in-out infinite alternate;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes buffetGlow {
+    0% { transform: rotate(0deg) scale(1); }
+    100% { transform: rotate(5deg) scale(1.05); }
 }
 
-/* Thêm animations */
-@keyframes slideIn {
+.section-header {
+    position: relative;
+    z-index: 2;
+}
+
+.section-header h3 {
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+}
+
+.buffet-card {
+    position: relative;
+    border: 2px solid #28a745;
+    box-shadow: 0 8px 25px rgba(40,167,69,0.2);
+    transition: all 0.3s ease;
+    background: linear-gradient(145deg, #ffffff 0%, #f8fff8 100%);
+}
+
+.buffet-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(40,167,69,0.3);
+    border-color: #20c997;
+}
+
+.buffet-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+}
+
+.buffet-badge .badge {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(40,167,69,0.3);
+}
+
+.buffet-btn {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: 25px;
+    box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+    transition: all 0.3s ease;
+}
+
+.buffet-btn:hover {
+    background: linear-gradient(45deg, #218838, #17a2b8);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40,167,69,0.4);
+    color: white;
+}
+
+.regular-section {
+    background: linear-gradient(135deg, #fff8f0 0%, #f0f8ff 100%);
+    border-radius: 15px;
+    padding: 30px;
+    border: 2px solid #e3f2fd;
+}
+
+.regular-card {
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.regular-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,123,255,0.2);
+}
+
+/* Category button enhancements */
+.category-btn[data-category="buffet"] {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+}
+
+.category-btn[data-category="buffet"]:hover {
+    background: linear-gradient(45deg, #218838, #17a2b8);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.category-btn[data-category="buffet"].active {
+    background: linear-gradient(45deg, #218838, #17a2b8);
+    border: none;
+    color: white;
+    box-shadow: 0 6px 20px rgba(40,167,69,0.4);
+}
+
+/* Food price styling for buffet */
+.buffet-card .food-price {
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Animation for section transitions */
+.buffet-section, .regular-section {
+    animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
     from {
-        transform: translateX(100%);
         opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes slideOut {
-    from {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(30px);
     }
     to {
         opacity: 1;
@@ -1434,83 +1620,42 @@ function refreshOrderStatus() {
     }
 }
 
-@keyframes pulse {
-    0% {
-        transform: scale(1);
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .buffet-section, .regular-section {
+        padding: 20px;
+        margin: 15px;
     }
-    50% {
-        transform: scale(1.05);
-    }
-    100% {
-        transform: scale(1);
+
+    .section-header h3 {
+        font-size: 1.5rem;
     }
 }
 
-.notification-toast {
-    animation: slideIn 0.3s ease;
+/* Buffet item styling in cart */
+.cart-item.buffet-item {
+    border-left: 4px solid #28a745;
+    background: linear-gradient(135deg, #f8fff8 0%, #ffffff 100%);
 }
 
-.empty-cart {
-    animation: fadeIn 0.5s ease;
+.cart-item.buffet-item .cart-item-info h4 {
+    color: #28a745;
 }
 
-.food-card {
-    animation: fadeIn 0.5s ease;
+.cart-item.buffet-item .badge {
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
 }
 
+/* Cart item enhancements */
 .cart-item {
-    animation: fadeIn 0.3s ease;
-}
-
-.floating-cart-btn.pulse {
-    animation: pulse 2s infinite;
-}
-
-/* Order Status Styles */
-.order-status-section .card {
-    border: none;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    border-radius: 15px;
-}
-
-.order-status-section .card-header {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-bottom: 1px solid #dee2e6;
-    border-radius: 15px 15px 0 0;
-}
-
-.order-status-item {
     transition: all 0.3s ease;
-    padding: 15px 0;
-}
-
-.order-status-item:hover {
-    background-color: #f8f9fa;
     border-radius: 8px;
-    padding: 15px;
-    /* margin: -15px 0; */
+    margin-bottom: 10px;
+    padding: 10px;
 }
 
-.order-status-item:last-child {
-    border-bottom: none !important;
-}
-
-.order-status-item h6 {
-    color: #2c3e50;
-    font-weight: 600;
-    margin-bottom: 5px;
-}
-
-.order-status-item .text-muted {
-    font-size: 0.85rem;
-}
-
-.order-status-item .badge {
-    font-size: 0.75rem;
-    padding: 4px 8px;
-}
-
-.order-status-item .fw-bold {
-    font-size: 1.1rem;
+.cart-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 </style>

@@ -1,4 +1,4 @@
- <style>
+<style>
      .image-placeholder {
          width: 100%;
          background: linear-gradient(135deg, #f8f9fc 0%, #e8ecf1 100%);
@@ -148,11 +148,41 @@
                                  </label>
                              </div>
                          </div>
-                     </div> <!-- Description -->
+                     </div>                     <!-- Description -->
                      <div class="mb-3">
                          <label for="description" class="form-label">Description</label>
                          <textarea class="form-control" id="description" name="description" rows="4"
                              placeholder="Describe the food item, ingredients, preparation method, etc..."><?= htmlspecialchars($food['description'] ?? '') ?></textarea>
+                     </div>
+
+                     <!-- Buffet Settings -->
+                     <div class="card mb-3 border-success">
+                         <div class="card-header bg-light-success">
+                             <h6 class="card-title mb-0">
+                                 <i class="fas fa-utensils text-success"></i> Buffet Settings
+                             </h6>
+                         </div>
+                         <div class="card-body">
+                             <div class="form-check form-switch">
+                                 <input class="form-check-input" type="checkbox" id="is_buffet_item" name="is_buffet_item" value="1"
+                                     <?= ($food['is_buffet_item'] ?? 0) == 1 ? 'checked' : '' ?>>
+                                 <label class="form-check-label" for="is_buffet_item">
+                                     <i class="fas fa-gift text-success"></i>
+                                     <strong>Buffet Item (Free with Entry)</strong>
+                                 </label>
+                             </div>
+                             <small class="text-muted">
+                                 <i class="fas fa-info-circle"></i>
+                                 Check this to mark as buffet item - customers can order for free with entry ticket.
+                                 Price will be automatically set to 0 when enabled.
+                             </small>
+                             <?php if (($food['is_buffet_item'] ?? 0) == 1): ?>
+                                 <div class="alert alert-success mt-2 mb-0">
+                                     <i class="fas fa-check-circle"></i>
+                                     This item is currently marked as a <strong>buffet item</strong>
+                                 </div>
+                             <?php endif; ?>
+                         </div>
                      </div>
 
                      <!-- Featured Food Settings -->
@@ -356,5 +386,43 @@
      // Page initialization
      document.addEventListener('DOMContentLoaded', function() {
          initializeFoodEditForm();
+     });
+
+     // Buffet item checkbox handler
+     document.addEventListener('DOMContentLoaded', function() {
+         const buffetCheckbox = document.getElementById('is_buffet_item');
+         const priceInput = document.getElementById('price');
+
+         if (buffetCheckbox && priceInput) {
+             buffetCheckbox.addEventListener('change', function() {
+                 if (this.checked) {
+                     // Save current price value
+                     priceInput.dataset.originalPrice = priceInput.value;
+                     priceInput.value = '0';
+                     priceInput.readOnly = true;
+                     priceInput.classList.add('bg-light');
+
+                     // Show tooltip
+                     if (!priceInput.title) {
+                         priceInput.title = 'Price is automatically set to 0 for buffet items';
+                     }
+                 } else {
+                     // Restore original price
+                     if (priceInput.dataset.originalPrice) {
+                         priceInput.value = priceInput.dataset.originalPrice;
+                     }
+                     priceInput.readOnly = false;
+                     priceInput.classList.remove('bg-light');
+                     priceInput.title = '';
+                 }
+             });
+
+             // Initialize on page load
+             if (buffetCheckbox.checked) {
+                 priceInput.readOnly = true;
+                 priceInput.classList.add('bg-light');
+                 priceInput.title = 'Price is automatically set to 0 for buffet items';
+             }
+         }
      });
  </script>

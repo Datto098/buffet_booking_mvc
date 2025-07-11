@@ -152,7 +152,15 @@
                     <option value="unavailable" <?= ($_GET['status'] ?? '') == 'unavailable' ? 'selected' : '' ?>>Unavailable</option>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
+                <label class="form-label">Type</label>
+                <select class="form-select" name="type">
+                    <option value="">All Types</option>
+                    <option value="buffet" <?= ($_GET['type'] ?? '') == 'buffet' ? 'selected' : '' ?>>Buffet Items</option>
+                    <option value="regular" <?= ($_GET['type'] ?? '') == 'regular' ? 'selected' : '' ?>>Regular Items</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <button type="submit" class="btn btn-primary me-2">
                     <i class="fas fa-filter me-1"></i>Filter
                 </button>
@@ -160,7 +168,7 @@
                     <i class="fas fa-times me-1"></i>Clear
                 </a>
             </div>
-        </form>
+            </a>
     </div>
 
     <!-- Foods Table -->
@@ -187,6 +195,7 @@
                                 <th>Food</th>
                                 <th>Category</th>
                                 <th>Price</th>
+                                <th>Type</th>
                                 <th>Status</th>
                                 <th>Created</th>
                                 <th width="120">Actions</th>
@@ -222,7 +231,23 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="fw-medium text-success">$<?php echo number_format($food['price'] ?? 0, 2); ?></div>
+                                        <?php if (($food['is_buffet_item'] ?? 0) == 1): ?>
+                                            <div class="fw-medium text-success">FREE</div>
+                                            <small class="text-muted">(Buffet)</small>
+                                        <?php else: ?>
+                                            <div class="fw-medium text-primary"><?php echo number_format($food['price'] ?? 0, 0, ',', '.'); ?>đ</div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if (($food['is_buffet_item'] ?? 0) == 1): ?>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-utensils"></i> Buffet
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-shopping-cart"></i> Regular
+                                            </span>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php

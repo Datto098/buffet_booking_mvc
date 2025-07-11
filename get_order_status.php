@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/models/DineInOrder.php';
+require_once __DIR__ . '/models/Invoice.php';
 
 header('Content-Type: application/json');
 
@@ -21,6 +22,7 @@ try {
 
     $user_id = $_SESSION['user']['id'];
     $dineInOrderModel = new DineInOrder();
+    $invoiceModel = new Invoice();
 
     // Get orders by both table number and user ID for security
     $orders = $dineInOrderModel->getOrdersByTableAndUser($table_number, $user_id);
@@ -28,14 +30,26 @@ try {
     // Format orders for display
     $formattedOrders = [];
     foreach ($orders as $order) {
+        // Check if order has invoice
+        $invoice = $invoiceModel->findByOrderId($order['id']);
+
         $formattedOrder = [
             'id' => $order['id'],
             'status' => $order['status'],
-            'total' => $order['total_amount'],
             'notes' => $order['notes'],
             'created_at' => date('d/m/Y H:i', strtotime($order['created_at'])),
-            'items' => []
+            'items' => [],
+            'has_invoice' => !empty($invoice),
+            'invoice_total' => $invoice ? $invoice['total_amount'] : null,
+            'order_total' => $order['total_amount']
         ];
+
+        // Set display total based on invoice existence
+        if ($invoice) {
+            $formattedOrder['total'] = $invoice['total_amount'];
+        } else {
+            $formattedOrder['total'] = null; // Don't show total if no invoice
+        }
 
         // Get order items
         $items = $dineInOrderModel->getOrderItems($order['id']);
