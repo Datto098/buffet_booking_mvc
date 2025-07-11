@@ -34,6 +34,9 @@ $current_page = 'bookings';
                             <p class="mb-1"><strong>Date:</strong> <?= date('l, F j, Y', strtotime($booking['booking_date'])) ?></p>
                             <p class="mb-1"><strong>Time:</strong> <?= date('g:i A', strtotime($booking['booking_time'])) ?></p>
                             <p class="mb-1"><strong>Guests:</strong> <?= $booking['guest_count'] ?></p>
+                            <?php if (!empty($booking['booking_location'])): ?>
+                            <p class="mb-1"><strong>Location:</strong> <?= htmlspecialchars($booking['booking_location']) ?></p>
+                            <?php endif; ?>
                             <?php if (!empty($booking['table_number'])): ?>
                             <p class="mb-1"><strong>Table:</strong> <?= $booking['table_number'] ?></p>
                             <?php endif; ?>

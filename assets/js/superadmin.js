@@ -226,10 +226,11 @@ function getNotificationIcon(type) {
  */
 // showAddTableModal function is implemented in specific table management pages
 
-function showAddPromotionModal() {
-	// Implementation for showing add promotion modal
-	showNotification('Add Promotion modal would open here', 'info');
-}
+// Note: showAddPromotionModal function is implemented in individual promotion pages
+// function showAddPromotionModal() {
+// 	// Implementation for showing add promotion modal
+// 	showNotification('Add Promotion modal would open here', 'info');
+// }
 
 function toggleEditMode() {
 	const form = document.getElementById('restaurantForm');

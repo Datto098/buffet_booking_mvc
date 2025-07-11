@@ -184,6 +184,7 @@
                              <th>Customer</th>
                              <th>Date & Time</th>
                              <th>Guests</th>
+                             <th>Location</th>
                              <th>Table</th>
                              <th>Status</th>
                              <th>Special Requests</th>
@@ -221,6 +222,15 @@
                                      <span class="badge bg-light text-dark">
                                          <i class="fas fa-users"></i> <?php echo htmlspecialchars($booking['number_of_guests']); ?>
                                      </span>
+                                 </td>
+                                 <td>
+                                     <?php if (!empty($booking['booking_location'])): ?>
+                                         <span class="badge bg-secondary">
+                                             <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($booking['booking_location']); ?>
+                                         </span>
+                                     <?php else: ?>
+                                         <span class="text-muted">No location</span>
+                                     <?php endif; ?>
                                  </td>
                                  <td>
                                      <?php if (!empty($booking['table_number'])): ?>
@@ -600,6 +610,12 @@
                                     <td><strong>Guests:</strong></td>
                                     <td>${bookingData.number_of_guests}</td>
                                 </tr>
+                                ${bookingData.booking_location ? `
+                                <tr>
+                                    <td><strong>Location:</strong></td>
+                                    <td><small>${bookingData.booking_location}</small></td>
+                                </tr>
+                                ` : ''}
                                 <tr>
                                     <td><strong>Table:</strong></td>
                                     <td>${bookingData.table_number ? 'Table ' + bookingData.table_number : 'Not assigned'}</td>
@@ -646,6 +662,9 @@
                         <div class="card-body">
                             <button class="btn btn-outline-secondary btn-sm" onclick="sendConfirmationEmail(${bookingData.id})">
                                 <i class="fas fa-envelope"></i> Send Email
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm ms-2" onclick="assignTable(${bookingData.id})">
+                                <i class="fas fa-table"></i> Assign Table
                             </button>
                         </div>
                     </div>

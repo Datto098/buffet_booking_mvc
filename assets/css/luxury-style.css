@@ -405,6 +405,110 @@ h3 {
     padding: 0.5rem 0;
 }
 
+/* Override Container Width for Better Spacing */
+.navbar .container {
+    max-width: 95%;
+    width: 95%;
+}
+
+@media (min-width: 576px) {
+    .navbar .container {
+        max-width: 90%;
+        width: 90%;
+    }
+}
+
+@media (min-width: 768px) {
+    .navbar .container {
+        max-width: 85%;
+        width: 85%;
+    }
+}
+
+@media (min-width: 992px) {
+    .navbar .container {
+        max-width: 90%;
+        width: 90%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .navbar .container {
+        max-width: 95%;
+        width: 95%;
+    }
+}
+
+@media (min-width: 1400px) {
+    .navbar .container {
+        max-width: 98%;
+        width: 98%;
+    }
+}
+
+/* Navigation Container Spacing */
+.navbar .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .navbar .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .navbar-brand {
+        margin-right: 1rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .navbar-nav.me-auto {
+        margin-left: 1rem;
+        margin-right: auto;
+    }
+
+    .navbar-actions {
+        margin-left: auto;
+    }
+
+    .btn-booking {
+        margin-left: 0.75rem;
+    }
+}
+
+@media (min-width: 1400px) {
+    .navbar .container {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+
+    .navbar-brand {
+        margin-right: 3rem;
+    }
+
+    .navbar-nav.me-auto {
+        margin-left: 1.5rem;
+    }
+}
+
+/* Navbar Layout Balance */
+.navbar-nav.me-auto {
+    flex-grow: 1;
+    justify-content: flex-start;
+    margin-left: 0.5rem;
+}
+
+.navbar-actions {
+    flex-shrink: 0;
+    gap: 0.5rem;
+}
+
+.navbar-actions .nav-item {
+    flex-shrink: 0;
+}
+
 /* Brand Styling */
 .navbar-brand {
     font-family: 'Playfair Display', serif;
@@ -595,7 +699,7 @@ h3 {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-left: 1rem;
+    margin-left: 0.5rem;
 }
 
 .btn-booking:hover {
