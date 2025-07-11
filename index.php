@@ -245,6 +245,22 @@ function handleSuperAdminRoute($segments)
     $action = $segments[2] ?? 'index';
     $param = $segments[3] ?? null;
 
+    // Handle address add POST
+    if (($section === 'address' || $section === 'addresses') && $action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $controller->addAddress();
+        return;
+    }
+
+    // Handle address AJAX actions
+    if (($section === 'address' || $section === 'addresses') && $action === 'toggle-status') {
+        $controller->toggleAddressStatus();
+        return;
+    }
+    if (($section === 'address' || $section === 'addresses') && $action === 'delete') {
+        $controller->deleteAddress();
+        return;
+    }
+
     switch ($section) {
         case 'dashboard':
             if ($action === 'stats') {
@@ -283,6 +299,10 @@ function handleSuperAdminRoute($segments)
             break;
         case 'statistics':
             $controller->statistics();
+            break;
+        case 'address':
+        case 'addresses':
+            $controller->addresses();
             break;
         default:
             $controller->dashboard();

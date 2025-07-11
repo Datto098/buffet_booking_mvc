@@ -93,14 +93,16 @@
                                             </select>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label for="location" class="form-label">Location/Area</label>
+                                            <label for="location" class="form-label">Location (Address)</label>
                                             <select class="form-select" id="location" name="location">
-                                                <option value="">Select Location</option>
-                                                <option value="main_hall" <?= ($data['table']['location'] ?? '') == 'main_hall' ? 'selected' : '' ?>>Main Hall</option>
-                                                <option value="private_room" <?= ($data['table']['location'] ?? '') == 'private_room' ? 'selected' : '' ?>>Private Room</option>
-                                                <option value="terrace" <?= ($data['table']['location'] ?? '') == 'terrace' ? 'selected' : '' ?>>Terrace</option>
-                                                <option value="vip_section" <?= ($data['table']['location'] ?? '') == 'vip_section' ? 'selected' : '' ?>>VIP Section</option>
-                                                <option value="outdoor" <?= ($data['table']['location'] ?? '') == 'outdoor' ? 'selected' : '' ?>>Outdoor</option>
+                                                <option value="">Select Address</option>
+                                                <?php if (!empty($data['addresses'])): ?>
+                                                    <?php foreach ($data['addresses'] as $addr): ?>
+                                                        <option value="<?= htmlspecialchars($addr['address']) ?>" <?= ($data['table']['location'] ?? '') == $addr['address'] ? 'selected' : '' ?>>
+                                                            <?= htmlspecialchars($addr['address']) ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                <?php endif; ?>
                                             </select>
                                         </div>
                                     </div>                                    <div class="mb-3">

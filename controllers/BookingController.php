@@ -22,31 +22,38 @@ class BookingController extends BaseController
         $this->userModel = new User();
     }
 
-    public function index()
-    {
-        // Lấy thông tin nhà hàng cho footer
-        try {
-            $db = Database::getInstance()->getConnection();
-            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
-            $stmt->execute();
-            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            $restaurantInfo = [
-                'restaurant_name' => SITE_NAME,
-                'address' => 'Địa chỉ nhà hàng',
-                'phone' => '0123-456-789',
-                'email' => ADMIN_EMAIL,
-                'description' => 'Nội dung giới thiệu về nhà hàng...'
-            ];
-        }
+public function index()
+{
+    // Lấy thông tin nhà hàng cho footer
+    try {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+        $stmt->execute();
+        $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $data = [
-            'title' => 'Đặt Bàn - ' . SITE_NAME,
-            'info' => $restaurantInfo
+        // Lấy danh sách địa chỉ đang mở (status = 1)
+        $stmt2 = $db->prepare("SELECT address FROM addresses WHERE status = 1");
+        $stmt2->execute();
+        $addresses = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        $restaurantInfo = [
+            'restaurant_name' => SITE_NAME,
+            'address' => 'Địa chỉ nhà hàng',
+            'phone' => '0123-456-789',
+            'email' => ADMIN_EMAIL,
+            'description' => 'Nội dung giới thiệu về nhà hàng...'
         ];
-
-        $this->loadView('customer/booking/index', $data);
+        $addresses = [];
     }
+
+    $data = [
+        'title' => 'Đặt Bàn - ' . SITE_NAME,
+        'info' => $restaurantInfo,
+        'addresses' => $addresses 
+    ];
+
+    $this->loadView('customer/booking/index', $data);
+}
 
     public function create()
     {
@@ -65,14 +72,14 @@ class BookingController extends BaseController
         $date = $_POST['booking_date'] ?? '';
         $time = $_POST['booking_time'] ?? '';
         $partySize = $_POST['party_size'] ?? '';
-
+        $location = $_POST['booking_location'] ?? '';
         error_log("BookingController - Extracted: date=$date, time=$time, partySize=$partySize");
 
         // Validate dữ liệu
-        if (!$date || !$time || !$partySize) {
+        if (!$date || !$time || !$partySize || !$location) {
             $response = [
                 'available' => false,
-                'message' => 'Vui lòng chọn đầy đủ ngày, giờ và số lượng khách.'
+                'message' => 'Vui lòng chọn đầy đủ ngày, địa chỉ chi nhánh, giờ và số lượng khách.'
             ];
             error_log("BookingController - Validation failed: " . json_encode($response));
             header('Content-Type: application/json');
@@ -82,7 +89,7 @@ class BookingController extends BaseController
 
         // Gọi model để kiểm tra bàn trống
         try {
-            $result = $this->bookingModel->checkAvailability($date, $time, $partySize);
+            $result = $this->bookingModel->checkAvailability($date, $time, $partySize, $location);
             error_log("BookingController - Result from model: " . json_encode($result));
         } catch (Exception $e) {
             error_log("BookingController - Exception: " . $e->getMessage());
@@ -263,6 +270,11 @@ class BookingController extends BaseController
         $bookingDateTime = $bookingDate . ' ' . $bookingTime;
         if (strtotime($bookingDateTime) < time()) {
             $errors[] = 'Không thể đặt bàn cho thời gian trong quá khứ';
+        }
+
+        $address = $_POST['booking_location'] ?? '';
+        if (!$this->bookingModel->hasTablesForAddress($address)) {
+            $errors[] = 'Địa chỉ này chưa có bàn nào!';
         }
 
         if (!empty($errors)) {

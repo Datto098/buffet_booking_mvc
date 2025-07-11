@@ -670,5 +670,13 @@ public function getBookingById($bookingId, $userId) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
+public function hasTablesForAddress($address) {
+    $sql = "SELECT COUNT(*) as count FROM tables WHERE location = :address";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(':address', $address);
+    $stmt->execute();
+    $result = $stmt->fetch();
+    return ($result['count'] ?? 0) > 0;
+}
 }
 ?>

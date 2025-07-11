@@ -125,7 +125,23 @@
                                         <?php endfor; ?>
                                     </select>
                                 </div>
+
+                               
                             </div>
+                             <div class="mb-3">
+                                    <label for="booking_location" class="form-label">
+                                        Địa chỉ <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="booking_location" name="booking_location" required>
+                                        <option value="">Chọn địa chỉ</option>
+                                        <?php foreach ($addresses as $address): ?>
+                                            <option value="<?= htmlspecialchars($address['address']) ?>"
+                                                <?= ($_SESSION['form_data']['booking_location'] ?? '') == $address['address'] ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($address['address']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                         </div>
 
                         <!-- Special Requests -->
@@ -315,8 +331,9 @@
             const date = bookingDateInput.value;
             const time = bookingTimeSelect.value;
             const partySize = partySizeSelect.value;
+            const location = document.getElementById('booking_location').value;
 
-            if (date && time && partySize) {
+            if (date && time && partySize && location) {
                 availabilityResult.style.display = 'block';
                 availabilityResult.className = 'alert alert-info';
                 availabilityResult.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang kiểm tra tình trạng bàn...';
@@ -326,7 +343,7 @@
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
                         },
-                        body: `booking_date=${date}&booking_time=${time}&party_size=${partySize}`
+                        body: `booking_date=${encodeURIComponent(date)}&booking_time=${encodeURIComponent(time)}&party_size=${encodeURIComponent(partySize)}&booking_location=${encodeURIComponent(location)}`
                     })
                     .then(response => response.json())
                     .then(data => {
@@ -376,6 +393,15 @@
                 isValid = false;
             }
 
+            // Kiểm tra địa chỉ
+            const bookingLocation = document.getElementById('booking_location');
+            if (!bookingLocation.value.trim()) {
+                bookingLocation.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                bookingLocation.classList.remove('is-invalid');
+            }
+
             return isValid;
         }
 
@@ -385,6 +411,7 @@
         bookingDateInput.addEventListener('change', checkAvailability);
         bookingTimeSelect.addEventListener('change', checkAvailability);
         partySizeSelect.addEventListener('change', checkAvailability);
+        document.getElementById('booking_location').addEventListener('change', checkAvailability);
 
         bookingForm.addEventListener('submit', function(e) {
             if (!validateForm()) {

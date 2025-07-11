@@ -51,6 +51,24 @@ class DineInController extends BaseController {
             $data['current_order'] = $this->dineInOrderModel->getCurrentOrderByTable($table['id'], $_SESSION['user']['id']);
         }
 
+        // Lấy thông tin nhà hàng cho footer/header
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+
+        $data['info'] = $restaurantInfo;
+
         $this->loadView('customer/dine_in/index', $data);
     }
 

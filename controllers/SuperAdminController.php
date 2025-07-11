@@ -16,6 +16,7 @@ require_once __DIR__ . '/../models/Promotion.php';
 require_once __DIR__ . '/../models/Review.php';
 require_once __DIR__ . '/../models/Notification.php';
 require_once __DIR__ . '/../models/InternalMessage.php';
+require_once __DIR__ . '/../models/Address.php';
 
 class SuperAdminController extends BaseController
 {
@@ -29,6 +30,7 @@ class SuperAdminController extends BaseController
     private $reviewModel;
     private $notificationModel;
     private $internalMessageModel;
+    private $addressModel;
 
     public function __construct()
     {
@@ -43,6 +45,7 @@ class SuperAdminController extends BaseController
         $this->reviewModel = new Review();
         $this->notificationModel = new Notification();
         $this->internalMessageModel = new InternalMessage();
+        $this->addressModel = new Address();
     }
 
     public function dashboard()
@@ -761,6 +764,9 @@ class SuperAdminController extends BaseController
     // ==========================================
     // RESTAURANT INFO MANAGEMENT
     // ==========================================
+    // ==========================================
+    // RESTAURANT INFO MANAGEMENT
+    // ==========================================
     public function restaurantInfo()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -1029,6 +1035,7 @@ class SuperAdminController extends BaseController
         $this->restaurantInfo();
     }
 
+
     // ==========================================
     // PROMOTION MANAGEMENT
     // ==========================================
@@ -1067,6 +1074,7 @@ class SuperAdminController extends BaseController
 
         $this->loadSuperAdminView('promotions', $data);
     }
+
 
     public function createPromotion()
     {
@@ -1947,7 +1955,7 @@ class SuperAdminController extends BaseController
      * Xử lý upload file
      */
     private function handleFileUpload($file)
-    {
+ {
         $allowedTypes = ['pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png'];
         $maxSize = 5 * 1024 * 1024; // 5MB
 
@@ -1982,4 +1990,108 @@ class SuperAdminController extends BaseController
             return ['success' => false, 'message' => 'Lỗi upload file'];
         }
     }
+
+    // ==========================================
+    // ADDRESS MANAGEMENT
+    // ==========================================
+
+    public function toggleAddressStatus()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = (int)($_POST['id'] ?? 0);
+            $status = (int)($_POST['status'] ?? 0);
+            if ($id > 0) {
+                $db = Database::getInstance()->getConnection();
+                $stmt = $db->prepare("UPDATE addresses SET status = ? WHERE id = ?");
+                $result = $stmt->execute([$status, $id]);
+                $this->jsonResponse(['success' => $result]);
+                return;
+            }
+        }
+        $this->jsonResponse(['success' => false], 400);
+    }
+
+   public function deleteAddress()
+{
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id > 0) {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT address FROM addresses WHERE id = ?");
+            $stmt->execute([$id]);
+            $addressRow = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($addressRow) {
+                $address = mb_strtolower(trim(preg_replace('/\s+/', ' ', $addressRow['address'])), 'UTF-8');
+                $stmt = $db->prepare("DELETE FROM tables WHERE LOWER(TRIM(REPLACE(location, '  ', ' '))) = :location");
+                $stmt->execute([':location' => $address]);
+                $stmt = $db->prepare("DELETE FROM addresses WHERE id = ?");
+                $result = $stmt->execute([$id]);
+                $this->redirect('/superadmin/addresses');
+                return;
+            }
+        }
+    }
+    $this->redirect('/superadmin/addresses');
+}
+
+    public function addresses()
+    {
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        // Get filter parameters
+        $filters = [
+            'search' => $_GET['search'] ?? '',
+            'user_id' => $_GET['user_id'] ?? '',
+            'type' => $_GET['type'] ?? '',
+            'city' => $_GET['city'] ?? ''
+        ];
+        // Lọc theo city/tỉnh nếu có
+        if (!empty($_GET['city'])) {
+            $filters['search'] = $_GET['city'] . (empty($filters['search']) ? '' : ' ' . $filters['search']);
+        }
+
+        // Lấy danh sách địa chỉ từ model
+        $addresses = $this->addressModel->getAllAddresses($limit, $offset, $filters);
+        $totalAddresses = $this->addressModel->countAddresses($filters);
+        $totalPages = ceil($totalAddresses / $limit);
+
+        $data = [
+            'title' => 'Address Management',
+            'addresses' => $addresses,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'totalAddresses' => $totalAddresses,
+            'filters' => $filters,
+            'csrf_token' => $this->generateCSRF()
+        ];
+
+        $this->loadSuperAdminView('addresses', $data);
+    }
+    public function addAddress()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $address = trim($_POST['address'] ?? '');
+            $status = isset($_POST['status']) ? (int)$_POST['status'] : 1;
+            if ($address !== '') {
+                $result = $this->addressModel->addAddress([
+                    'address' => $address,
+                    'status' => $status
+                ]);
+                if ($result) {
+                    $this->setFlash('success', 'Thêm địa chỉ thành công!');
+                } else {
+                    $this->setFlash('error', 'Lỗi khi lưu địa chỉ!');
+                }
+            } else {
+                $this->setFlash('error', 'Vui lòng nhập địa chỉ.');
+            }
+            $this->redirect('/superadmin/addresses');
+            return;
+        }
+        // Nếu không phải POST thì chuyển về danh sách
+        $this->redirect('/superadmin/addresses');
+    }
+    
 }
