@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Máy chủ: 127.0.0.1:3306
--- Thời gian đã tạo: Th7 11, 2025 lúc 10:05 AM
--- Phiên bản máy phục vụ: 8.2.0
--- Phiên bản PHP: 8.2.13
+-- Host: 127.0.0.1:3306
+-- Generation Time: Jul 11, 2025 at 02:06 PM
+-- Server version: 9.1.0
+-- PHP Version: 8.3.14
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,13 +18,13 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Cơ sở dữ liệu: `buffet_booking`
+-- Database: `buffet_booking`
 --
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `addresses`
+-- Table structure for table `addresses`
 --
 
 DROP TABLE IF EXISTS `addresses`;
@@ -35,21 +35,22 @@ CREATE TABLE IF NOT EXISTS `addresses` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `addresses`
+-- Dumping data for table `addresses`
 --
 
 INSERT INTO `addresses` (`id`, `address`, `status`, `created_at`, `updated_at`) VALUES
-(5, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', 1, '2025-07-11 05:04:37', '2025-07-11 10:23:38'),
+(5, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', 1, '2025-07-11 05:04:37', '2025-07-11 20:49:34'),
 (11, 'GiaiKhat 119 Coffee, Hoàng Hoa Thám, Thạc Gián, Thanh Khê, Phường Thanh Khê, Thành phố Đà Nẵng, Việt Nam', 1, '2025-07-11 05:07:35', '2025-07-11 10:23:36'),
-(9, 'Bùi Quốc Khánh, Khu phố 1, Phường Thủ Dầu Một, Thành phố Hồ Chí Minh, Việt Nam', 1, '2025-07-11 05:05:55', '2025-07-11 10:23:37');
+(9, 'Bùi Quốc Khánh, Khu phố 1, Phường Thủ Dầu Một, Thành phố Hồ Chí Minh, Việt Nam', 1, '2025-07-11 05:05:55', '2025-07-11 10:23:37'),
+(14, 'Ký Hòa, Cholon, Thủ Đức, Ho Chi Minh City, Vietnam', 1, '2025-07-11 20:49:06', '2025-07-11 20:49:06');
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `bookings`
+-- Table structure for table `bookings`
 --
 
 DROP TABLE IF EXISTS `bookings`;
@@ -63,6 +64,7 @@ CREATE TABLE IF NOT EXISTS `bookings` (
   `booking_date` date NOT NULL,
   `booking_time` time NOT NULL,
   `guest_count` int NOT NULL,
+  `booking_location` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `special_requests` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `status` enum('pending','confirmed','seated','completed','cancelled','no_show') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
   `booking_reference` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -77,59 +79,63 @@ CREATE TABLE IF NOT EXISTS `bookings` (
   KEY `idx_status` (`status`),
   KEY `idx_customer_email` (`customer_email`),
   KEY `idx_bookings_date_status` (`booking_date`,`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=104 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=108 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `bookings`
+-- Dumping data for table `bookings`
 --
 
-INSERT INTO `bookings` (`id`, `user_id`, `table_id`, `customer_name`, `customer_email`, `customer_phone`, `booking_date`, `booking_time`, `guest_count`, `special_requests`, `status`, `booking_reference`, `notes`, `created_at`, `updated_at`) VALUES
-(1, NULL, NULL, 'Nguyễn Văn A', 'test1@example.com', '0123456789', '2025-07-08', '18:00:00', 4, NULL, 'confirmed', '', NULL, '2025-07-10 14:47:54', '2025-07-10 14:47:54'),
-(64, NULL, NULL, 'Nguyễn Văn A', 'nguyenvana@example.com', '0123456789', '2025-07-10', '18:00:00', 4, NULL, 'confirmed', '5586ED9A64', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(65, NULL, NULL, 'Trần Thị B', 'tranthib@example.com', '0987654321', '2025-07-10', '19:30:00', 2, NULL, 'pending', 'C6501EDB16', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(66, NULL, NULL, 'Lê Văn C', 'levanc@example.com', '0111222333', '2025-07-09', '20:00:00', 6, NULL, 'confirmed', 'A6DB3F5B04', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(67, NULL, NULL, 'Phạm Thị D', 'phamthid@example.com', '0444555666', '2025-07-09', '17:30:00', 3, NULL, 'completed', '56611CEDA7', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(68, NULL, NULL, 'Hoàng Văn E', 'hoangvane@example.com', '0777888999', '2025-07-08', '19:30:00', 5, NULL, 'seated', 'CAE66DD946', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(69, NULL, NULL, 'Vũ Thị F', 'vuthif@example.com', '0555666777', '2025-07-08', '18:30:00', 4, NULL, 'confirmed', '81ED8AE2AA', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(70, NULL, NULL, 'Đặng Văn G', 'dangvang@example.com', '0333444555', '2025-07-07', '20:30:00', 3, NULL, 'cancelled', '049988D64B', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(71, NULL, NULL, 'Bùi Thị H', 'buithih@example.com', '0666777888', '2025-07-07', '19:00:00', 2, NULL, 'confirmed', '3643F3F06D', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(72, NULL, NULL, 'Lý Văn I', 'lyvani@example.com', '0222333444', '2025-07-05', '18:00:00', 6, NULL, 'completed', '08A09DEBB8', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(73, NULL, NULL, 'Hồ Thị K', 'hothik@example.com', '0888999000', '2025-07-05', '20:00:00', 4, NULL, 'confirmed', '8BB80E760F', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(74, NULL, NULL, 'Tô Văn L', 'tovanl@example.com', '0111000111', '2025-07-03', '19:30:00', 3, NULL, 'seated', 'A41B398C03', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(75, NULL, NULL, 'Dương Thị M', 'duongthim@example.com', '0999000999', '2025-07-03', '17:30:00', 5, NULL, 'confirmed', '4BD09977D9', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(76, NULL, NULL, 'Mai Văn N', 'maivann@example.com', '0123456780', '2025-06-30', '18:30:00', 2, NULL, 'completed', '361BF96968', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(77, NULL, NULL, 'Lâm Thị O', 'lamthio@example.com', '0987654320', '2025-06-30', '20:30:00', 4, NULL, 'confirmed', '7139A40FCA', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(78, NULL, NULL, 'Châu Văn P', 'chauvanp@example.com', '0111222330', '2025-06-25', '19:00:00', 3, NULL, 'cancelled', '206A08E04B', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(79, NULL, NULL, 'Thái Thị Q', 'thaithiq@example.com', '0444555660', '2025-06-25', '18:00:00', 6, NULL, 'confirmed', '1FCC4A7074', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(80, NULL, NULL, 'Tạ Văn R', 'tavanr@example.com', '0777888990', '2025-06-20', '20:00:00', 2, NULL, 'completed', '559E120EBB', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(81, NULL, NULL, 'Hà Thị S', 'hathis@example.com', '0555666770', '2025-06-20', '19:30:00', 4, NULL, 'seated', '5FEC92F0AB', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(82, NULL, NULL, 'Võ Văn T', 'vovant@example.com', '0333444550', '2025-06-15', '18:30:00', 3, NULL, 'confirmed', '1269B1D770', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(83, NULL, NULL, 'Ngô Thị U', 'ngothiu@example.com', '0666777880', '2025-06-15', '20:30:00', 5, NULL, 'pending', '5F4DB46B1A', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
-(84, NULL, NULL, 'Nguyễn Văn A', 'nguyenvana@example.com', '0123456789', '2025-07-10', '18:00:00', 4, NULL, 'confirmed', 'B61683B9B7', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(85, NULL, NULL, 'Trần Thị B', 'tranthib@example.com', '0987654321', '2025-07-10', '19:30:00', 2, NULL, 'pending', 'A0D11686C8', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(86, NULL, NULL, 'Lê Văn C', 'levanc@example.com', '0111222333', '2025-07-09', '20:00:00', 6, NULL, 'confirmed', 'A7CC9EAD87', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(87, NULL, NULL, 'Phạm Thị D', 'phamthid@example.com', '0444555666', '2025-07-09', '17:30:00', 3, NULL, 'completed', '7E90A2E154', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(88, NULL, NULL, 'Hoàng Văn E', 'hoangvane@example.com', '0777888999', '2025-07-08', '19:30:00', 5, NULL, 'seated', '3FDD32A5FB', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(89, NULL, NULL, 'Vũ Thị F', 'vuthif@example.com', '0555666777', '2025-07-08', '18:30:00', 4, NULL, 'confirmed', 'F5B34A7892', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(90, NULL, NULL, 'Đặng Văn G', 'dangvang@example.com', '0333444555', '2025-07-07', '20:30:00', 3, NULL, 'cancelled', 'F35DEF08B4', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(91, NULL, NULL, 'Bùi Thị H', 'buithih@example.com', '0666777888', '2025-07-07', '19:00:00', 2, NULL, 'confirmed', '94DA61AF7E', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(92, NULL, NULL, 'Lý Văn I', 'lyvani@example.com', '0222333444', '2025-07-05', '18:00:00', 6, NULL, 'completed', '360BF6CDB1', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(93, NULL, NULL, 'Hồ Thị K', 'hothik@example.com', '0888999000', '2025-07-05', '20:00:00', 4, NULL, 'confirmed', '6D46CA3958', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(94, NULL, NULL, 'Tô Văn L', 'tovanl@example.com', '0111000111', '2025-07-03', '19:30:00', 3, NULL, 'seated', '44320E2284', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(95, NULL, NULL, 'Dương Thị M', 'duongthim@example.com', '0999000999', '2025-07-03', '17:30:00', 5, NULL, 'confirmed', '9F686D90FC', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(96, NULL, NULL, 'Mai Văn N', 'maivann@example.com', '0123456780', '2025-06-30', '18:30:00', 2, NULL, 'completed', '5F0E36B78E', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(97, NULL, NULL, 'Lâm Thị O', 'lamthio@example.com', '0987654320', '2025-06-30', '20:30:00', 4, NULL, 'confirmed', 'D504900014', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(98, NULL, NULL, 'Châu Văn P', 'chauvanp@example.com', '0111222330', '2025-06-25', '19:00:00', 3, NULL, 'cancelled', '13A62C418A', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(99, NULL, NULL, 'Thái Thị Q', 'thaithiq@example.com', '0444555660', '2025-06-25', '18:00:00', 6, NULL, 'confirmed', 'D7C6B40E17', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(100, NULL, NULL, 'Tạ Văn R', 'tavanr@example.com', '0777888990', '2025-06-20', '20:00:00', 2, NULL, 'completed', '95DB9452C4', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(101, NULL, NULL, 'Hà Thị S', 'hathis@example.com', '0555666770', '2025-06-20', '19:30:00', 4, NULL, 'seated', 'E4C21C1E18', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(102, NULL, NULL, 'Võ Văn T', 'vovant@example.com', '0333444550', '2025-06-15', '18:30:00', 3, NULL, 'confirmed', 'AF033C79D5', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
-(103, NULL, NULL, 'Ngô Thị U', 'ngothiu@example.com', '0666777880', '2025-06-15', '20:30:00', 5, NULL, 'pending', '1D36628F02', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10');
+INSERT INTO `bookings` (`id`, `user_id`, `table_id`, `customer_name`, `customer_email`, `customer_phone`, `booking_date`, `booking_time`, `guest_count`, `booking_location`, `special_requests`, `status`, `booking_reference`, `notes`, `created_at`, `updated_at`) VALUES
+(1, NULL, NULL, 'Nguyễn Văn A', 'test1@example.com', '0123456789', '2025-07-08', '18:00:00', 4, NULL, NULL, 'confirmed', '', NULL, '2025-07-10 14:47:54', '2025-07-10 14:47:54'),
+(64, NULL, NULL, 'Nguyễn Văn A', 'nguyenvana@example.com', '0123456789', '2025-07-10', '18:00:00', 4, NULL, NULL, 'confirmed', '5586ED9A64', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(65, NULL, NULL, 'Trần Thị B', 'tranthib@example.com', '0987654321', '2025-07-10', '19:30:00', 2, NULL, NULL, 'pending', 'C6501EDB16', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(66, NULL, NULL, 'Lê Văn C', 'levanc@example.com', '0111222333', '2025-07-09', '20:00:00', 6, NULL, NULL, 'confirmed', 'A6DB3F5B04', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(67, NULL, NULL, 'Phạm Thị D', 'phamthid@example.com', '0444555666', '2025-07-09', '17:30:00', 3, NULL, NULL, 'completed', '56611CEDA7', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(68, NULL, NULL, 'Hoàng Văn E', 'hoangvane@example.com', '0777888999', '2025-07-08', '19:30:00', 5, NULL, NULL, 'seated', 'CAE66DD946', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(69, NULL, NULL, 'Vũ Thị F', 'vuthif@example.com', '0555666777', '2025-07-08', '18:30:00', 4, NULL, NULL, 'confirmed', '81ED8AE2AA', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(70, NULL, NULL, 'Đặng Văn G', 'dangvang@example.com', '0333444555', '2025-07-07', '20:30:00', 3, NULL, NULL, 'cancelled', '049988D64B', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(71, NULL, NULL, 'Bùi Thị H', 'buithih@example.com', '0666777888', '2025-07-07', '19:00:00', 2, NULL, NULL, 'confirmed', '3643F3F06D', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(72, NULL, NULL, 'Lý Văn I', 'lyvani@example.com', '0222333444', '2025-07-05', '18:00:00', 6, NULL, NULL, 'completed', '08A09DEBB8', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(73, NULL, NULL, 'Hồ Thị K', 'hothik@example.com', '0888999000', '2025-07-05', '20:00:00', 4, NULL, NULL, 'confirmed', '8BB80E760F', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(74, NULL, NULL, 'Tô Văn L', 'tovanl@example.com', '0111000111', '2025-07-03', '19:30:00', 3, NULL, NULL, 'seated', 'A41B398C03', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(75, NULL, NULL, 'Dương Thị M', 'duongthim@example.com', '0999000999', '2025-07-03', '17:30:00', 5, NULL, NULL, 'confirmed', '4BD09977D9', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(76, NULL, NULL, 'Mai Văn N', 'maivann@example.com', '0123456780', '2025-06-30', '18:30:00', 2, NULL, NULL, 'completed', '361BF96968', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(77, NULL, NULL, 'Lâm Thị O', 'lamthio@example.com', '0987654320', '2025-06-30', '20:30:00', 4, NULL, NULL, 'confirmed', '7139A40FCA', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(78, NULL, NULL, 'Châu Văn P', 'chauvanp@example.com', '0111222330', '2025-06-25', '19:00:00', 3, NULL, NULL, 'cancelled', '206A08E04B', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(79, NULL, NULL, 'Thái Thị Q', 'thaithiq@example.com', '0444555660', '2025-06-25', '18:00:00', 6, NULL, NULL, 'confirmed', '1FCC4A7074', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(80, NULL, NULL, 'Tạ Văn R', 'tavanr@example.com', '0777888990', '2025-06-20', '20:00:00', 2, NULL, NULL, 'completed', '559E120EBB', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(81, NULL, NULL, 'Hà Thị S', 'hathis@example.com', '0555666770', '2025-06-20', '19:30:00', 4, NULL, NULL, 'seated', '5FEC92F0AB', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(82, NULL, NULL, 'Võ Văn T', 'vovant@example.com', '0333444550', '2025-06-15', '18:30:00', 3, NULL, NULL, 'confirmed', '1269B1D770', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(83, NULL, NULL, 'Ngô Thị U', 'ngothiu@example.com', '0666777880', '2025-06-15', '20:30:00', 5, NULL, NULL, 'pending', '5F4DB46B1A', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(84, NULL, NULL, 'Nguyễn Văn A', 'nguyenvana@example.com', '0123456789', '2025-07-10', '18:00:00', 4, NULL, NULL, 'confirmed', 'B61683B9B7', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(85, NULL, NULL, 'Trần Thị B', 'tranthib@example.com', '0987654321', '2025-07-10', '19:30:00', 2, NULL, NULL, 'pending', 'A0D11686C8', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(86, NULL, NULL, 'Lê Văn C', 'levanc@example.com', '0111222333', '2025-07-09', '20:00:00', 6, NULL, NULL, 'confirmed', 'A7CC9EAD87', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(87, NULL, NULL, 'Phạm Thị D', 'phamthid@example.com', '0444555666', '2025-07-09', '17:30:00', 3, NULL, NULL, 'completed', '7E90A2E154', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(88, NULL, NULL, 'Hoàng Văn E', 'hoangvane@example.com', '0777888999', '2025-07-08', '19:30:00', 5, NULL, NULL, 'seated', '3FDD32A5FB', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(89, NULL, NULL, 'Vũ Thị F', 'vuthif@example.com', '0555666777', '2025-07-08', '18:30:00', 4, NULL, NULL, 'confirmed', 'F5B34A7892', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(90, NULL, NULL, 'Đặng Văn G', 'dangvang@example.com', '0333444555', '2025-07-07', '20:30:00', 3, NULL, NULL, 'cancelled', 'F35DEF08B4', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(91, NULL, NULL, 'Bùi Thị H', 'buithih@example.com', '0666777888', '2025-07-07', '19:00:00', 2, NULL, NULL, 'confirmed', '94DA61AF7E', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(92, NULL, NULL, 'Lý Văn I', 'lyvani@example.com', '0222333444', '2025-07-05', '18:00:00', 6, NULL, NULL, 'completed', '360BF6CDB1', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(93, NULL, NULL, 'Hồ Thị K', 'hothik@example.com', '0888999000', '2025-07-05', '20:00:00', 4, NULL, NULL, 'confirmed', '6D46CA3958', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(94, NULL, NULL, 'Tô Văn L', 'tovanl@example.com', '0111000111', '2025-07-03', '19:30:00', 3, NULL, NULL, 'seated', '44320E2284', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(95, NULL, NULL, 'Dương Thị M', 'duongthim@example.com', '0999000999', '2025-07-03', '17:30:00', 5, NULL, NULL, 'confirmed', '9F686D90FC', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(96, NULL, NULL, 'Mai Văn N', 'maivann@example.com', '0123456780', '2025-06-30', '18:30:00', 2, NULL, NULL, 'completed', '5F0E36B78E', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(97, NULL, NULL, 'Lâm Thị O', 'lamthio@example.com', '0987654320', '2025-06-30', '20:30:00', 4, NULL, NULL, 'confirmed', 'D504900014', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(98, NULL, NULL, 'Châu Văn P', 'chauvanp@example.com', '0111222330', '2025-06-25', '19:00:00', 3, NULL, NULL, 'cancelled', '13A62C418A', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(99, NULL, NULL, 'Thái Thị Q', 'thaithiq@example.com', '0444555660', '2025-06-25', '18:00:00', 6, NULL, NULL, 'confirmed', 'D7C6B40E17', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(100, NULL, NULL, 'Tạ Văn R', 'tavanr@example.com', '0777888990', '2025-06-20', '20:00:00', 2, NULL, NULL, 'completed', '95DB9452C4', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(101, NULL, NULL, 'Hà Thị S', 'hathis@example.com', '0555666770', '2025-06-20', '19:30:00', 4, NULL, NULL, 'seated', 'E4C21C1E18', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(102, NULL, NULL, 'Võ Văn T', 'vovant@example.com', '0333444550', '2025-06-15', '18:30:00', 3, NULL, NULL, 'confirmed', 'AF033C79D5', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(103, NULL, NULL, 'Ngô Thị U', 'ngothiu@example.com', '0666777880', '2025-06-15', '20:30:00', 5, NULL, NULL, 'pending', '1D36628F02', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(104, 1, 9, 'admin', 'admin@buffet.com', '666666000', '2025-07-23', '12:00:00', 5, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', '', 'confirmed', '19FCB2FC01', NULL, '2025-07-11 10:47:56', '2025-07-11 13:35:55'),
+(105, 1, 11, 'admin', 'admin@buffet.com', '666666000', '2025-07-15', '11:30:00', 3, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', '', 'confirmed', '1A883BC6A5', NULL, '2025-07-11 13:35:05', '2025-07-11 13:36:12'),
+(106, 1, 21, 'admin', 'admin@buffet.com', '666666000', '2025-07-18', '11:00:00', 2, 'GiaiKhat 119 Coffee, Hoàng Hoa Thám, Thạc Gián, Thanh Khê, Phường Thanh Khê, Thành phố Đà Nẵng, Việt Nam', '', 'confirmed', 'E472D48995', NULL, '2025-07-11 13:36:47', '2025-07-11 13:37:17'),
+(107, 4, 23, 'Admin', 'superadmin@buffet.com', '666666000', '2025-07-20', '12:00:00', 2, 'GiaiKhat 119 Coffee, Hoàng Hoa Thám, Thạc Gián, Thanh Khê, Phường Thanh Khê, Thành phố Đà Nẵng, Việt Nam', '', 'confirmed', '1C81F75761', NULL, '2025-07-11 13:51:23', '2025-07-11 13:52:07');
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `cart_items`
+-- Table structure for table `cart_items`
 --
 
 DROP TABLE IF EXISTS `cart_items`;
@@ -151,7 +157,7 @@ CREATE TABLE IF NOT EXISTS `cart_items` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `categories`
+-- Table structure for table `categories`
 --
 
 DROP TABLE IF EXISTS `categories`;
@@ -170,7 +176,7 @@ CREATE TABLE IF NOT EXISTS `categories` (
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `categories`
+-- Dumping data for table `categories`
 --
 
 INSERT INTO `categories` (`id`, `name`, `description`, `image`, `sort_order`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -180,7 +186,7 @@ INSERT INTO `categories` (`id`, `name`, `description`, `image`, `sort_order`, `i
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `dine_in_orders`
+-- Table structure for table `dine_in_orders`
 --
 
 DROP TABLE IF EXISTS `dine_in_orders`;
@@ -199,17 +205,20 @@ CREATE TABLE IF NOT EXISTS `dine_in_orders` (
   KEY `idx_status` (`status`),
   KEY `idx_created_at` (`created_at`),
   KEY `user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `dine_in_orders`
+-- Dumping data for table `dine_in_orders`
 --
 
 INSERT INTO `dine_in_orders` (`id`, `table_id`, `total_amount`, `status`, `special_notes`, `created_at`, `updated_at`, `notes`, `user_id`) VALUES
-(13, 11, 190000.00, 'pending', NULL, '2025-07-10 21:04:29', '2025-07-11 04:04:29', '', 9);
+(13, 11, 190000.00, 'pending', NULL, '2025-07-10 21:04:29', '2025-07-11 04:04:29', '', 9),
+(14, 8, 135000.00, 'cancelled', NULL, '2025-07-11 05:23:42', '2025-07-11 13:21:22', '', 1),
+(15, 8, 35000.00, 'completed', NULL, '2025-07-11 05:48:44', '2025-07-11 13:17:28', '', 1),
+(16, 8, 50000.00, 'completed', NULL, '2025-07-11 06:21:41', '2025-07-11 13:22:58', 'CAY', 1);
 
 --
--- Bẫy `dine_in_orders`
+-- Triggers `dine_in_orders`
 --
 DROP TRIGGER IF EXISTS `update_dine_in_orders_updated_at`;
 DELIMITER $$
@@ -220,7 +229,7 @@ DELIMITER ;
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `dine_in_order_items`
+-- Table structure for table `dine_in_order_items`
 --
 
 DROP TABLE IF EXISTS `dine_in_order_items`;
@@ -235,20 +244,27 @@ CREATE TABLE IF NOT EXISTS `dine_in_order_items` (
   PRIMARY KEY (`id`),
   KEY `order_id` (`order_id`),
   KEY `food_id` (`food_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `dine_in_order_items`
+-- Dumping data for table `dine_in_order_items`
 --
 
 INSERT INTO `dine_in_order_items` (`id`, `order_id`, `food_id`, `quantity`, `price`, `total`, `created_at`) VALUES
 (21, 13, 16, 12, 15000.00, 180000.00, '2025-07-11 11:04:29'),
-(22, 13, 13, 1, 10000.00, 10000.00, '2025-07-11 11:04:29');
+(22, 13, 13, 1, 10000.00, 10000.00, '2025-07-11 11:04:29'),
+(23, 14, 5, 1, 100000.00, 100000.00, '2025-07-11 19:23:42'),
+(24, 14, 16, 1, 15000.00, 15000.00, '2025-07-11 19:23:42'),
+(25, 14, 10, 1, 20000.00, 20000.00, '2025-07-11 19:23:42'),
+(26, 15, 16, 1, 15000.00, 15000.00, '2025-07-11 19:48:44'),
+(27, 15, 11, 1, 20000.00, 20000.00, '2025-07-11 19:48:44'),
+(28, 16, 7, 1, 20000.00, 20000.00, '2025-07-11 20:21:41'),
+(29, 16, 9, 1, 30000.00, 30000.00, '2025-07-11 20:21:41');
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc đóng vai cho view `dine_in_order_stats`
+-- Stand-in structure for view `dine_in_order_stats`
 -- (See below for the actual view)
 --
 DROP VIEW IF EXISTS `dine_in_order_stats`;
@@ -265,7 +281,7 @@ CREATE TABLE IF NOT EXISTS `dine_in_order_stats` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `food_items`
+-- Table structure for table `food_items`
 --
 
 DROP TABLE IF EXISTS `food_items`;
@@ -299,7 +315,7 @@ CREATE TABLE IF NOT EXISTS `food_items` (
 ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `food_items`
+-- Dumping data for table `food_items`
 --
 
 INSERT INTO `food_items` (`id`, `category_id`, `subcategory_id`, `name`, `description`, `price`, `image`, `ingredients`, `allergens`, `dietary_info`, `nutrition_info`, `preparation_time`, `spice_level`, `is_popular`, `is_new`, `is_seasonal`, `is_available`, `sort_order`, `created_at`, `updated_at`) VALUES
@@ -319,7 +335,7 @@ INSERT INTO `food_items` (`id`, `category_id`, `subcategory_id`, `name`, `descri
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `internal_messages`
+-- Table structure for table `internal_messages`
 --
 
 DROP TABLE IF EXISTS `internal_messages`;
@@ -340,19 +356,21 @@ CREATE TABLE IF NOT EXISTS `internal_messages` (
   KEY `idx_message_type` (`message_type`),
   KEY `idx_priority` (`priority`),
   KEY `idx_created_at` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `internal_messages`
+-- Dumping data for table `internal_messages`
 --
 
 INSERT INTO `internal_messages` (`id`, `sender_id`, `title`, `content`, `attachment_path`, `attachment_name`, `message_type`, `priority`, `is_broadcast`, `created_at`, `updated_at`) VALUES
-(1, 4, 'Chào mừng sử dụng hệ thống thông báo nội bộ', 'Đây là thông báo đầu tiên để kiểm tra hệ thống thông báo nội bộ. Hệ thống này cho phép Super Admin gửi thông báo đến các Admin một cách nhanh chóng và hiệu quả.', NULL, NULL, 'general', 'normal', 1, '2025-07-08 16:36:28', '2025-07-08 16:36:28');
+(1, 4, 'Chào mừng sử dụng hệ thống thông báo nội bộ', 'Đây là thông báo đầu tiên để kiểm tra hệ thống thông báo nội bộ. Hệ thống này cho phép Super Admin gửi thông báo đến các Admin một cách nhanh chóng và hiệu quả.', NULL, NULL, 'general', 'normal', 1, '2025-07-08 16:36:28', '2025-07-08 16:36:28'),
+(16, 4, 'Thông báo mới', 'Thông báo mới', 'uploads/internal_messages/68710f3780931_1752239927.jpg', 'download (1).jpg', 'general', 'normal', 0, '2025-07-11 13:18:47', '2025-07-11 13:18:47'),
+(17, 4, 'TEST', 'TEST', 'uploads/internal_messages/68710f6695207_1752239974.jpg', 'porsche_911_st_2023_car_4k_hd_cars-3840x2160.jpg', 'general', 'urgent', 0, '2025-07-11 13:19:34', '2025-07-11 13:19:34');
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `internal_message_recipients`
+-- Table structure for table `internal_message_recipients`
 --
 
 DROP TABLE IF EXISTS `internal_message_recipients`;
@@ -368,20 +386,22 @@ CREATE TABLE IF NOT EXISTS `internal_message_recipients` (
   KEY `fk_message_recipients_message` (`message_id`),
   KEY `fk_message_recipients_recipient` (`recipient_id`),
   KEY `idx_is_read` (`is_read`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `internal_message_recipients`
+-- Dumping data for table `internal_message_recipients`
 --
 
 INSERT INTO `internal_message_recipients` (`id`, `message_id`, `recipient_id`, `is_read`, `read_at`, `created_at`) VALUES
 (1, 1, 1, 1, '2025-07-10 22:30:19', '2025-07-08 16:36:28'),
-(2, 1, 4, 0, NULL, '2025-07-08 16:36:28');
+(2, 1, 4, 0, NULL, '2025-07-08 16:36:28'),
+(17, 16, 1, 1, '2025-07-11 13:18:52', '2025-07-11 13:18:47'),
+(18, 17, 1, 1, '2025-07-11 13:19:38', '2025-07-11 13:19:34');
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `news`
+-- Table structure for table `news`
 --
 
 DROP TABLE IF EXISTS `news`;
@@ -407,7 +427,7 @@ CREATE TABLE IF NOT EXISTS `news` (
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `news`
+-- Dumping data for table `news`
 --
 
 INSERT INTO `news` (`id`, `title`, `content`, `excerpt`, `author_id`, `image_url`, `is_published`, `is_featured`, `meta_title`, `meta_description`, `views_count`, `created_at`, `updated_at`) VALUES
@@ -417,7 +437,7 @@ INSERT INTO `news` (`id`, `title`, `content`, `excerpt`, `author_id`, `image_url
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `notifications`
+-- Table structure for table `notifications`
 --
 
 DROP TABLE IF EXISTS `notifications`;
@@ -437,7 +457,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `notifications`
+-- Dumping data for table `notifications`
 --
 
 INSERT INTO `notifications` (`id`, `user_id`, `type`, `title`, `message`, `data`, `is_read`, `created_at`) VALUES
@@ -456,7 +476,7 @@ INSERT INTO `notifications` (`id`, `user_id`, `type`, `title`, `message`, `data`
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `orders`
+-- Table structure for table `orders`
 --
 
 DROP TABLE IF EXISTS `orders`;
@@ -504,7 +524,7 @@ CREATE TABLE IF NOT EXISTS `orders` (
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `orders`
+-- Dumping data for table `orders`
 --
 
 INSERT INTO `orders` (`id`, `user_id`, `booking_id`, `order_number`, `customer_name`, `customer_email`, `customer_phone`, `order_type`, `subtotal`, `tax_amount`, `total_amount`, `payment_method`, `payment_status`, `payment_id`, `status`, `special_instructions`, `delivery_address`, `order_notes`, `estimated_ready_time`, `completed_at`, `created_at`, `updated_at`, `delivery_ward`, `delivery_district`, `delivery_city`, `delivery_notes`, `delivery_fee`, `service_fee`, `discount_amount`, `coupon_code`) VALUES
@@ -526,7 +546,7 @@ INSERT INTO `orders` (`id`, `user_id`, `booking_id`, `order_number`, `customer_n
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `order_items`
+-- Table structure for table `order_items`
 --
 
 DROP TABLE IF EXISTS `order_items`;
@@ -546,7 +566,7 @@ CREATE TABLE IF NOT EXISTS `order_items` (
 ) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `order_items`
+-- Dumping data for table `order_items`
 --
 
 INSERT INTO `order_items` (`id`, `order_id`, `food_item_id`, `quantity`, `unit_price`, `total_price`, `special_instructions`, `created_at`) VALUES
@@ -572,7 +592,7 @@ INSERT INTO `order_items` (`id`, `order_id`, `food_item_id`, `quantity`, `unit_p
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `payments`
+-- Table structure for table `payments`
 --
 
 DROP TABLE IF EXISTS `payments`;
@@ -602,7 +622,7 @@ CREATE TABLE IF NOT EXISTS `payments` (
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `payments`
+-- Dumping data for table `payments`
 --
 
 INSERT INTO `payments` (`id`, `order_id`, `payment_method`, `vnp_txn_ref`, `vnp_amount`, `vnp_order_info`, `vnp_response_code`, `vnp_transaction_no`, `vnp_bank_code`, `vnp_pay_date`, `vnp_secure_hash`, `payment_status`, `payment_data`, `created_at`, `updated_at`, `completed_at`) VALUES
@@ -617,7 +637,7 @@ INSERT INTO `payments` (`id`, `order_id`, `payment_method`, `vnp_txn_ref`, `vnp_
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `promotions`
+-- Table structure for table `promotions`
 --
 
 DROP TABLE IF EXISTS `promotions`;
@@ -639,21 +659,22 @@ CREATE TABLE IF NOT EXISTS `promotions` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `promotions`
+-- Dumping data for table `promotions`
 --
 
 INSERT INTO `promotions` (`id`, `name`, `code`, `description`, `type`, `application_type`, `discount_value`, `start_date`, `end_date`, `usage_limit`, `used_count`, `minimum_amount`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Welcome Discount', 'WELCOME10', 'Get 10% off your first order', 'percentage', 'specific_items', 10.00, '2025-06-10', '2025-07-10', 100, 0, 50.00, 1, '2025-06-10 04:09:55', '2025-07-10 21:17:05'),
+(1, 'Welcome Discount', 'WELCOME10', 'Get 10% off your first order', 'percentage', 'specific_items', 10.00, '2025-06-10', '2025-07-31', 100, 0, 50.00, 1, '2025-06-10 04:09:55', '2025-07-11 11:54:52'),
 (2, 'Weekend Speciall', 'WEEKEND20', '20% off weekend buffet', 'percentage', 'specific_items', 20.00, '2025-06-10', '2025-08-09', NULL, 0, 100.00, 1, '2025-06-10 04:09:55', '2025-07-10 21:16:32'),
-(3, 'Family Deal', 'FAMILY15', '$15 off family packages', 'fixed', 'all', 15000.00, '2025-06-10', '2025-09-08', 50, 0, 80.00, 1, '2025-06-10 04:09:55', '2025-07-10 21:16:23');
+(3, 'Family Deal', 'FAMILY15', '$15 off family packages', 'fixed', 'specific_items', 15000.00, '2025-06-08', '2025-09-11', 50, 0, 80.00, 1, '2025-06-10 04:09:55', '2025-07-11 11:54:29'),
+(4, 'Giảm giá đặc biệt', 'GGDB', 'Giảm giá đặc biệt', 'percentage', 'specific_items', 20.00, '2025-07-09', '2025-07-19', 100, 0, 10000.00, 1, '2025-07-11 12:12:37', '2025-07-11 12:12:37');
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `promotion_categories`
+-- Table structure for table `promotion_categories`
 --
 
 DROP TABLE IF EXISTS `promotion_categories`;
@@ -670,7 +691,7 @@ CREATE TABLE IF NOT EXISTS `promotion_categories` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `promotion_food_items`
+-- Table structure for table `promotion_food_items`
 --
 
 DROP TABLE IF EXISTS `promotion_food_items`;
@@ -682,22 +703,27 @@ CREATE TABLE IF NOT EXISTS `promotion_food_items` (
   PRIMARY KEY (`id`),
   KEY `idx_promotion_id` (`promotion_id`),
   KEY `idx_food_item_id` (`food_item_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `promotion_food_items`
+-- Dumping data for table `promotion_food_items`
 --
 
 INSERT INTO `promotion_food_items` (`id`, `promotion_id`, `food_item_id`, `created_at`) VALUES
 (16, 2, 15, '2025-07-10 21:16:32'),
 (15, 2, 14, '2025-07-10 21:16:32'),
-(18, 1, 13, '2025-07-10 21:17:05'),
-(17, 1, 5, '2025-07-10 21:17:05');
+(29, 1, 13, '2025-07-11 11:54:52'),
+(28, 1, 5, '2025-07-11 11:54:52'),
+(27, 3, 9, '2025-07-11 11:54:29'),
+(26, 3, 7, '2025-07-11 11:54:29'),
+(25, 3, 6, '2025-07-11 11:54:29'),
+(30, 4, 5, '2025-07-11 12:12:37'),
+(31, 4, 13, '2025-07-11 12:12:37');
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `reservations`
+-- Table structure for table `reservations`
 --
 
 DROP TABLE IF EXISTS `reservations`;
@@ -716,10 +742,10 @@ CREATE TABLE IF NOT EXISTS `reservations` (
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `table_id` (`table_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `reservations`
+-- Dumping data for table `reservations`
 --
 
 INSERT INTO `reservations` (`id`, `user_id`, `customer_name`, `phone_number`, `table_id`, `reservation_time`, `number_of_guests`, `status`, `notes`, `created_at`, `updated_at`) VALUES
@@ -751,12 +777,14 @@ INSERT INTO `reservations` (`id`, `user_id`, `customer_name`, `phone_number`, `t
 (26, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-15 12:00:00', 6, 'confirmed', '', '2025-06-14 15:38:22', '2025-07-10 15:16:44'),
 (27, 1, 'admin', '666666000', 12, '2025-07-12 11:00:00', 1, 'confirmed', '', '2025-07-10 15:23:45', '2025-07-10 18:21:32'),
 (28, 1, 'admin', '666666000', 10, '2025-07-19 11:30:00', 3, 'confirmed', '', '2025-07-10 15:24:15', '2025-07-10 22:33:27'),
-(29, 1, 'admin', '666666000', 8, '2025-08-01 12:00:00', 6, 'cancelled', '', '2025-07-10 15:24:38', '2025-07-10 18:16:09');
+(29, 1, 'admin', '666666000', 8, '2025-08-01 12:00:00', 6, 'cancelled', '', '2025-07-10 15:24:38', '2025-07-10 18:16:09'),
+(30, 1, 'admin', '666666000', NULL, '2025-07-16 11:00:00', 1, 'pending', '', '2025-07-11 10:11:13', NULL),
+(31, 1, 'admin', '666666000', NULL, '2025-07-23 12:00:00', 5, 'pending', '', '2025-07-11 10:13:24', NULL);
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `restaurant_info`
+-- Table structure for table `restaurant_info`
 --
 
 DROP TABLE IF EXISTS `restaurant_info`;
@@ -781,16 +809,16 @@ CREATE TABLE IF NOT EXISTS `restaurant_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `restaurant_info`
+-- Dumping data for table `restaurant_info`
 --
 
 INSERT INTO `restaurant_info` (`id`, `restaurant_name`, `address`, `phone`, `email`, `description`, `opening_hours`, `capacity`, `logo_url`, `created_at`, `updated_at`, `website`, `cover_images`, `facebook`, `instagram`, `twitter`) VALUES
-(1, 'Buffet Restaurant', '123 Food Street, City Center', '+1234567890', 'info@buffetparadise.com', 'Chào mừng đến với nhà hàng buffet tuyệt vời của chúng tôi với ẩm thực hảo hạng và dịch vụ xuất sắc.', 'Thứ 2 - Thứ 6: 11:00 - 22:00\r\nThứ 7 - Chủ Nhật: 10:00 - 23:00\r\nNgày Lễ: 10:00 - 23:30', 100, '', '2025-06-09 21:09:55', '2025-07-10 22:01:52', 'http://localhost/buffet_booking_mvc/', '[\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_6870383566b22.jpg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_6870383566d62.jpeg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_6870383566f42.png\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_68703835670d6.jpg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_68703835671df.jpg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_68703835672f8.png\"]', 'http://localhost/buffet_booking_mvc/', 'http://localhost/buffet_booking_mvc/', 'http://localhost/buffet_booking_mvc/');
+(1, 'Buffet Restaurant', '123 Food Street, City Center', '+1234567890', 'info@buffetparadise.com', 'Chào mừng bạn đến với nhà hàng buffet tuyệt vời của chúng tôi với ẩm thực hảo hạng và dịch vụ xuất sắc.', 'Thứ 2 - Thứ 6: 11:00 - 22:00\r\nThứ 7 - Chủ Nhật: 10:00 - 23:00\r\nNgày Lễ: 10:00 - 23:30', 100, '', '2025-06-09 21:09:55', '2025-07-11 13:20:41', 'http://localhost/buffet_booking_mvc/', '[\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_6870383566b22.jpg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_6870383566d62.jpeg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_6870383566f42.png\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_68703835670d6.jpg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_68703835671df.jpg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_68703835672f8.png\"]', 'http://localhost/buffet_booking_mvc/', 'http://localhost/buffet_booking_mvc/', 'http://localhost/buffet_booking_mvc/');
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `reviews`
+-- Table structure for table `reviews`
 --
 
 DROP TABLE IF EXISTS `reviews`;
@@ -817,7 +845,7 @@ CREATE TABLE IF NOT EXISTS `reviews` (
 ) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `reviews`
+-- Dumping data for table `reviews`
 --
 
 INSERT INTO `reviews` (`id`, `user_id`, `order_id`, `food_item_id`, `rating`, `title`, `comment`, `is_verified`, `is_approved`, `helpful_count`, `created_at`, `updated_at`, `photos`) VALUES
@@ -826,7 +854,7 @@ INSERT INTO `reviews` (`id`, `user_id`, `order_id`, `food_item_id`, `rating`, `t
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `review_likes`
+-- Table structure for table `review_likes`
 --
 
 DROP TABLE IF EXISTS `review_likes`;
@@ -842,7 +870,7 @@ CREATE TABLE IF NOT EXISTS `review_likes` (
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `review_likes`
+-- Dumping data for table `review_likes`
 --
 
 INSERT INTO `review_likes` (`id`, `user_id`, `review_id`, `created_at`) VALUES
@@ -852,7 +880,7 @@ INSERT INTO `review_likes` (`id`, `user_id`, `review_id`, `created_at`) VALUES
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `settings`
+-- Table structure for table `settings`
 --
 
 DROP TABLE IF EXISTS `settings`;
@@ -871,7 +899,7 @@ CREATE TABLE IF NOT EXISTS `settings` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `subcategories`
+-- Table structure for table `subcategories`
 --
 
 DROP TABLE IF EXISTS `subcategories`;
@@ -893,7 +921,7 @@ CREATE TABLE IF NOT EXISTS `subcategories` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `sub_categories`
+-- Table structure for table `sub_categories`
 --
 
 DROP TABLE IF EXISTS `sub_categories`;
@@ -909,7 +937,7 @@ CREATE TABLE IF NOT EXISTS `sub_categories` (
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `sub_categories`
+-- Dumping data for table `sub_categories`
 --
 
 INSERT INTO `sub_categories` (`id`, `category_id`, `name`, `description`, `created_at`, `updated_at`) VALUES
@@ -921,7 +949,7 @@ INSERT INTO `sub_categories` (`id`, `category_id`, `name`, `description`, `creat
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `tables`
+-- Table structure for table `tables`
 --
 
 DROP TABLE IF EXISTS `tables`;
@@ -939,23 +967,24 @@ CREATE TABLE IF NOT EXISTS `tables` (
   UNIQUE KEY `table_number` (`table_number`),
   KEY `idx_capacity` (`capacity`),
   KEY `idx_available` (`is_available`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `tables`
+-- Dumping data for table `tables`
 --
 
 INSERT INTO `tables` (`id`, `table_number`, `capacity`, `location`, `description`, `is_available`, `status`, `created_at`, `updated_at`) VALUES
-(8, 'D2', 10, 'GiaiKhat 119 Coffee, Hoàng Hoa Thám, Thạc Gián, Thanh Khê, Phường Thanh Khê, Thành phố Đà Nẵng, Việt Nam', NULL, 0, 'available', '2025-06-06 06:25:52', '2025-07-11 03:56:08'),
-(9, 'M4', 10, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', '', 0, 'available', '2025-06-09 15:04:48', '2025-07-11 03:56:09'),
-(10, 'M5', 15, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', '', 0, 'available', '2025-06-09 17:09:14', '2025-07-11 03:56:11'),
-(11, 'M6', 20, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', 'NEW', 0, 'available', '2025-06-10 12:05:04', '2025-07-11 04:04:29'),
-(21, 'ssssssssss', 2, 'GiaiKhat 119 Coffee, Hoàng Hoa Thám, Thạc Gián, Thanh Khê, Phường Thanh Khê, Thành phố Đà Nẵng, Việt Nam', 'ư', 0, 'available', '2025-07-10 23:56:01', '2025-07-11 03:56:16');
+(8, 'D2', 10, 'GiaiKhat 119 Coffee, Hoàng Hoa Thám, Thạc Gián, Thanh Khê, Phường Thanh Khê, Thành phố Đà Nẵng, Việt Nam', NULL, 0, 'available', '2025-06-06 06:25:52', '2025-07-11 13:21:41'),
+(9, 'M4', 10, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', '', 0, 'available', '2025-06-09 15:04:48', '2025-07-11 13:35:55'),
+(10, 'M5', 15, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', '', 0, 'available', '2025-06-09 17:09:14', '2025-07-11 11:42:00'),
+(11, 'M6', 20, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', '', 0, 'available', '2025-06-10 12:05:04', '2025-07-11 13:36:12'),
+(21, 'K5', 2, 'GiaiKhat 119 Coffee, Hoàng Hoa Thám, Thạc Gián, Thanh Khê, Phường Thanh Khê, Thành phố Đà Nẵng, Việt Nam', '', 0, 'available', '2025-07-10 23:56:01', '2025-07-11 13:37:17'),
+(23, 'K10', 12, 'GiaiKhat 119 Coffee, Hoàng Hoa Thám, Thạc Gián, Thanh Khê, Phường Thanh Khê, Thành phố Đà Nẵng, Việt Nam', 'K10', 0, 'available', '2025-07-11 13:50:28', '2025-07-11 13:52:07');
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc đóng vai cho view `table_order_stats`
+-- Stand-in structure for view `table_order_stats`
 -- (See below for the actual view)
 --
 DROP VIEW IF EXISTS `table_order_stats`;
@@ -973,7 +1002,7 @@ CREATE TABLE IF NOT EXISTS `table_order_stats` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `users`
+-- Table structure for table `users`
 --
 
 DROP TABLE IF EXISTS `users`;
@@ -1004,7 +1033,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `users`
+-- Dumping data for table `users`
 --
 
 INSERT INTO `users` (`id`, `first_name`, `last_name`, `email`, `password`, `phone`, `date_of_birth`, `address`, `avatar`, `role`, `email_verified`, `email_verification_token`, `password_reset_token`, `password_reset_expires`, `last_login`, `is_active`, `preferences`, `created_at`, `updated_at`) VALUES
@@ -1018,7 +1047,7 @@ INSERT INTO `users` (`id`, `first_name`, `last_name`, `email`, `password`, `phon
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `user_addresses`
+-- Table structure for table `user_addresses`
 --
 
 DROP TABLE IF EXISTS `user_addresses`;
@@ -1035,7 +1064,7 @@ CREATE TABLE IF NOT EXISTS `user_addresses` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc đóng vai cho view `v_bookings_with_details`
+-- Stand-in structure for view `v_bookings_with_details`
 -- (See below for the actual view)
 --
 DROP VIEW IF EXISTS `v_bookings_with_details`;
@@ -1065,7 +1094,7 @@ CREATE TABLE IF NOT EXISTS `v_bookings_with_details` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc đóng vai cho view `v_orders_with_totals`
+-- Stand-in structure for view `v_orders_with_totals`
 -- (See below for the actual view)
 --
 DROP VIEW IF EXISTS `v_orders_with_totals`;
@@ -1097,7 +1126,7 @@ CREATE TABLE IF NOT EXISTS `v_orders_with_totals` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc đóng vai cho view `v_payments_with_orders`
+-- Stand-in structure for view `v_payments_with_orders`
 -- (See below for the actual view)
 --
 DROP VIEW IF EXISTS `v_payments_with_orders`;
@@ -1130,7 +1159,7 @@ CREATE TABLE IF NOT EXISTS `v_payments_with_orders` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc cho view `dine_in_order_stats`
+-- Structure for view `dine_in_order_stats`
 --
 DROP TABLE IF EXISTS `dine_in_order_stats`;
 
@@ -1140,7 +1169,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc cho view `table_order_stats`
+-- Structure for view `table_order_stats`
 --
 DROP TABLE IF EXISTS `table_order_stats`;
 
@@ -1150,7 +1179,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc cho view `v_bookings_with_details`
+-- Structure for view `v_bookings_with_details`
 --
 DROP TABLE IF EXISTS `v_bookings_with_details`;
 
@@ -1160,7 +1189,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc cho view `v_orders_with_totals`
+-- Structure for view `v_orders_with_totals`
 --
 DROP TABLE IF EXISTS `v_orders_with_totals`;
 
@@ -1170,7 +1199,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc cho view `v_payments_with_orders`
+-- Structure for view `v_payments_with_orders`
 --
 DROP TABLE IF EXISTS `v_payments_with_orders`;
 
@@ -1178,84 +1207,77 @@ DROP VIEW IF EXISTS `v_payments_with_orders`;
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_payments_with_orders`  AS SELECT `p`.`id` AS `id`, `p`.`order_id` AS `order_id`, `p`.`payment_method` AS `payment_method`, `p`.`vnp_txn_ref` AS `vnp_txn_ref`, `p`.`vnp_amount` AS `vnp_amount`, `p`.`vnp_order_info` AS `vnp_order_info`, `p`.`vnp_response_code` AS `vnp_response_code`, `p`.`vnp_transaction_no` AS `vnp_transaction_no`, `p`.`vnp_bank_code` AS `vnp_bank_code`, `p`.`vnp_pay_date` AS `vnp_pay_date`, `p`.`vnp_secure_hash` AS `vnp_secure_hash`, `p`.`payment_status` AS `payment_status`, `p`.`payment_data` AS `payment_data`, `p`.`created_at` AS `created_at`, `p`.`updated_at` AS `updated_at`, `p`.`completed_at` AS `completed_at`, `o`.`order_number` AS `order_number`, `o`.`customer_name` AS `customer_name`, `o`.`customer_email` AS `customer_email`, `o`.`customer_phone` AS `customer_phone`, `o`.`total_amount` AS `order_total`, `o`.`status` AS `order_status`, `o`.`created_at` AS `order_created_at` FROM (`payments` `p` left join `orders` `o` on((`p`.`order_id` = `o`.`id`))) ORDER BY `p`.`created_at` DESC ;
 
 --
--- Các ràng buộc cho các bảng đã đổ
+-- Constraints for dumped tables
 --
 
 --
--- Các ràng buộc cho bảng `bookings`
+-- Constraints for table `bookings`
 --
 ALTER TABLE `bookings`
   ADD CONSTRAINT `fk_bookings_table` FOREIGN KEY (`table_id`) REFERENCES `tables` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_bookings_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Các ràng buộc cho bảng `cart_items`
+-- Constraints for table `cart_items`
 --
 ALTER TABLE `cart_items`
   ADD CONSTRAINT `fk_cart_food` FOREIGN KEY (`food_item_id`) REFERENCES `food_items` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_cart_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
--- Các ràng buộc cho bảng `dine_in_orders`
+-- Constraints for table `dine_in_orders`
 --
 ALTER TABLE `dine_in_orders`
   ADD CONSTRAINT `dine_in_orders_ibfk_1` FOREIGN KEY (`table_id`) REFERENCES `tables` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `dine_in_orders_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Các ràng buộc cho bảng `dine_in_order_items`
+-- Constraints for table `dine_in_order_items`
 --
 ALTER TABLE `dine_in_order_items`
   ADD CONSTRAINT `dine_in_order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `dine_in_orders` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `dine_in_order_items_ibfk_2` FOREIGN KEY (`food_id`) REFERENCES `food_items` (`id`) ON DELETE CASCADE;
 
 --
--- Các ràng buộc cho bảng `food_items`
+-- Constraints for table `food_items`
 --
 ALTER TABLE `food_items`
   ADD CONSTRAINT `fk_food_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`),
   ADD CONSTRAINT `fk_food_subcategory` FOREIGN KEY (`subcategory_id`) REFERENCES `subcategories` (`id`) ON DELETE SET NULL;
 
 --
--- Các ràng buộc cho bảng `news`
+-- Constraints for table `news`
 --
 ALTER TABLE `news`
   ADD CONSTRAINT `fk_news_author` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
--- Các ràng buộc cho bảng `notifications`
+-- Constraints for table `notifications`
 --
 ALTER TABLE `notifications`
   ADD CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
--- Các ràng buộc cho bảng `orders`
+-- Constraints for table `orders`
 --
 ALTER TABLE `orders`
   ADD CONSTRAINT `fk_orders_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_orders_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Các ràng buộc cho bảng `order_items`
---
-ALTER TABLE `order_items`
-  ADD CONSTRAINT `fk_order_items_food` FOREIGN KEY (`food_item_id`) REFERENCES `food_items` (`id`),
-  ADD CONSTRAINT `fk_order_items_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE;
-
---
--- Các ràng buộc cho bảng `payments`
+-- Constraints for table `payments`
 --
 ALTER TABLE `payments`
   ADD CONSTRAINT `fk_payments_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE;
 
 --
--- Các ràng buộc cho bảng `subcategories`
+-- Constraints for table `subcategories`
 --
 ALTER TABLE `subcategories`
   ADD CONSTRAINT `fk_subcategories_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE;
 
 --
--- Các ràng buộc cho bảng `sub_categories`
+-- Constraints for table `sub_categories`
 --
 ALTER TABLE `sub_categories`
   ADD CONSTRAINT `sub_categories_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE;
