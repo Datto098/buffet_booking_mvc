@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1:3306
--- Thời gian đã tạo: Th7 08, 2025 lúc 01:32 PM
+-- Thời gian đã tạo: Th7 11, 2025 lúc 10:05 AM
 -- Phiên bản máy phục vụ: 8.2.0
 -- Phiên bản PHP: 8.2.13
 
@@ -20,6 +20,31 @@ SET time_zone = "+00:00";
 --
 -- Cơ sở dữ liệu: `buffet_booking`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `addresses`
+--
+
+DROP TABLE IF EXISTS `addresses`;
+CREATE TABLE IF NOT EXISTS `addresses` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `address` varchar(255) NOT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `addresses`
+--
+
+INSERT INTO `addresses` (`id`, `address`, `status`, `created_at`, `updated_at`) VALUES
+(5, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', 1, '2025-07-11 05:04:37', '2025-07-11 10:23:38'),
+(11, 'GiaiKhat 119 Coffee, Hoàng Hoa Thám, Thạc Gián, Thanh Khê, Phường Thanh Khê, Thành phố Đà Nẵng, Việt Nam', 1, '2025-07-11 05:07:35', '2025-07-11 10:23:36'),
+(9, 'Bùi Quốc Khánh, Khu phố 1, Phường Thủ Dầu Một, Thành phố Hồ Chí Minh, Việt Nam', 1, '2025-07-11 05:05:55', '2025-07-11 10:23:37');
 
 -- --------------------------------------------------------
 
@@ -52,7 +77,54 @@ CREATE TABLE IF NOT EXISTS `bookings` (
   KEY `idx_status` (`status`),
   KEY `idx_customer_email` (`customer_email`),
   KEY `idx_bookings_date_status` (`booking_date`,`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=104 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `bookings`
+--
+
+INSERT INTO `bookings` (`id`, `user_id`, `table_id`, `customer_name`, `customer_email`, `customer_phone`, `booking_date`, `booking_time`, `guest_count`, `special_requests`, `status`, `booking_reference`, `notes`, `created_at`, `updated_at`) VALUES
+(1, NULL, NULL, 'Nguyễn Văn A', 'test1@example.com', '0123456789', '2025-07-08', '18:00:00', 4, NULL, 'confirmed', '', NULL, '2025-07-10 14:47:54', '2025-07-10 14:47:54'),
+(64, NULL, NULL, 'Nguyễn Văn A', 'nguyenvana@example.com', '0123456789', '2025-07-10', '18:00:00', 4, NULL, 'confirmed', '5586ED9A64', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(65, NULL, NULL, 'Trần Thị B', 'tranthib@example.com', '0987654321', '2025-07-10', '19:30:00', 2, NULL, 'pending', 'C6501EDB16', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(66, NULL, NULL, 'Lê Văn C', 'levanc@example.com', '0111222333', '2025-07-09', '20:00:00', 6, NULL, 'confirmed', 'A6DB3F5B04', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(67, NULL, NULL, 'Phạm Thị D', 'phamthid@example.com', '0444555666', '2025-07-09', '17:30:00', 3, NULL, 'completed', '56611CEDA7', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(68, NULL, NULL, 'Hoàng Văn E', 'hoangvane@example.com', '0777888999', '2025-07-08', '19:30:00', 5, NULL, 'seated', 'CAE66DD946', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(69, NULL, NULL, 'Vũ Thị F', 'vuthif@example.com', '0555666777', '2025-07-08', '18:30:00', 4, NULL, 'confirmed', '81ED8AE2AA', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(70, NULL, NULL, 'Đặng Văn G', 'dangvang@example.com', '0333444555', '2025-07-07', '20:30:00', 3, NULL, 'cancelled', '049988D64B', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(71, NULL, NULL, 'Bùi Thị H', 'buithih@example.com', '0666777888', '2025-07-07', '19:00:00', 2, NULL, 'confirmed', '3643F3F06D', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(72, NULL, NULL, 'Lý Văn I', 'lyvani@example.com', '0222333444', '2025-07-05', '18:00:00', 6, NULL, 'completed', '08A09DEBB8', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(73, NULL, NULL, 'Hồ Thị K', 'hothik@example.com', '0888999000', '2025-07-05', '20:00:00', 4, NULL, 'confirmed', '8BB80E760F', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(74, NULL, NULL, 'Tô Văn L', 'tovanl@example.com', '0111000111', '2025-07-03', '19:30:00', 3, NULL, 'seated', 'A41B398C03', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(75, NULL, NULL, 'Dương Thị M', 'duongthim@example.com', '0999000999', '2025-07-03', '17:30:00', 5, NULL, 'confirmed', '4BD09977D9', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(76, NULL, NULL, 'Mai Văn N', 'maivann@example.com', '0123456780', '2025-06-30', '18:30:00', 2, NULL, 'completed', '361BF96968', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(77, NULL, NULL, 'Lâm Thị O', 'lamthio@example.com', '0987654320', '2025-06-30', '20:30:00', 4, NULL, 'confirmed', '7139A40FCA', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(78, NULL, NULL, 'Châu Văn P', 'chauvanp@example.com', '0111222330', '2025-06-25', '19:00:00', 3, NULL, 'cancelled', '206A08E04B', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(79, NULL, NULL, 'Thái Thị Q', 'thaithiq@example.com', '0444555660', '2025-06-25', '18:00:00', 6, NULL, 'confirmed', '1FCC4A7074', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(80, NULL, NULL, 'Tạ Văn R', 'tavanr@example.com', '0777888990', '2025-06-20', '20:00:00', 2, NULL, 'completed', '559E120EBB', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(81, NULL, NULL, 'Hà Thị S', 'hathis@example.com', '0555666770', '2025-06-20', '19:30:00', 4, NULL, 'seated', '5FEC92F0AB', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(82, NULL, NULL, 'Võ Văn T', 'vovant@example.com', '0333444550', '2025-06-15', '18:30:00', 3, NULL, 'confirmed', '1269B1D770', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(83, NULL, NULL, 'Ngô Thị U', 'ngothiu@example.com', '0666777880', '2025-06-15', '20:30:00', 5, NULL, 'pending', '5F4DB46B1A', NULL, '2025-07-10 15:29:30', '2025-07-10 15:29:30'),
+(84, NULL, NULL, 'Nguyễn Văn A', 'nguyenvana@example.com', '0123456789', '2025-07-10', '18:00:00', 4, NULL, 'confirmed', 'B61683B9B7', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(85, NULL, NULL, 'Trần Thị B', 'tranthib@example.com', '0987654321', '2025-07-10', '19:30:00', 2, NULL, 'pending', 'A0D11686C8', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(86, NULL, NULL, 'Lê Văn C', 'levanc@example.com', '0111222333', '2025-07-09', '20:00:00', 6, NULL, 'confirmed', 'A7CC9EAD87', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(87, NULL, NULL, 'Phạm Thị D', 'phamthid@example.com', '0444555666', '2025-07-09', '17:30:00', 3, NULL, 'completed', '7E90A2E154', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(88, NULL, NULL, 'Hoàng Văn E', 'hoangvane@example.com', '0777888999', '2025-07-08', '19:30:00', 5, NULL, 'seated', '3FDD32A5FB', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(89, NULL, NULL, 'Vũ Thị F', 'vuthif@example.com', '0555666777', '2025-07-08', '18:30:00', 4, NULL, 'confirmed', 'F5B34A7892', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(90, NULL, NULL, 'Đặng Văn G', 'dangvang@example.com', '0333444555', '2025-07-07', '20:30:00', 3, NULL, 'cancelled', 'F35DEF08B4', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(91, NULL, NULL, 'Bùi Thị H', 'buithih@example.com', '0666777888', '2025-07-07', '19:00:00', 2, NULL, 'confirmed', '94DA61AF7E', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(92, NULL, NULL, 'Lý Văn I', 'lyvani@example.com', '0222333444', '2025-07-05', '18:00:00', 6, NULL, 'completed', '360BF6CDB1', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(93, NULL, NULL, 'Hồ Thị K', 'hothik@example.com', '0888999000', '2025-07-05', '20:00:00', 4, NULL, 'confirmed', '6D46CA3958', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(94, NULL, NULL, 'Tô Văn L', 'tovanl@example.com', '0111000111', '2025-07-03', '19:30:00', 3, NULL, 'seated', '44320E2284', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(95, NULL, NULL, 'Dương Thị M', 'duongthim@example.com', '0999000999', '2025-07-03', '17:30:00', 5, NULL, 'confirmed', '9F686D90FC', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(96, NULL, NULL, 'Mai Văn N', 'maivann@example.com', '0123456780', '2025-06-30', '18:30:00', 2, NULL, 'completed', '5F0E36B78E', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(97, NULL, NULL, 'Lâm Thị O', 'lamthio@example.com', '0987654320', '2025-06-30', '20:30:00', 4, NULL, 'confirmed', 'D504900014', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(98, NULL, NULL, 'Châu Văn P', 'chauvanp@example.com', '0111222330', '2025-06-25', '19:00:00', 3, NULL, 'cancelled', '13A62C418A', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(99, NULL, NULL, 'Thái Thị Q', 'thaithiq@example.com', '0444555660', '2025-06-25', '18:00:00', 6, NULL, 'confirmed', 'D7C6B40E17', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(100, NULL, NULL, 'Tạ Văn R', 'tavanr@example.com', '0777888990', '2025-06-20', '20:00:00', 2, NULL, 'completed', '95DB9452C4', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(101, NULL, NULL, 'Hà Thị S', 'hathis@example.com', '0555666770', '2025-06-20', '19:30:00', 4, NULL, 'seated', 'E4C21C1E18', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(102, NULL, NULL, 'Võ Văn T', 'vovant@example.com', '0333444550', '2025-06-15', '18:30:00', 3, NULL, 'confirmed', 'AF033C79D5', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10'),
+(103, NULL, NULL, 'Ngô Thị U', 'ngothiu@example.com', '0666777880', '2025-06-15', '20:30:00', 5, NULL, 'pending', '1D36628F02', NULL, '2025-07-10 15:30:10', '2025-07-10 15:30:10');
 
 -- --------------------------------------------------------
 
@@ -108,6 +180,91 @@ INSERT INTO `categories` (`id`, `name`, `description`, `image`, `sort_order`, `i
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `dine_in_orders`
+--
+
+DROP TABLE IF EXISTS `dine_in_orders`;
+CREATE TABLE IF NOT EXISTS `dine_in_orders` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `table_id` int NOT NULL,
+  `total_amount` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `status` enum('pending','preparing','served','completed','cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `special_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `user_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_table_id` (`table_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_created_at` (`created_at`),
+  KEY `user_id` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `dine_in_orders`
+--
+
+INSERT INTO `dine_in_orders` (`id`, `table_id`, `total_amount`, `status`, `special_notes`, `created_at`, `updated_at`, `notes`, `user_id`) VALUES
+(13, 11, 190000.00, 'pending', NULL, '2025-07-10 21:04:29', '2025-07-11 04:04:29', '', 9);
+
+--
+-- Bẫy `dine_in_orders`
+--
+DROP TRIGGER IF EXISTS `update_dine_in_orders_updated_at`;
+DELIMITER $$
+CREATE TRIGGER `update_dine_in_orders_updated_at` BEFORE UPDATE ON `dine_in_orders` FOR EACH ROW SET NEW.updated_at = CURRENT_TIMESTAMP
+$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `dine_in_order_items`
+--
+
+DROP TABLE IF EXISTS `dine_in_order_items`;
+CREATE TABLE IF NOT EXISTS `dine_in_order_items` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `order_id` int NOT NULL,
+  `food_id` int NOT NULL,
+  `quantity` int NOT NULL DEFAULT '1',
+  `price` decimal(10,2) NOT NULL,
+  `total` decimal(10,2) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `order_id` (`order_id`),
+  KEY `food_id` (`food_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `dine_in_order_items`
+--
+
+INSERT INTO `dine_in_order_items` (`id`, `order_id`, `food_id`, `quantity`, `price`, `total`, `created_at`) VALUES
+(21, 13, 16, 12, 15000.00, 180000.00, '2025-07-11 11:04:29'),
+(22, 13, 13, 1, 10000.00, 10000.00, '2025-07-11 11:04:29');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc đóng vai cho view `dine_in_order_stats`
+-- (See below for the actual view)
+--
+DROP VIEW IF EXISTS `dine_in_order_stats`;
+CREATE TABLE IF NOT EXISTS `dine_in_order_stats` (
+`order_date` date
+,`total_orders` bigint
+,`total_revenue` decimal(32,2)
+,`pending_orders` bigint
+,`preparing_orders` bigint
+,`served_orders` bigint
+,`completed_orders` bigint
+);
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `food_items`
 --
 
@@ -146,9 +303,6 @@ CREATE TABLE IF NOT EXISTS `food_items` (
 --
 
 INSERT INTO `food_items` (`id`, `category_id`, `subcategory_id`, `name`, `description`, `price`, `image`, `ingredients`, `allergens`, `dietary_info`, `nutrition_info`, `preparation_time`, `spice_level`, `is_popular`, `is_new`, `is_seasonal`, `is_available`, `sort_order`, `created_at`, `updated_at`) VALUES
-(1, 1, NULL, 'Deluxe Buffet', 'All-you-can-eat buffet with premium dishes', 200000.00, NULL, NULL, NULL, NULL, NULL, NULL, 'none', 0, 0, 0, 1, 0, '2025-06-06 04:19:41', '2025-06-09 00:37:26'),
-(2, 1, NULL, 'Standard Buffet', 'Traditional buffet experience', 100000.00, NULL, NULL, NULL, NULL, NULL, NULL, 'none', 0, 0, 0, 1, 0, '2025-06-06 04:19:41', '2025-06-09 00:37:38'),
-(3, 1, NULL, 'Vegetarian Special', 'Vegetarian-only buffet options', 100000.00, NULL, NULL, NULL, NULL, NULL, NULL, 'none', 0, 0, 0, 1, 0, '2025-06-06 04:19:41', '2025-06-09 00:38:37'),
 (5, 1, NULL, 'Ba chỉ bò Mỹ', 'Thịt bò Mỹ mềm, cắt lát mỏng, ướp sốt BBQ đậm đà', 100000.00, 'food_5_1749454675.jpg', NULL, NULL, NULL, NULL, NULL, 'none', 1, 0, 0, 1, 0, '2025-06-08 03:26:53', '2025-06-09 00:38:45'),
 (6, 1, NULL, 'Sườn non bò non', 'Cắt miếng sườn nhỏ, thấm đều sốt tiêu đen', 10000.00, '1749379117_IMG_6763.png', NULL, NULL, NULL, NULL, NULL, 'none', 1, 0, 0, 1, 0, '2025-06-08 03:38:37', '2025-06-09 00:38:52'),
 (7, 1, NULL, 'Sushi cá hồi', 'Cuộn cơm giấm, cá hồi tươi, rong biển', 20000.00, '1749449920_a32af133-cover.jpg', NULL, NULL, NULL, NULL, NULL, 'none', 1, 0, 0, 1, 0, '2025-06-08 23:18:40', '2025-06-09 00:38:59'),
@@ -160,7 +314,69 @@ INSERT INTO `food_items` (`id`, `category_id`, `subcategory_id`, `name`, `descri
 (13, 3, NULL, 'Bánh flan', 'Mềm, béo, thơm mùi caramel', 10000.00, '1749450389_banh-flan-recipe-f3.jpg', NULL, NULL, NULL, NULL, NULL, 'none', 1, 0, 0, 1, 0, '2025-06-08 23:26:29', '2025-06-09 00:39:17'),
 (14, 3, NULL, 'Trà đào cam sả', 'Thơm mát, chua ngọt, thanh', 10000.00, '1749450500_huong-dan-cong-thuc-tra-dao-cam-sa-hut-khach-ngon-kho-cuong_20240526180626.jpg', NULL, NULL, NULL, NULL, NULL, 'none', 1, 0, 0, 1, 0, '2025-06-08 23:28:20', '2025-06-09 00:39:28'),
 (15, 3, NULL, 'Trà tắc', 'Vị trà nhài thơm nhẹ, tắc chua', 10000.00, '1749450708_tra-tac-bao-nhieu-calo.jpg', NULL, NULL, NULL, NULL, NULL, 'none', 0, 0, 0, 1, 0, '2025-06-08 23:31:48', '2025-06-09 06:31:48'),
-(16, 3, NULL, 'Bia', 'Có thể thêm bia lon Heineken, Tiger', 15000.00, '1749450774_bia-tiger-sleek-5-abv-lon-330ml-281124-112850-1732768166826.webp', NULL, NULL, NULL, NULL, NULL, 'none', 0, 0, 0, 1, 0, '2025-06-08 23:32:54', '2025-06-09 06:32:54');
+(16, 3, NULL, 'Bia', 'Có thể thêm bia lon Heineken, Tiger', 15000.00, '1749450774_bia-tiger-sleek-5-abv-lon-330ml-281124-112850-1732768166826.webp', NULL, NULL, NULL, NULL, NULL, 'none', 0, 0, 0, 1, 0, '2025-06-08 23:32:54', '2025-07-10 11:26:28');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `internal_messages`
+--
+
+DROP TABLE IF EXISTS `internal_messages`;
+CREATE TABLE IF NOT EXISTS `internal_messages` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `sender_id` int NOT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attachment_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `attachment_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `message_type` enum('system_update','policy_change','maintenance','personal','general') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'general',
+  `priority` enum('low','normal','high','urgent') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'normal',
+  `is_broadcast` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_internal_messages_sender` (`sender_id`),
+  KEY `idx_message_type` (`message_type`),
+  KEY `idx_priority` (`priority`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `internal_messages`
+--
+
+INSERT INTO `internal_messages` (`id`, `sender_id`, `title`, `content`, `attachment_path`, `attachment_name`, `message_type`, `priority`, `is_broadcast`, `created_at`, `updated_at`) VALUES
+(1, 4, 'Chào mừng sử dụng hệ thống thông báo nội bộ', 'Đây là thông báo đầu tiên để kiểm tra hệ thống thông báo nội bộ. Hệ thống này cho phép Super Admin gửi thông báo đến các Admin một cách nhanh chóng và hiệu quả.', NULL, NULL, 'general', 'normal', 1, '2025-07-08 16:36:28', '2025-07-08 16:36:28');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `internal_message_recipients`
+--
+
+DROP TABLE IF EXISTS `internal_message_recipients`;
+CREATE TABLE IF NOT EXISTS `internal_message_recipients` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `message_id` int NOT NULL,
+  `recipient_id` int NOT NULL,
+  `is_read` tinyint(1) DEFAULT '0',
+  `read_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_message_recipient` (`message_id`,`recipient_id`),
+  KEY `fk_message_recipients_message` (`message_id`),
+  KEY `fk_message_recipients_recipient` (`recipient_id`),
+  KEY `idx_is_read` (`is_read`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `internal_message_recipients`
+--
+
+INSERT INTO `internal_message_recipients` (`id`, `message_id`, `recipient_id`, `is_read`, `read_at`, `created_at`) VALUES
+(1, 1, 1, 1, '2025-07-10 22:30:19', '2025-07-08 16:36:28'),
+(2, 1, 4, 0, NULL, '2025-07-08 16:36:28');
 
 -- --------------------------------------------------------
 
@@ -430,9 +646,9 @@ CREATE TABLE IF NOT EXISTS `promotions` (
 --
 
 INSERT INTO `promotions` (`id`, `name`, `code`, `description`, `type`, `application_type`, `discount_value`, `start_date`, `end_date`, `usage_limit`, `used_count`, `minimum_amount`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Welcome Discount', 'WELCOME10', 'Get 10% off your first order', 'percentage', 'specific_items', 10.00, '2025-06-10', '2025-07-10', 100, 0, 50.00, 1, '2025-06-10 04:09:55', '2025-06-11 10:46:47'),
-(2, 'Weekend Speciall', 'WEEKEND20', '20% off weekend buffet', 'percentage', 'specific_items', 20.00, '2025-06-10', '2025-08-09', NULL, 0, 100.00, 1, '2025-06-10 04:09:55', '2025-06-11 10:47:51'),
-(3, 'Family Deal', 'FAMILY15', '$15 off family packages', 'fixed', 'all', 15000.00, '2025-06-10', '2025-09-08', 50, 0, 80.00, 1, '2025-06-10 04:09:55', '2025-06-11 10:48:00');
+(1, 'Welcome Discount', 'WELCOME10', 'Get 10% off your first order', 'percentage', 'specific_items', 10.00, '2025-06-10', '2025-07-10', 100, 0, 50.00, 1, '2025-06-10 04:09:55', '2025-07-10 21:17:05'),
+(2, 'Weekend Speciall', 'WEEKEND20', '20% off weekend buffet', 'percentage', 'specific_items', 20.00, '2025-06-10', '2025-08-09', NULL, 0, 100.00, 1, '2025-06-10 04:09:55', '2025-07-10 21:16:32'),
+(3, 'Family Deal', 'FAMILY15', '$15 off family packages', 'fixed', 'all', 15000.00, '2025-06-10', '2025-09-08', 50, 0, 80.00, 1, '2025-06-10 04:09:55', '2025-07-10 21:16:23');
 
 -- --------------------------------------------------------
 
@@ -466,17 +682,17 @@ CREATE TABLE IF NOT EXISTS `promotion_food_items` (
   PRIMARY KEY (`id`),
   KEY `idx_promotion_id` (`promotion_id`),
   KEY `idx_food_item_id` (`food_item_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `promotion_food_items`
 --
 
 INSERT INTO `promotion_food_items` (`id`, `promotion_id`, `food_item_id`, `created_at`) VALUES
-(12, 2, 15, '2025-06-11 10:47:51'),
-(11, 2, 14, '2025-06-11 10:47:51'),
-(10, 1, 13, '2025-06-11 10:46:47'),
-(9, 1, 5, '2025-06-11 10:46:47');
+(16, 2, 15, '2025-07-10 21:16:32'),
+(15, 2, 14, '2025-07-10 21:16:32'),
+(18, 1, 13, '2025-07-10 21:17:05'),
+(17, 1, 5, '2025-07-10 21:17:05');
 
 -- --------------------------------------------------------
 
@@ -500,39 +716,42 @@ CREATE TABLE IF NOT EXISTS `reservations` (
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `table_id` (`table_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `reservations`
 --
 
 INSERT INTO `reservations` (`id`, `user_id`, `customer_name`, `phone_number`, `table_id`, `reservation_time`, `number_of_guests`, `status`, `notes`, `created_at`, `updated_at`) VALUES
-(1, NULL, 'sadf', '23434444', NULL, '2025-06-19 19:30:00', 17, 'cancelled', '', '2025-06-06 07:03:24', '2025-06-14 11:38:15'),
+(1, NULL, 'sadf', '23434444', NULL, '2025-06-19 19:30:00', 17, 'confirmed', '', '2025-06-06 07:03:24', '2025-07-10 15:11:56'),
 (2, 4, 'Admin', '09999999', NULL, '2025-06-19 19:30:00', 5, 'confirmed', '', '2025-06-13 17:03:57', '2025-06-14 09:21:34'),
-(3, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-27 12:00:00', 13, 'cancelled', 'hello', '2025-06-14 06:48:32', '2025-06-14 11:44:48'),
+(3, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-27 12:00:00', 13, 'completed', 'hello', '2025-06-14 06:48:32', '2025-07-10 15:15:46'),
 (4, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 12:30:00', 12, 'confirmed', 'jhfjhg', '2025-06-14 06:50:26', '2025-06-14 07:07:27'),
 (5, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 12:30:00', 12, 'confirmed', 'jhfjhg', '2025-06-14 06:51:08', '2025-06-14 08:11:28'),
 (6, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-20 11:30:00', 12, 'confirmed', 'ss', '2025-06-14 06:57:19', '2025-06-14 07:38:35'),
 (7, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 19:30:00', 4, 'confirmed', 's', '2025-06-14 07:03:30', '2025-06-14 07:42:18'),
-(8, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-26 17:00:00', 14, 'confirmed', 'ss', '2025-06-14 07:29:28', '2025-06-14 07:32:18'),
+(8, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-26 17:00:00', 14, 'completed', 'ss', '2025-06-14 07:29:28', '2025-07-10 15:16:00'),
 (9, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 17:00:00', 11, 'confirmed', 'dad', '2025-06-14 07:48:23', '2025-06-14 07:48:43'),
 (10, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-19 17:30:00', 15, 'confirmed', '', '2025-06-14 08:20:52', '2025-06-14 09:08:40'),
 (11, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 13:30:00', 6, 'confirmed', 'ssd', '2025-06-14 08:23:37', '2025-06-14 09:38:37'),
 (12, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-18 20:00:00', 4, 'confirmed', 's', '2025-06-14 08:28:08', '2025-06-14 09:05:16'),
-(13, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-26 20:00:00', 10, 'confirmed', 's', '2025-06-14 08:36:42', '2025-06-14 09:22:33'),
-(14, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-27 11:30:00', 6, 'cancelled', 'a', '2025-06-14 08:40:14', '2025-06-14 11:47:15'),
+(13, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-26 20:00:00', 10, 'completed', 's', '2025-06-14 08:36:42', '2025-07-10 15:15:56'),
+(14, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-27 11:30:00', 6, 'completed', 'a', '2025-06-14 08:40:14', '2025-07-10 15:15:51'),
 (15, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-25 19:00:00', 9, 'confirmed', 'nm', '2025-06-14 08:46:50', '2025-06-14 09:21:45'),
 (16, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-19 17:00:00', 9, 'confirmed', 's', '2025-06-14 08:51:27', '2025-06-14 09:21:25'),
 (17, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 17:00:00', 7, 'confirmed', 's', '2025-06-14 08:54:55', '2025-06-14 09:36:07'),
 (18, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-20 17:00:00', 14, 'confirmed', 'd', '2025-06-14 08:59:03', '2025-06-14 09:37:20'),
 (19, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-18 17:00:00', 4, 'confirmed', 's', '2025-06-14 09:29:00', '2025-06-14 09:40:14'),
 (20, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-18 17:00:00', 4, 'confirmed', 's', '2025-06-14 09:29:14', '2025-06-14 09:32:32'),
-(21, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-18 17:00:00', 4, 'pending', 's', '2025-06-14 09:31:06', NULL),
-(22, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-26 12:30:00', 12, 'pending', 's', '2025-06-14 10:00:10', NULL),
-(23, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-14 11:30:00', 11, 'pending', 's', '2025-06-14 10:02:08', NULL),
-(24, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-25 13:30:00', 7, 'pending', 'd', '2025-06-14 10:05:24', NULL),
-(25, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 11:30:00', 9, 'pending', 'dfd', '2025-06-14 10:59:03', NULL),
-(26, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-15 12:00:00', 6, 'pending', '', '2025-06-14 15:38:22', NULL);
+(21, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-18 17:00:00', 4, 'confirmed', 's', '2025-06-14 09:31:06', '2025-07-10 15:16:28'),
+(22, 9, 'Ngọc Hiếu', '0384946973', 11, '2025-06-26 12:30:00', 12, 'confirmed', 's', '2025-06-14 10:00:10', '2025-07-10 22:33:50'),
+(23, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-14 11:30:00', 11, 'confirmed', 's', '2025-06-14 10:02:08', '2025-07-10 15:17:00'),
+(24, 9, 'Ngọc Hiếu', '0384946972', NULL, '2025-06-25 13:30:00', 7, 'confirmed', 'd', '2025-06-14 10:05:24', '2025-07-10 15:11:40'),
+(25, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-19 11:30:00', 9, 'confirmed', 'dfd', '2025-06-14 10:59:03', '2025-07-10 15:16:07'),
+(26, 9, 'Ngọc Hiếu', '0384946973', NULL, '2025-06-15 12:00:00', 6, 'confirmed', '', '2025-06-14 15:38:22', '2025-07-10 15:16:44'),
+(27, 1, 'admin', '666666000', 12, '2025-07-12 11:00:00', 1, 'confirmed', '', '2025-07-10 15:23:45', '2025-07-10 18:21:32'),
+(28, 1, 'admin', '666666000', 10, '2025-07-19 11:30:00', 3, 'confirmed', '', '2025-07-10 15:24:15', '2025-07-10 22:33:27'),
+(29, 1, 'admin', '666666000', 8, '2025-08-01 12:00:00', 6, 'cancelled', '', '2025-07-10 15:24:38', '2025-07-10 18:16:09');
 
 -- --------------------------------------------------------
 
@@ -554,7 +773,7 @@ CREATE TABLE IF NOT EXISTS `restaurant_info` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `website` varchar(255) DEFAULT '',
-  `cover_image` varchar(255) DEFAULT '',
+  `cover_images` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `facebook` varchar(255) DEFAULT '',
   `instagram` varchar(255) DEFAULT '',
   `twitter` varchar(255) DEFAULT '',
@@ -565,8 +784,8 @@ CREATE TABLE IF NOT EXISTS `restaurant_info` (
 -- Đang đổ dữ liệu cho bảng `restaurant_info`
 --
 
-INSERT INTO `restaurant_info` (`id`, `restaurant_name`, `address`, `phone`, `email`, `description`, `opening_hours`, `capacity`, `logo_url`, `created_at`, `updated_at`, `website`, `cover_image`, `facebook`, `instagram`, `twitter`) VALUES
-(1, 'Buffet Paradise Restaurant', '123 Food Street, City Center', '+1234567890', 'info@buffetparadise.com', 'Welcome to our amazing buffet restaurant with the finest cuisine and excellent service.', '09:00 - 22:00', 100, '', '2025-06-10 04:09:55', '2025-06-10 15:28:22', 'http://localhost/buffet_booking_mvc/', '', 'http://localhost/buffet_booking_mvc/', 'http://localhost/buffet_booking_mvc/', 'http://localhost/buffet_booking_mvc/');
+INSERT INTO `restaurant_info` (`id`, `restaurant_name`, `address`, `phone`, `email`, `description`, `opening_hours`, `capacity`, `logo_url`, `created_at`, `updated_at`, `website`, `cover_images`, `facebook`, `instagram`, `twitter`) VALUES
+(1, 'Buffet Restaurant', '123 Food Street, City Center', '+1234567890', 'info@buffetparadise.com', 'Chào mừng đến với nhà hàng buffet tuyệt vời của chúng tôi với ẩm thực hảo hạng và dịch vụ xuất sắc.', 'Thứ 2 - Thứ 6: 11:00 - 22:00\r\nThứ 7 - Chủ Nhật: 10:00 - 23:00\r\nNgày Lễ: 10:00 - 23:30', 100, '', '2025-06-09 21:09:55', '2025-07-10 22:01:52', 'http://localhost/buffet_booking_mvc/', '[\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_6870383566b22.jpg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_6870383566d62.jpeg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_6870383566f42.png\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_68703835670d6.jpg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_68703835671df.jpg\",\"http:\\/\\/localhost\\/buffet_booking_mvc\\/uploads\\/restaurant\\/cover_1752184885_68703835672f8.png\"]', 'http://localhost/buffet_booking_mvc/', 'http://localhost/buffet_booking_mvc/', 'http://localhost/buffet_booking_mvc/');
 
 -- --------------------------------------------------------
 
@@ -710,7 +929,7 @@ CREATE TABLE IF NOT EXISTS `tables` (
   `id` int NOT NULL AUTO_INCREMENT,
   `table_number` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `capacity` int NOT NULL,
-  `location` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `location` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `is_available` tinyint(1) DEFAULT '1',
   `status` enum('available','occupied','reserved','maintenance') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'available',
@@ -720,19 +939,36 @@ CREATE TABLE IF NOT EXISTS `tables` (
   UNIQUE KEY `table_number` (`table_number`),
   KEY `idx_capacity` (`capacity`),
   KEY `idx_available` (`is_available`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `tables`
 --
 
 INSERT INTO `tables` (`id`, `table_number`, `capacity`, `location`, `description`, `is_available`, `status`, `created_at`, `updated_at`) VALUES
-(7, 'D1', 10, '', '', 1, 'available', '2025-06-06 06:25:52', '2025-06-10 11:40:05'),
-(8, 'D2', 10, NULL, NULL, 0, 'available', '2025-06-06 06:25:52', '2025-06-11 11:29:21'),
-(9, 'M4', 10, 'Private Room', '', 1, 'available', '2025-06-09 15:04:48', '2025-06-09 15:04:48'),
-(10, 'M5', 15, '', '', 1, 'available', '2025-06-09 17:09:14', '2025-06-09 17:09:29'),
-(11, 'M6', 20, 'NEW', 'NEW', 0, 'available', '2025-06-10 12:05:04', '2025-06-10 12:05:04'),
-(12, 'TABLE_5', 5, 'Main Dining', '', 1, 'available', '2025-06-10 13:38:46', '2025-06-10 13:38:50');
+(8, 'D2', 10, 'GiaiKhat 119 Coffee, Hoàng Hoa Thám, Thạc Gián, Thanh Khê, Phường Thanh Khê, Thành phố Đà Nẵng, Việt Nam', NULL, 0, 'available', '2025-06-06 06:25:52', '2025-07-11 03:56:08'),
+(9, 'M4', 10, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', '', 0, 'available', '2025-06-09 15:04:48', '2025-07-11 03:56:09'),
+(10, 'M5', 15, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', '', 0, 'available', '2025-06-09 17:09:14', '2025-07-11 03:56:11'),
+(11, 'M6', 20, 'Hẻm 153 Bà Hom, Quận 6, Thành phố Hồ Chí Minh, Việt Nam', 'NEW', 0, 'available', '2025-06-10 12:05:04', '2025-07-11 04:04:29'),
+(21, 'ssssssssss', 2, 'GiaiKhat 119 Coffee, Hoàng Hoa Thám, Thạc Gián, Thanh Khê, Phường Thanh Khê, Thành phố Đà Nẵng, Việt Nam', 'ư', 0, 'available', '2025-07-10 23:56:01', '2025-07-11 03:56:16');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc đóng vai cho view `table_order_stats`
+-- (See below for the actual view)
+--
+DROP VIEW IF EXISTS `table_order_stats`;
+CREATE TABLE IF NOT EXISTS `table_order_stats` (
+`table_id` int
+,`table_number` varchar(10)
+,`capacity` int
+,`location` text
+,`total_orders` bigint
+,`total_revenue` decimal(32,2)
+,`avg_order_value` decimal(14,6)
+,`last_order_time` timestamp
+);
 
 -- --------------------------------------------------------
 
@@ -772,7 +1008,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 --
 
 INSERT INTO `users` (`id`, `first_name`, `last_name`, `email`, `password`, `phone`, `date_of_birth`, `address`, `avatar`, `role`, `email_verified`, `email_verification_token`, `password_reset_token`, `password_reset_expires`, `last_login`, `is_active`, `preferences`, `created_at`, `updated_at`) VALUES
-(1, 'Adminn', 'User', 'admin@buffet.com', '$2y$10$5gjA8CuwdXg3/7DFmUC8AOdVRhej2W402IRBfnsWPjIAhw/A4csce', '0000000000', NULL, '', NULL, 'manager', 0, NULL, NULL, NULL, NULL, 1, NULL, '2025-06-06 04:03:21', '2025-06-10 06:53:18'),
+(1, 'Adminn', 'admin', 'admin@buffet.com', '$2y$10$5gjA8CuwdXg3/7DFmUC8AOdVRhej2W402IRBfnsWPjIAhw/A4csce', '0000000000', NULL, '', NULL, 'manager', 0, NULL, NULL, NULL, NULL, 1, NULL, '2025-06-06 04:03:21', '2025-07-09 08:37:12'),
 (4, 'Super', 'Admin', 'superadmin@buffet.com', '$2y$10$2IA71pot7oZqhM5DTwMRteOACsDF1F5TIKA3FLfshyU/3zpFvYFPa', '+1234567890', NULL, NULL, NULL, 'super_admin', 0, NULL, NULL, NULL, NULL, 1, NULL, '2025-06-10 04:09:56', '2025-06-10 04:09:56'),
 (5, 'New', 'New', 'new@gmail.com', '$2y$10$xwTmHBrRyc/LGhDsM7QYwuPIJxZtaLqewWnQV8QxI/K.CQUTYRUI2', '009999999', NULL, 'HCM', NULL, 'customer', 0, NULL, NULL, NULL, NULL, 1, NULL, '2025-06-10 00:19:41', '2025-06-10 07:19:41'),
 (7, 'hehe', 'heheheh', 'hehe@gmail.com', '$2y$10$p48sD//5xANycMpPG1L5eurklilL12lG6rnaZWsNgKyusYqdewjhW', '0999999', NULL, '', NULL, 'manager', 0, NULL, NULL, NULL, NULL, 1, NULL, '2025-06-10 06:45:59', '2025-06-10 13:46:09'),
@@ -821,7 +1057,7 @@ CREATE TABLE IF NOT EXISTS `v_bookings_with_details` (
 ,`updated_at` timestamp
 ,`table_number` varchar(10)
 ,`table_capacity` int
-,`table_location` varchar(50)
+,`table_location` text
 ,`first_name` varchar(50)
 ,`last_name` varchar(50)
 );
@@ -894,6 +1130,26 @@ CREATE TABLE IF NOT EXISTS `v_payments_with_orders` (
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc cho view `dine_in_order_stats`
+--
+DROP TABLE IF EXISTS `dine_in_order_stats`;
+
+DROP VIEW IF EXISTS `dine_in_order_stats`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `dine_in_order_stats`  AS SELECT cast(`dine_in_orders`.`created_at` as date) AS `order_date`, count(0) AS `total_orders`, sum(`dine_in_orders`.`total_amount`) AS `total_revenue`, count((case when (`dine_in_orders`.`status` = 'pending') then 1 end)) AS `pending_orders`, count((case when (`dine_in_orders`.`status` = 'preparing') then 1 end)) AS `preparing_orders`, count((case when (`dine_in_orders`.`status` = 'served') then 1 end)) AS `served_orders`, count((case when (`dine_in_orders`.`status` = 'completed') then 1 end)) AS `completed_orders` FROM `dine_in_orders` GROUP BY cast(`dine_in_orders`.`created_at` as date) ORDER BY `order_date` DESC ;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc cho view `table_order_stats`
+--
+DROP TABLE IF EXISTS `table_order_stats`;
+
+DROP VIEW IF EXISTS `table_order_stats`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `table_order_stats`  AS SELECT `t`.`id` AS `table_id`, `t`.`table_number` AS `table_number`, `t`.`capacity` AS `capacity`, `t`.`location` AS `location`, count(`dio`.`id`) AS `total_orders`, sum(`dio`.`total_amount`) AS `total_revenue`, avg(`dio`.`total_amount`) AS `avg_order_value`, max(`dio`.`created_at`) AS `last_order_time` FROM (`tables` `t` left join `dine_in_orders` `dio` on((`t`.`id` = `dio`.`table_id`))) GROUP BY `t`.`id`, `t`.`table_number`, `t`.`capacity`, `t`.`location` ORDER BY `t`.`table_number` ASC ;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc cho view `v_bookings_with_details`
 --
 DROP TABLE IF EXISTS `v_bookings_with_details`;
@@ -938,6 +1194,20 @@ ALTER TABLE `bookings`
 ALTER TABLE `cart_items`
   ADD CONSTRAINT `fk_cart_food` FOREIGN KEY (`food_item_id`) REFERENCES `food_items` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_cart_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Các ràng buộc cho bảng `dine_in_orders`
+--
+ALTER TABLE `dine_in_orders`
+  ADD CONSTRAINT `dine_in_orders_ibfk_1` FOREIGN KEY (`table_id`) REFERENCES `tables` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `dine_in_orders_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Các ràng buộc cho bảng `dine_in_order_items`
+--
+ALTER TABLE `dine_in_order_items`
+  ADD CONSTRAINT `dine_in_order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `dine_in_orders` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `dine_in_order_items_ibfk_2` FOREIGN KEY (`food_id`) REFERENCES `food_items` (`id`) ON DELETE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `food_items`
@@ -994,50 +1264,3 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `internal_messages`
---
-
-DROP TABLE IF EXISTS `internal_messages`;
-CREATE TABLE IF NOT EXISTS `internal_messages` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `sender_id` int NOT NULL,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `attachment_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `attachment_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `message_type` enum('system_update','policy_change','maintenance','personal','general') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'general',
-  `priority` enum('low','normal','high','urgent') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'normal',
-  `is_broadcast` tinyint(1) DEFAULT '0',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `fk_internal_messages_sender` (`sender_id`),
-  KEY `idx_message_type` (`message_type`),
-  KEY `idx_priority` (`priority`),
-  KEY `idx_created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `internal_message_recipients`
---
-
-DROP TABLE IF EXISTS `internal_message_recipients`;
-CREATE TABLE IF NOT EXISTS `internal_message_recipients` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `message_id` int NOT NULL,
-  `recipient_id` int NOT NULL,
-  `is_read` tinyint(1) DEFAULT '0',
-  `read_at` timestamp NULL DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_message_recipient` (`message_id`,`recipient_id`),
-  KEY `fk_message_recipients_message` (`message_id`),
-  KEY `fk_message_recipients_recipient` (`recipient_id`),
-  KEY `idx_is_read` (`is_read`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

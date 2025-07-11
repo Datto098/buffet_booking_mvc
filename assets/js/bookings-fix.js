@@ -93,6 +93,134 @@ window.assignTable = function (bookingId) {
 	}
 };
 
+// Load available tables for a booking
+window.loadAvailableTables = function (bookingId) {
+	console.log('Loading available tables for booking:', bookingId);
+
+	// First get booking details to know the location
+	fetch(
+		`${window.SITE_URL}/admin/bookings/available-tables?booking_id=${bookingId}`,
+		{
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		}
+	)
+		.then((response) => response.json())
+		.then((data) => {
+			const tableSelect = document.getElementById('tableNumber');
+			if (!tableSelect) {
+				console.error('Table select element not found');
+				return;
+			}
+
+			// Clear existing options
+			tableSelect.innerHTML = '<option value="">Select Table</option>';
+
+			if (data.success && data.tables && data.tables.length > 0) {
+				data.tables.forEach((table) => {
+					const option = document.createElement('option');
+					option.value = table.id;
+					option.textContent = `Table ${table.table_number} (${
+						table.capacity
+					} seats)${
+						table.location
+							? ` - ${table.location.substring(0, 30)}...`
+							: ''
+					}`;
+					tableSelect.appendChild(option);
+				});
+				console.log(`Loaded ${data.tables.length} available tables`);
+			} else {
+				const option = document.createElement('option');
+				option.value = '';
+				option.textContent = 'No available tables';
+				option.disabled = true;
+				tableSelect.appendChild(option);
+				console.log('No available tables found');
+			}
+		})
+		.catch((error) => {
+			console.error('Error loading available tables:', error);
+			const tableSelect = document.getElementById('tableNumber');
+			if (tableSelect) {
+				tableSelect.innerHTML =
+					'<option value="">Error loading tables</option>';
+			}
+		});
+};
+
+// Global saveTableAssignment function for modal onclick
+window.saveTableAssignment = function () {
+	console.log('Global saveTableAssignment called');
+	const bookingId = document.getElementById('bookingIdForTable')?.value;
+	const tableId = document.getElementById('tableNumber')?.value;
+	const notes = document.getElementById('assignTableNotes')?.value || '';
+
+	console.log('Save table assignment values:', { bookingId, tableId, notes });
+
+	if (!bookingId) {
+		showViewOnlyNotification('Booking ID is missing');
+		return;
+	}
+
+	if (!tableId) {
+		showViewOnlyNotification('Please select a table');
+		return;
+	}
+
+	const csrfToken =
+		document
+			.querySelector('meta[name="csrf-token"]')
+			?.getAttribute('content') ||
+		document.querySelector('input[name="csrf_token"]')?.value ||
+		'';
+
+	fetch(`${window.SITE_URL}/admin/bookings/assign-table`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'X-CSRF-Token': csrfToken,
+		},
+		body: JSON.stringify({
+			csrf_token: csrfToken,
+			booking_id: parseInt(bookingId),
+			table_id: parseInt(tableId),
+			notes: notes,
+		}),
+	})
+		.then((response) => response.json())
+		.then((data) => {
+			if (data.success) {
+				showViewOnlyNotification('Table assigned successfully');
+
+				const tableModal = document.getElementById('tableAssignModal');
+				if (tableModal) {
+					const modal = bootstrap.Modal.getInstance(tableModal);
+					if (modal) {
+						modal.hide();
+					}
+				}
+
+				// Reload the page to reflect changes
+				setTimeout(() => {
+					window.location.reload();
+				}, 1000);
+			} else {
+				showViewOnlyNotification(
+					data.message || 'Failed to assign table'
+				);
+			}
+		})
+		.catch((error) => {
+			console.error('Error assigning table:', error);
+			showViewOnlyNotification(
+				'An error occurred while processing your request'
+			);
+		});
+};
+
 // Only disable the edit booking button/link - NOT table assignment or status updates
 window.editBooking = function (bookingId) {
 	showViewOnlyNotification(

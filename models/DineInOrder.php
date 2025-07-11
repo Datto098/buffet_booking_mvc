@@ -199,13 +199,19 @@ class DineInOrder extends BaseModel {
             $params[':table_id'] = $table;
         }
         if ($search) {
-            $where[] = '(t.table_number LIKE :search OR o.notes LIKE :search)';
+            $where[] = '(t.table_number LIKE :search OR o.notes LIKE :search OR CONCAT(u.first_name, " ", u.last_name) LIKE :search OR u.email LIKE :search)';
             $params[':search'] = "%$search%";
         }
         $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
-        $sql = "SELECT o.*, t.table_number, COALESCE(SUM(oi.total),0) as total_amount
+        $sql = "SELECT o.*,
+                       t.table_number,
+                       CONCAT(u.first_name, ' ', u.last_name) as customer_name,
+                       u.email as customer_email,
+                       COALESCE(SUM(oi.total), 0) as total_amount,
+                       COUNT(oi.id) as item_count
                 FROM dine_in_orders o
                 LEFT JOIN tables t ON o.table_id = t.id
+                LEFT JOIN users u ON o.user_id = u.id
                 LEFT JOIN dine_in_order_items oi ON o.id = oi.order_id
                 $whereSql
                 GROUP BY o.id
@@ -226,25 +232,69 @@ class DineInOrder extends BaseModel {
         $where = [];
         $params = [];
         if ($status) {
-            $where[] = 'status = :status';
+            $where[] = 'o.status = :status';
             $params[':status'] = $status;
         }
         if ($table) {
-            $where[] = 'table_id = :table_id';
+            $where[] = 'o.table_id = :table_id';
             $params[':table_id'] = $table;
         }
         if ($search) {
-            $where[] = '(notes LIKE :search)';
+            $where[] = '(t.table_number LIKE :search OR o.notes LIKE :search OR CONCAT(u.first_name, " ", u.last_name) LIKE :search OR u.email LIKE :search)';
             $params[':search'] = "%$search%";
         }
         $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
-        $sql = "SELECT COUNT(*) FROM dine_in_orders $whereSql";
+        $sql = "SELECT COUNT(DISTINCT o.id)
+                FROM dine_in_orders o
+                LEFT JOIN tables t ON o.table_id = t.id
+                LEFT JOIN users u ON o.user_id = u.id
+                $whereSql";
         $stmt = $this->db->prepare($sql);
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
         }
         $stmt->execute();
         return (int)$stmt->fetchColumn();
+    }
+
+    public function getOrdersByTable($table_number) {
+        $sql = "SELECT o.* FROM {$this->table} o
+                INNER JOIN tables t ON o.table_id = t.id
+                WHERE t.table_number = :table_number
+                ORDER BY o.created_at DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':table_number' => $table_number]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getOrderItems($order_id) {
+        $sql = "SELECT doi.*, f.name as food_name, f.image as food_image
+                FROM {$this->itemsTable} doi
+                INNER JOIN food_items f ON doi.food_id = f.id
+                WHERE doi.order_id = :order_id
+                ORDER BY doi.id";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':order_id' => $order_id]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getOrdersByTableAndUser($table_number, $user_id) {
+        $sql = "SELECT o.* FROM {$this->table} o
+                INNER JOIN tables t ON o.table_id = t.id
+                WHERE t.table_number = :table_number AND o.user_id = :user_id
+                ORDER BY o.created_at DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            ':table_number' => $table_number,
+            ':user_id' => $user_id
+        ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 ?>

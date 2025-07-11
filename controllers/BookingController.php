@@ -49,7 +49,7 @@ public function index()
     $data = [
         'title' => 'Đặt Bàn - ' . SITE_NAME,
         'info' => $restaurantInfo,
-        'addresses' => $addresses 
+        'addresses' => $addresses
     ];
 
     $this->loadView('customer/booking/index', $data);
@@ -237,6 +237,7 @@ public function index()
         $bookingDate = $_POST['booking_date'] ?? '';
         $bookingTime = $_POST['booking_time'] ?? '';
         $partySize = intval($_POST['party_size'] ?? 0);
+        $bookingLocation = sanitizeInput($_POST['booking_location'] ?? '');
         $specialRequests = sanitizeInput($_POST['special_requests'] ?? '');
 
         // Validation
@@ -266,13 +267,17 @@ public function index()
             $errors[] = 'Số lượng khách không hợp lệ (1-20 người)';
         }
 
+        if (empty($bookingLocation)) {
+            $errors[] = 'Vui lòng chọn địa chỉ chi nhánh';
+        }
+
         // Validate date and time
         $bookingDateTime = $bookingDate . ' ' . $bookingTime;
         if (strtotime($bookingDateTime) < time()) {
             $errors[] = 'Không thể đặt bàn cho thời gian trong quá khứ';
         }
 
-        $address = $_POST['booking_location'] ?? '';
+        $address = $bookingLocation;
         if (!$this->bookingModel->hasTablesForAddress($address)) {
             $errors[] = 'Địa chỉ này chưa có bàn nào!';
         }
@@ -285,7 +290,7 @@ public function index()
         }
 
         // Check availability again
-        $availability = $this->bookingModel->checkAvailability($bookingDate, $bookingTime, $partySize);
+        $availability = $this->bookingModel->checkAvailability($bookingDate, $bookingTime, $partySize, $bookingLocation);
 
         if (!$availability['available']) {
             $_SESSION['error'] = $availability['message'];
@@ -301,6 +306,7 @@ public function index()
             'customer_phone' => $customerPhone,
             'booking_datetime' => $bookingDateTime,
             'party_size' => $partySize,
+            'booking_location' => $bookingLocation,
             'special_requests' => $specialRequests,
             'status' => 'pending'
         ];
@@ -323,6 +329,7 @@ public function index()
                     <li><b>Ngày:</b> $bookingDate</li>
                     <li><b>Giờ:</b> $bookingTime</li>
                     <li><b>Số lượng khách:</b> $partySize</li>
+                    <li><b>Địa chỉ chi nhánh:</b> $bookingLocation</li>
                     <li><b>Số điện thoại:</b> $customerPhone</li>
                 </ul>
                 <p>Chúng tôi sẽ liên hệ lại để xác nhận đặt bàn của bạn trong thời gian sớm nhất.</p>

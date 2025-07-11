@@ -6,7 +6,7 @@
 require_once 'BaseModel.php';
 
 class Booking extends BaseModel {
-    protected $table = 'reservations';    public function createBooking($bookingData) {
+    protected $table = 'bookings';    public function createBooking($bookingData) {
         $sql = "INSERT INTO reservations
         (customer_name, customer_email, customer_phone, booking_date, booking_time, guest_count, special_requests, status, created_at, updated_at)
         VALUES
@@ -24,11 +24,12 @@ class Booking extends BaseModel {
 }
 
     public function getBookingsByUser($userId, $limit = null, $offset = 0) {
-        $sql = "SELECT r.*, t.table_number, t.capacity
+        $sql = "SELECT r.*, t.table_number, t.capacity,
+                       CONCAT(r.booking_date, ' ', r.booking_time) as reservation_time
                 FROM {$this->table} r
                 LEFT JOIN tables t ON r.table_id = t.id
                 WHERE r.user_id = :user_id
-                ORDER BY r.reservation_time DESC";
+                ORDER BY CONCAT(r.booking_date, ' ', r.booking_time) DESC";
 
         if ($limit !== null) {
             $sql .= " LIMIT :limit OFFSET :offset";
@@ -47,7 +48,8 @@ class Booking extends BaseModel {
     }
 
     public function getBookingDetails($bookingId, $userId = null) {
-        $sql = "SELECT r.*, u.email as customer_email, t.table_number, t.capacity
+        $sql = "SELECT r.*, u.email as customer_email, t.table_number, t.capacity,
+                       CONCAT(r.booking_date, ' ', r.booking_time) as reservation_time
                 FROM {$this->table} r
                 LEFT JOIN users u ON r.user_id = u.id
                 LEFT JOIN tables t ON r.table_id = t.id
@@ -88,16 +90,17 @@ class Booking extends BaseModel {
     }
 
     public function getBookingsByDate($date, $status = null) {
-        $sql = "SELECT r.*, t.table_number, t.capacity
+        $sql = "SELECT r.*, t.table_number, t.capacity,
+                       CONCAT(r.booking_date, ' ', r.booking_time) as reservation_time
                 FROM {$this->table} r
                 LEFT JOIN tables t ON r.table_id = t.id
-                WHERE DATE(r.reservation_time) = :date";
+                WHERE r.booking_date = :date";
 
         if ($status) {
             $sql .= " AND r.status = :status";
         }
 
-        $sql .= " ORDER BY r.reservation_time";
+        $sql .= " ORDER BY CONCAT(r.booking_date, ' ', r.booking_time)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':date', $date);
@@ -111,11 +114,12 @@ class Booking extends BaseModel {
     }
 
     public function getBookingsByStatus($status, $limit = null) {
-        $sql = "SELECT r.*, t.table_number, t.capacity
+        $sql = "SELECT r.*, t.table_number, t.capacity,
+                       CONCAT(r.booking_date, ' ', r.booking_time) as reservation_time
                 FROM {$this->table} r
                 LEFT JOIN tables t ON r.table_id = t.id
                 WHERE r.status = :status
-                ORDER BY r.reservation_time";
+                ORDER BY CONCAT(r.booking_date, ' ', r.booking_time)";
 
         if ($limit) {
             $sql .= " LIMIT :limit";
@@ -130,7 +134,7 @@ class Booking extends BaseModel {
 
         $stmt->execute();
         return $stmt->fetchAll();
-    }    public function getAvailableTables($reservationTime, $numberOfGuests) {
+    }    public function getAvailableTables($reservationTime, $numberOfGuests, $location = null) {
         try {
             // First check if tables exist
             $checkSql = "SELECT COUNT(*) as count FROM tables";
@@ -149,14 +153,25 @@ class Booking extends BaseModel {
             $sql = "SELECT t.*
                     FROM tables t
                     WHERE t.capacity >= :number_of_guests
-                    AND t.is_available = 1
-                    ORDER BY t.capacity, t.table_number";
+                    AND t.is_available = 1";
 
-            error_log("Booking Debug - Simplified SQL: " . $sql);
-            error_log("Booking Debug - Params: guests=" . $numberOfGuests);
+            // Add location filter if provided
+            if ($location) {
+                $sql .= " AND t.location = :location";
+            }
+
+            $sql .= " ORDER BY t.capacity, t.table_number";
+
+            error_log("Booking Debug - SQL: " . $sql);
+            error_log("Booking Debug - Params: guests=" . $numberOfGuests . ", location=" . ($location ?? 'null'));
 
             $stmt = $this->db->prepare($sql);
             $stmt->bindValue(':number_of_guests', $numberOfGuests, PDO::PARAM_INT);
+
+            if ($location) {
+                $stmt->bindValue(':location', $location, PDO::PARAM_STR);
+            }
+
             $stmt->execute();
 
             $tables = $stmt->fetchAll();
@@ -211,7 +226,7 @@ class Booking extends BaseModel {
             $sql .= " WHERE " . implode(' AND ', $conditions);
         }
 
-        $sql .= " ORDER BY r.reservation_time DESC";
+        $sql .= " ORDER BY CONCAT(r.booking_date, ' ', r.booking_time) DESC";
 
         if ($limit) {
             $sql .= " LIMIT :limit OFFSET :offset";
@@ -274,10 +289,10 @@ class Booking extends BaseModel {
         $sql = "SELECT
                     status,
                     COUNT(*) as count,
-                    DATE(reservation_time) as booking_date
+                    booking_date
                 FROM {$this->table}
-                WHERE reservation_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-                GROUP BY status, DATE(reservation_time)
+                WHERE CONCAT(booking_date, ' ', booking_time) >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                GROUP BY status, booking_date
                 ORDER BY booking_date DESC";
 
         $stmt = $this->db->prepare($sql);
@@ -285,13 +300,14 @@ class Booking extends BaseModel {
         return $stmt->fetchAll();
     }
 
-    public function getUpcomingBookings($limit = 10) {        $sql = "SELECT r.*, u.email as customer_email, u.email, t.table_number
+    public function getUpcomingBookings($limit = 10) {        $sql = "SELECT r.*, u.email as customer_email, u.email, t.table_number,
+                       CONCAT(r.booking_date, ' ', r.booking_time) as reservation_time
                 FROM {$this->table} r
                 LEFT JOIN users u ON r.user_id = u.id
                 LEFT JOIN tables t ON r.table_id = t.id
-                WHERE r.reservation_time > NOW()
+                WHERE CONCAT(r.booking_date, ' ', r.booking_time) > NOW()
                 AND r.status IN ('confirmed', 'pending')
-                ORDER BY r.reservation_time ASC
+                ORDER BY r.booking_date ASC, r.booking_time ASC
                 LIMIT :limit";
 
         $stmt = $this->db->prepare($sql);
@@ -300,28 +316,29 @@ class Booking extends BaseModel {
         return $stmt->fetchAll();
     }
 
-    public function getTodayBookings() {        $sql = "SELECT r.*, u.email as customer_email, u.email, t.table_number
+    public function getTodayBookings() {        $sql = "SELECT r.*, u.email as customer_email, u.email, t.table_number,
+                       CONCAT(r.booking_date, ' ', r.booking_time) as reservation_time
                 FROM {$this->table} r
                 LEFT JOIN users u ON r.user_id = u.id
                 LEFT JOIN tables t ON r.table_id = t.id
-                WHERE DATE(r.reservation_time) = CURDATE()
-                ORDER BY r.reservation_time ASC";
+                WHERE r.booking_date = CURDATE()
+                ORDER BY r.booking_time ASC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll();
     }    /**
      * Check availability for a booking at specified date and time
-     */    public function checkAvailability($date, $time, $partySize) {
+     */    public function checkAvailability($date, $time, $partySize, $location = null) {
         $bookingDateTime = $date . ' ' . $time;
 
         error_log("Booking Debug - checkAvailability called");
-        error_log("Booking Debug - Date: $date, Time: $time, Party Size: $partySize");
+        error_log("Booking Debug - Date: $date, Time: $time, Party Size: $partySize, Location: $location");
         error_log("Booking Debug - DateTime: $bookingDateTime");
 
         // Check if there are available tables for the party size
         try {
-            $availableTables = $this->getAvailableTables($bookingDateTime, $partySize);
+            $availableTables = $this->getAvailableTables($bookingDateTime, $partySize, $location);
 
             if (count($availableTables) > 0) {
                 error_log("Booking Debug - Found " . count($availableTables) . " available tables");
@@ -332,13 +349,11 @@ class Booking extends BaseModel {
                 ];
             } else {
                 error_log("Booking Debug - No available tables found");
-                // Suggest alternative times
-                $suggestedTimes = $this->getSuggestedTimes($date, $partySize);
 
                 return [
                     'available' => false,
                     'message' => 'Không có bàn trống cho thời gian này. Vui lòng chọn thời gian khác.',
-                    'suggestedTimes' => $suggestedTimes
+                    'suggestedTimes' => []
                 ];
             }
         } catch (Exception $e) {
@@ -454,32 +469,47 @@ class Booking extends BaseModel {
      * Create booking with proper data mapping for controller compatibility
      */
     public function createBookingFromController($bookingData) {
+        // Generate unique booking reference
+        $bookingReference = strtoupper(substr(md5(uniqid()), 0, 10));
+
         // Map controller data to model data
         $mappedData = [
             'user_id' => $bookingData['user_id'] ?? null,
             'customer_name' => $bookingData['customer_name'],
-            'phone_number' => $bookingData['customer_phone'],
-            'table_id' => null, // Will be assigned later
-            'reservation_time' => $bookingData['booking_datetime'],
-            'number_of_guests' => $bookingData['party_size'],
+            'customer_email' => $bookingData['customer_email'] ?? '',
+            'customer_phone' => $bookingData['customer_phone'],
+            'booking_date' => date('Y-m-d', strtotime($bookingData['booking_datetime'])),
+            'booking_time' => date('H:i:s', strtotime($bookingData['booking_datetime'])),
+            'guest_count' => $bookingData['party_size'],
+            'booking_location' => $bookingData['booking_location'] ?? null,
+            'special_requests' => $bookingData['special_requests'] ?? null,
             'status' => $bookingData['status'] ?? 'pending',
-            'notes' => $bookingData['special_requests'] ?? null
+            'booking_reference' => $bookingReference
         ];
 
-        $sql = "INSERT INTO {$this->table} (user_id, customer_name, phone_number, table_id, reservation_time, number_of_guests, status, notes, created_at)
-                VALUES (:user_id, :customer_name, :phone_number, :table_id, :reservation_time, :number_of_guests, :status, :notes, NOW())";
+        $sql = "INSERT INTO {$this->table}
+                (user_id, customer_name, customer_email, customer_phone, booking_date, booking_time,
+                 guest_count, booking_location, special_requests, status, booking_reference, created_at, updated_at)
+                VALUES
+                (:user_id, :customer_name, :customer_email, :customer_phone, :booking_date, :booking_time,
+                 :guest_count, :booking_location, :special_requests, :status, :booking_reference, NOW(), NOW())";
 
         $stmt = $this->db->prepare($sql);
         $result = $stmt->execute([
             ':user_id' => $mappedData['user_id'],
             ':customer_name' => $mappedData['customer_name'],
-            ':phone_number' => $mappedData['phone_number'],
-            ':table_id' => $mappedData['table_id'],
-            ':reservation_time' => $mappedData['reservation_time'],
-            ':number_of_guests' => $mappedData['number_of_guests'],
+            ':customer_email' => $mappedData['customer_email'],
+            ':customer_phone' => $mappedData['customer_phone'],
+            ':booking_date' => $mappedData['booking_date'],
+            ':booking_time' => $mappedData['booking_time'],
+            ':guest_count' => $mappedData['guest_count'],
+            ':booking_location' => $mappedData['booking_location'],
+            ':special_requests' => $mappedData['special_requests'],
             ':status' => $mappedData['status'],
-            ':notes' => $mappedData['notes']
-        ]);        if ($result) {
+            ':booking_reference' => $mappedData['booking_reference']
+        ]);
+
+        if ($result) {
             return $this->db->lastInsertId();
         }
 
@@ -491,8 +521,9 @@ class Booking extends BaseModel {
      */    public function getRecentBookingsWithCustomer($limit = 5) {
         $sql = "SELECT r.*,
                        COALESCE(CONCAT(u.first_name, ' ', u.last_name), r.customer_name) as customer_name,
-                       DATE(r.reservation_time) as booking_date,
-                       TIME(r.reservation_time) as booking_time,
+                       r.booking_date,
+                       r.booking_time,
+                       CONCAT(r.booking_date, ' ', r.booking_time) as reservation_time,
                        u.email as customer_email,
                        t.table_number
                 FROM {$this->table} r
@@ -552,10 +583,19 @@ class Booking extends BaseModel {
     private function transformBookingData($booking) {
         if (!$booking) return $booking;
 
-        // Split reservation_time into separate date and time fields
-        if (isset($booking['reservation_time'])) {
-            $booking['booking_date'] = date('Y-m-d', strtotime($booking['reservation_time']));
-            $booking['booking_time'] = date('H:i:s', strtotime($booking['reservation_time']));
+        // Map fields for admin interface compatibility
+        if (isset($booking['booking_date']) && isset($booking['booking_time'])) {
+            $booking['reservation_time'] = $booking['booking_date'] . ' ' . $booking['booking_time'];
+        }
+
+        // Map customer_phone to phone_number for admin interface
+        if (isset($booking['customer_phone'])) {
+            $booking['phone_number'] = $booking['customer_phone'];
+        }
+
+        // Map guest_count to number_of_guests for admin interface
+        if (isset($booking['guest_count'])) {
+            $booking['number_of_guests'] = $booking['guest_count'];
         }
 
         // Ensure customer_email field exists (from user join or direct)
@@ -563,9 +603,9 @@ class Booking extends BaseModel {
             $booking['customer_email'] = $booking['email'];
         }
 
-        // Map notes to special_requests for view compatibility
-        if (isset($booking['notes']) && !isset($booking['special_requests'])) {
-            $booking['special_requests'] = $booking['notes'];
+        // Map special_requests to notes for admin interface
+        if (isset($booking['special_requests']) && !isset($booking['notes'])) {
+            $booking['notes'] = $booking['special_requests'];
         }
 
         return $booking;
@@ -575,7 +615,7 @@ class Booking extends BaseModel {
      * Get all bookings with admin-compatible field mapping
      */    public function getAllForAdmin($limit = null, $offset = 0, $status = null, $search = null, $date = null) {
         $sql = "SELECT r.*,
-                       COALESCE(u.email, '') as customer_email,
+                       COALESCE(u.email, r.customer_email) as customer_email,
                        u.email,
                        t.table_number,
                        t.capacity
@@ -592,12 +632,12 @@ class Booking extends BaseModel {
         }
 
         if ($search) {
-            $conditions[] = "(r.customer_name LIKE :search OR u.email LIKE :search OR r.phone_number LIKE :search)";
+            $conditions[] = "(r.customer_name LIKE :search OR r.customer_email LIKE :search OR u.email LIKE :search OR r.customer_phone LIKE :search)";
             $params[':search'] = "%{$search}%";
         }
 
         if ($date) {
-            $conditions[] = "DATE(r.reservation_time) = :date";
+            $conditions[] = "r.booking_date = :date";
             $params[':date'] = $date;
         }
 
@@ -605,7 +645,7 @@ class Booking extends BaseModel {
             $sql .= " WHERE " . implode(' AND ', $conditions);
         }
 
-        $sql .= " ORDER BY r.reservation_time DESC";
+        $sql .= " ORDER BY r.booking_date DESC, r.booking_time DESC";
 
         if ($limit) {
             $sql .= " LIMIT :limit OFFSET :offset";

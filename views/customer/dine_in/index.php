@@ -63,8 +63,11 @@ if ($table_id) {
                             <p class="mb-0" id="total-amount">0 ₫</p>
                         </div>
                         <div class="col-md-3 text-end">
-                            <button class="btn btn-outline-primary" onclick="toggleOrderStatus()">
+                            <button class="btn btn-outline-primary position-relative" onclick="toggleOrderStatus()">
                                 <i class="fas fa-list-alt me-2"></i>Tình trạng đơn hàng
+                                <span id="order-status-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info" style="display: none;">
+                                    <span id="active-orders-count">0</span>
+                                </span>
                             </button>
                         </div>
                     </div>
@@ -74,20 +77,27 @@ if ($table_id) {
             <!-- Order Status Section -->
             <div class="order-status-section mb-4" id="orderStatusSection" style="display: none;">
                 <div class="container">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="fas fa-clock me-2"></i>Tình trạng đơn hàng gần đây
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-primary">
+                                <i class="fas fa-list-check me-2"></i>Tình trạng đơn hàng của bạn
                             </h5>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="refreshOrderStatus()">
-                                <i class="fas fa-sync-alt me-1"></i>Làm mới
-                            </button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="refreshOrderStatus()">
+                                    <i class="fas fa-sync-alt me-1"></i>Làm mới
+                                </button>
+                                <small class="text-muted align-self-center">
+                                    <i class="fas fa-info-circle me-1"></i>Tự động cập nhật mỗi 60s
+                                </small>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div id="orderStatusList">
-                                <div class="text-center py-3">
-                                    <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
-                                    <p class="mt-2 text-muted">Đang tải...</p>
+                        <div class="card-body p-0">
+                            <div id="orderStatusList" class="p-3">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Đang tải...</span>
+                                    </div>
+                                    <p class="mt-3 text-muted">Đang tải thông tin đơn hàng...</p>
                                 </div>
                             </div>
                         </div>
@@ -571,109 +581,293 @@ function toggleOrderStatus() {
     }
 }
 
-// Load order status
+// Update order status badge with active order count
+function updateOrderStatusBadge() {
+    const activeOrders = orderStatusData.filter(order =>
+        ['pending', 'preparing'].includes(order.status)
+    ).length;
+
+    const badge = document.getElementById('order-status-badge');
+    const countElement = document.getElementById('active-orders-count');
+
+    if (activeOrders > 0) {
+        countElement.textContent = activeOrders;
+        badge.style.display = 'block';
+        badge.className = badge.className.replace(/bg-\w+/,
+            activeOrders > 3 ? 'bg-warning' : 'bg-info');
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// Enhanced order status loading with badge update
 function loadOrderStatus() {
-    const tableId = '<?php echo $table_id; ?>';
-    const orderStatusList = document.getElementById('orderStatusList');
+    const statusContainer = document.getElementById('orderStatusList');
 
-    fetch(`<?php echo SITE_URL; ?>/dine-in/get-order-status?table_id=${tableId}`)
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            if (data.orders.length === 0) {
-                orderStatusList.innerHTML = `
-                    <div class="text-center py-4">
-                        <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
-                        <h6 class="text-muted">Chưa có đơn hàng nào</h6>
-                        <p class="text-muted small">Đơn hàng sẽ hiển thị ở đây sau khi bạn gửi</p>
-                    </div>
-                `;
+    if (!statusContainer) return;
+
+    statusContainer.innerHTML = '<div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+
+    const tableId = new URLSearchParams(window.location.search).get('table');
+    if (!tableId) {
+        statusContainer.innerHTML = '<div class="alert alert-warning">Không xác định được bàn</div>';
+        return;
+    }
+
+    fetch(`get_order_status.php?table=${tableId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                orderStatusData = data.orders || [];
+                displayOrderStatus(orderStatusData);
+                updateOrderStatusBadge(); // Update badge after loading
+
+                // Log debug info for troubleshooting
+                if (data.debug_info) {
+                    console.log('Order Status Debug Info:', data.debug_info);
+                }
             } else {
-                let html = '';
-                data.orders.forEach(order => {
-                    const statusClass = getStatusClass(order.status);
-                    const statusText = getStatusText(order.status);
-                    const createdAt = new Date(order.created_at).toLocaleString('vi-VN');
-
-                    let itemsHtml = '';
-                    if (order.items && order.items.length > 0) {
-                        itemsHtml = '<ul class="order-items-list mb-1">';
-                        order.items.forEach(item => {
-                            itemsHtml += `<li><span class='fw-bold'>${item.food_name}</span> x${item.quantity}</li>`;
-                        });
-                        itemsHtml += '</ul>';
-                    } else {
-                        itemsHtml = '<div class="text-muted small">(Chưa có món nào)</div>';
-                    }
-
-                    html += `
-                        <div class="order-status-item border-bottom pb-3 mb-3">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="mb-1">Đơn hàng #${order.id}</h6>
-                                    <p class="text-muted small mb-1">Tạo lúc: ${createdAt}</p>
-                                    ${order.notes ? `<p class="text-muted small mb-1">Ghi chú: ${order.notes}</p>` : ''}
-                                    ${itemsHtml}
-                                </div>
-                                <div class="text-end">
-                                    <span class="badge ${statusClass} mb-1">${statusText}</span>
-                                    <div class="text-primary fw-bold">${formatCurrency(order.total_amount)} ₫</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                orderStatusList.innerHTML = html;
+                // Handle specific error messages
+                if (data.message === 'User must be logged in') {
+                    statusContainer.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>Vui lòng đăng nhập để xem đơn hàng</div>';
+                } else {
+                    statusContainer.innerHTML = '<div class="alert alert-info">Chưa có đơn hàng nào</div>';
+                }
+                updateOrderStatusBadge(); // Update badge even when no orders
             }
-        } else {
-            orderStatusList.innerHTML = `
-                <div class="text-center py-3">
-                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
-                    <p class="text-muted">Không thể tải tình trạng đơn hàng</p>
-                </div>
-            `;
+        })
+        .catch(error => {
+            console.error('Error loading order status:', error);
+            statusContainer.innerHTML = '<div class="alert alert-danger">Lỗi khi tải thông tin đơn hàng</div>';
+        });
+}
+
+// User identification for order tracking
+function getUserIdentifier() {
+    // Try to get user ID from session (if logged in)
+    // This would need to be set by server-side PHP
+    let userId = window.currentUserId || null;
+
+    if (!userId) {
+        // If not logged in, use session-based tracking
+        let sessionKey = `dine_in_user_${window.location.search.get('table') || 'unknown'}`;
+        userId = localStorage.getItem(sessionKey);
+
+        if (!userId) {
+            // Generate a unique session identifier
+            userId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem(sessionKey, userId);
         }
-    })
-    .catch(error => {
-        console.error('Error loading order status:', error);
-        orderStatusList.innerHTML = `
-            <div class="text-center py-3">
-                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
-                <p class="text-muted">Lỗi khi tải tình trạng đơn hàng</p>
+    }
+
+    return userId;
+}
+
+// Enhanced order status loading with user tracking
+function loadOrderStatusWithUser() {
+    const statusContainer = document.getElementById('orderStatusList');
+
+    if (!statusContainer) return;
+
+    statusContainer.innerHTML = '<div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+
+    const tableId = new URLSearchParams(window.location.search).get('table');
+    if (!tableId) {
+        statusContainer.innerHTML = '<div class="alert alert-warning">Không xác định được bàn</div>';
+        return;
+    }
+
+    const userIdentifier = getUserIdentifier();
+
+    // Add user identifier to request if available
+    let url = `get_order_status.php?table=${tableId}`;
+    if (userIdentifier && userIdentifier.startsWith('session_')) {
+        url += `&session_key=${userIdentifier}`;
+    }
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                orderStatusData = data.orders || [];
+                displayOrderStatus(orderStatusData);
+                updateOrderStatusBadge();
+
+                // Enhanced debug logging
+                console.log('Order Status Loaded:', {
+                    table: tableId,
+                    userIdentifier: userIdentifier,
+                    ordersCount: orderStatusData.length,
+                    debugInfo: data.debug_info
+                });
+            } else {
+                statusContainer.innerHTML = '<div class="alert alert-info">Chưa có đơn hàng nào</div>';
+                updateOrderStatusBadge();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading order status:', error);
+            statusContainer.innerHTML = '<div class="alert alert-danger">Lỗi khi tải thông tin đơn hàng</div>';
+        });
+}
+
+// Auto-refresh order status every 30 seconds
+let statusRefreshInterval;
+
+function startStatusRefresh() {
+    // Clear existing interval if any
+    if (statusRefreshInterval) {
+        clearInterval(statusRefreshInterval);
+    }
+
+    // Refresh every 30 seconds
+    statusRefreshInterval = setInterval(() => {
+        const statusDiv = document.getElementById('order-status');
+        if (statusDiv && statusDiv.style.display === 'block') {
+            loadOrderStatus();
+        } else {
+            // Update badge even when status panel is hidden
+            updateOrderStatusSilently();
+        }
+    }, 30000);
+}
+
+// Silent update for badge only (no UI changes to status panel)
+function updateOrderStatusSilently() {
+    const tableId = new URLSearchParams(window.location.search).get('table');
+    if (!tableId) return;
+
+    fetch(`get_order_status.php?table=${tableId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                orderStatusData = data.orders || [];
+                updateOrderStatusBadge();
+
+                // Log debug info silently (less verbose)
+                if (data.debug_info && data.debug_info.total_orders > 0) {
+                    console.log(`Silent update: Found ${data.debug_info.total_orders} orders for table ${data.debug_info.table_id}`);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error in silent update:', error);
+        });
+}
+
+// Enhanced page load function
+document.addEventListener('DOMContentLoaded', function() {
+    // Load cart if table is specified
+    if ('<?php echo $table_id; ?>') {
+        updateCart();
+
+        // Initialize order status and start auto-refresh
+        updateOrderStatusSilently();
+        startStatusRefresh();
+    }
+});
+
+// Clean up interval when page unloads
+window.addEventListener('beforeunload', function() {
+    if (statusRefreshInterval) {
+        clearInterval(statusRefreshInterval);
+    }
+});
+
+// Global variables for order status tracking
+let orderStatusData = [];
+
+// Status mapping functions
+function getStatusClass(status) {
+    const statusClasses = {
+        'pending': 'warning',
+        'preparing': 'primary',
+        'served': 'success',
+        'completed': 'success',
+        'cancelled': 'danger'
+    };
+    return statusClasses[status] || 'secondary';
+}
+
+function getStatusText(status) {
+    const statusTexts = {
+        'pending': 'Chờ xử lý',
+        'preparing': 'Đang chuẩn bị',
+        'served': 'Đã phục vụ',
+        'completed': 'Hoàn thành',
+        'cancelled': 'Đã hủy'
+    };
+    return statusTexts[status] || 'Không xác định';
+}
+
+// Display order status function
+function displayOrderStatus(orders) {
+    const container = document.getElementById('orderStatusList');
+    if (!container) return;
+
+    if (!orders || orders.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Chưa có đơn hàng nào</h5>
+                <p class="text-muted mb-0">Đơn hàng sẽ hiển thị ở đây sau khi bạn gửi đơn</p>
             </div>
         `;
-    });
+        return;
+    }
+
+    container.innerHTML = orders.map(order => {
+        const statusClass = getStatusClass(order.status);
+        const statusText = getStatusText(order.status);
+        const isPreparing = order.status === 'preparing';
+
+        return `
+            <div class="order-status-item border-bottom pb-3 mb-3 ${isPreparing ? 'pulse-animation' : ''}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h6 class="mb-1">Đơn hàng #${order.id}</h6>
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            ${order.created_at}
+                        </small>
+                    </div>
+                    <span class="badge bg-${statusClass}">${statusText}</span>
+                </div>
+
+                ${order.items ? `
+                    <div class="mb-2">
+                        <small class="text-muted d-block mb-1">Món đã gọi:</small>
+                        <ul class="order-items-list mb-0">
+                            ${order.items.map(item => `
+                                <li>
+                                    <span class="fw-bold">${item.quantity}x</span> ${item.name}
+                                    <span class="text-primary ms-2">${formatCurrency(item.price)} ₫</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        ${order.notes ? `
+                            <i class="fas fa-sticky-note me-1"></i>
+                            Ghi chú: ${order.notes}
+                        ` : ''}
+                    </small>
+                    <div class="fw-bold text-end">
+                        Tổng: <span class="text-primary">${formatCurrency(order.total)} ₫</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
-// Refresh order status
+// Refresh order status function
 function refreshOrderStatus() {
     loadOrderStatus();
-}
-
-// Get status class for badge
-function getStatusClass(status) {
-    switch(status) {
-        case 'pending': return 'bg-warning';
-        case 'preparing': return 'bg-info';
-        case 'ready': return 'bg-success';
-        case 'served': return 'bg-primary';
-        case 'completed': return 'bg-secondary';
-        case 'cancelled': return 'bg-danger';
-        default: return 'bg-secondary';
-    }
-}
-
-// Get status text
-function getStatusText(status) {
-    switch(status) {
-        case 'pending': return 'Chờ xử lý';
-        case 'preparing': return 'Đang chế biến';
-        case 'ready': return 'Sẵn sàng';
-        case 'served': return 'Đã phục vụ';
-        case 'completed': return 'Hoàn thành';
-        case 'cancelled': return 'Đã hủy';
-        default: return status;
-    }
+    showNotification('Đã làm mới thông tin đơn hàng', 'success');
 }
 </script>
 
@@ -844,7 +1038,7 @@ function getStatusText(status) {
 .add-to-cart-btn:hover {
     background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+    box-shadow: 0 4px 12px rgba(40,167,69,0.3);
 }
 
 .floating-cart-btn {
@@ -1046,6 +1240,84 @@ function getStatusText(status) {
     background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+}
+
+/* Order status badge animations */
+#order-status-badge {
+    animation: none;
+    transition: all 0.3s ease;
+}
+
+#order-status-badge.bg-warning {
+    animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-warning {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+.btn-outline-primary.position-relative {
+    overflow: visible;
+}
+
+.btn-outline-primary:hover #order-status-badge {
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Responsive badge positioning */
+@media (max-width: 768px) {
+    #order-status-badge {
+        top: -5px;
+        right: -10px;
+        transform: none;
+    }
+
+    .btn-outline-primary:hover #order-status-badge {
+        transform: scale(1.1);
+    }
+}
+
+/* Pulse animation for processing status */
+.pulse-animation {
+    animation: pulse-warning 2s infinite;
+}
+
+/* Enhanced order status styling */
+.order-status-item {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.order-status-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.order-items-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+}
+
+.order-items-list li {
+    padding: 0.25rem 0;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.order-items-list li .fw-bold {
+    color: #495057;
 }
 
 /* Responsive Design */

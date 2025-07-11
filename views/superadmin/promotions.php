@@ -72,7 +72,7 @@
                         </nav>
                     </div>
                     <div class="btn-toolbar mb-2 mb-md-0">
-                        <button type="button" class="btn btn-primary" onclick="showCreatePromotionModal()">
+                        <button type="button" class="btn btn-primary" id="createPromotionBtn" data-bs-toggle="modal" data-bs-target="#promotionModal">
                             <i class="fas fa-plus me-1"></i>Create Promotion
                         </button>
                     </div>
@@ -317,7 +317,7 @@
                             <i class="fas fa-tags fa-3x text-muted mb-3"></i>
                             <h5 class="text-muted">No promotions found</h5>
                             <p class="text-muted">Create your first promotion to attract customers.</p>
-                            <button type="button" class="btn btn-danger" onclick="showAddPromotionModal()">
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#promotionModal" onclick="setupNewPromotionForm()">
                                 <i class="fas fa-plus"></i> Add First Promotion
                             </button>
                         </div>
@@ -509,14 +509,41 @@
         return document.querySelector('meta[name="csrf-token"]').getAttribute('content') ||
                document.querySelector('input[name="csrf_token"]').value;
     }    function showAddPromotionModal() {
+        console.log('showAddPromotionModal called');
+
+        // Check if modal element exists
+        const modalElement = document.getElementById('promotionModal');
+        if (!modalElement) {
+            console.error('Modal element promotionModal not found');
+            alert('Modal element not found');
+            return;
+        }
+
+        // Check if form element exists
+        const formElement = document.getElementById('promotionForm');
+        if (!formElement) {
+            console.error('Form element promotionForm not found');
+            alert('Form element not found');
+            return;
+        }
+
         document.getElementById('promotionModalLabel').textContent = 'Add New Promotion';
         document.getElementById('promotionForm').reset();
         document.getElementById('promotionId').value = '';
 
         // Reset application type to 'all'
-        document.getElementById('applyAll').checked = true;
-        updateApplicationTypeFields();
-        clearSelections();
+        const applyAllElement = document.getElementById('applyAll');
+        if (applyAllElement) {
+            applyAllElement.checked = true;
+        }
+
+        // Check if these functions exist
+        if (typeof updateApplicationTypeFields === 'function') {
+            updateApplicationTypeFields();
+        }
+        if (typeof clearSelections === 'function') {
+            clearSelections();
+        }
 
         // Set default dates
         const today = new Date();
@@ -525,11 +552,24 @@
         const nextMonth = new Date(today);
         nextMonth.setMonth(nextMonth.getMonth() + 1);
 
-        document.getElementById('startDate').value = tomorrow.toISOString().split('T')[0];
-        document.getElementById('endDate').value = nextMonth.toISOString().split('T')[0];
+        const startDateElement = document.getElementById('startDate');
+        const endDateElement = document.getElementById('endDate');
 
-        const modal = new bootstrap.Modal(document.getElementById('promotionModal'));
-        modal.show();
+        if (startDateElement) {
+            startDateElement.value = tomorrow.toISOString().split('T')[0];
+        }
+        if (endDateElement) {
+            endDateElement.value = nextMonth.toISOString().split('T')[0];
+        }
+
+        try {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+            console.log('Modal should be shown now');
+        } catch (error) {
+            console.error('Error showing modal:', error);
+            alert('Error showing modal: ' + error.message);
+        }
     }function editPromotion(promotionId) {
         console.log('Edit promotion called with ID:', promotionId);
 
@@ -811,6 +851,45 @@
         }
     }
 
+    // Helper function for setting up new promotion form
+    function setupNewPromotionForm() {
+        // Reset form for new promotion
+        document.getElementById('promotionModalLabel').textContent = 'Add New Promotion';
+        document.getElementById('promotionForm').reset();
+        document.getElementById('promotionId').value = '';
+
+        // Reset application type to 'all'
+        const applyAllElement = document.getElementById('applyAll');
+        if (applyAllElement) {
+            applyAllElement.checked = true;
+        }
+
+        // Check if these functions exist
+        if (typeof updateApplicationTypeFields === 'function') {
+            updateApplicationTypeFields();
+        }
+        if (typeof clearSelections === 'function') {
+            clearSelections();
+        }
+
+        // Set default dates
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const nextMonth = new Date(today);
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+        const startDateElement = document.getElementById('startDate');
+        const endDateElement = document.getElementById('endDate');
+
+        if (startDateElement) {
+            startDateElement.value = tomorrow.toISOString().split('T')[0];
+        }
+        if (endDateElement) {
+            endDateElement.value = nextMonth.toISOString().split('T')[0];
+        }
+    }
+
     // Enhanced form validation
     function validatePromotionForm(form) {
         const applicationType = form.querySelector('input[name="application_type"]:checked')?.value;
@@ -839,6 +918,48 @@
             form.addEventListener('submit', function(e) {
                 if (!validatePromotionForm(this)) {
                     e.preventDefault();
+                }
+            });
+        }
+
+        // Add event listener for create promotion button
+        const createBtn = document.getElementById('createPromotionBtn');
+        if (createBtn) {
+            createBtn.addEventListener('click', function() {
+                // Reset form for new promotion
+                document.getElementById('promotionModalLabel').textContent = 'Add New Promotion';
+                document.getElementById('promotionForm').reset();
+                document.getElementById('promotionId').value = '';
+
+                // Reset application type to 'all'
+                const applyAllElement = document.getElementById('applyAll');
+                if (applyAllElement) {
+                    applyAllElement.checked = true;
+                }
+
+                // Check if these functions exist
+                if (typeof updateApplicationTypeFields === 'function') {
+                    updateApplicationTypeFields();
+                }
+                if (typeof clearSelections === 'function') {
+                    clearSelections();
+                }
+
+                // Set default dates
+                const today = new Date();
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const nextMonth = new Date(today);
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+                const startDateElement = document.getElementById('startDate');
+                const endDateElement = document.getElementById('endDate');
+
+                if (startDateElement) {
+                    startDateElement.value = tomorrow.toISOString().split('T')[0];
+                }
+                if (endDateElement) {
+                    endDateElement.value = nextMonth.toISOString().split('T')[0];
                 }
             });
         }

@@ -26,7 +26,26 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <style>
+        /* Container Width Override for Better Balance */
+        .navbar .container {
+            max-width: 95% !important;
+            width: 95% !important;
+        }
+
+        @media (min-width: 768px) {
+            .navbar .container {
+                max-width: 88% !important;
+                width: 88% !important;
+            }
+        }
+
         @media (min-width: 992px) {
+            .navbar .container {
+                max-width: 92% !important;
+                width: 92% !important;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
             .navbar-nav {
                 gap: 0.5rem;
             }
@@ -36,6 +55,17 @@
             }
             .navbar-brand {
                 margin-right: 2rem;
+                flex-shrink: 0;
+            }
+            .navbar-nav.me-auto {
+                flex-grow: 1;
+                justify-content: flex-start;
+                margin-left: 1rem;
+            }
+            .navbar-nav.navbar-actions {
+                flex-shrink: 0;
+                margin-left: auto;
+                gap: 0.5rem;
             }
             .btn-booking {
                 padding: 0.5rem 1.25rem !important;
@@ -46,6 +76,21 @@
                 min-width: auto !important;
             }
         }
+
+        @media (min-width: 1200px) {
+            .navbar .container {
+                max-width: 95% !important;
+                width: 95% !important;
+            }
+        }
+
+        @media (min-width: 1400px) {
+            .navbar .container {
+                max-width: 98% !important;
+                width: 98% !important;
+            }
+        }
+
         @media (max-width: 991.98px) {
             .navbar-nav {
                 padding: 1rem 0;
@@ -92,7 +137,7 @@
             <!-- Collapsible Content -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 <!-- Main Navigation -->
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a class="nav-link" href="<?php echo SITE_URL; ?>">
                             <i class="fas fa-home"></i>
@@ -137,7 +182,7 @@
                 </ul>
 
                 <!-- Right Side Actions -->
-                <ul class="navbar-nav navbar-actions align-items-center">
+                <ul class="navbar-nav navbar-actions align-items-lg-center mb-2 mb-lg-0">
                     <!-- Cart -->
                     <li class="nav-item">
                         <a class="nav-link position-relative" href="<?php echo SITE_URL; ?>/cart">

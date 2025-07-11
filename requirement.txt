@@ -1,0 +1,8 @@
+Đọc lại toàn bộ source code và thực thi yêu cầu sau:
+- Trước đó phần booking table của người dùng không có phẩn chọn địa chỉ nhưng bây giờ thì có thêm phần chọn địa chỉ để booking.
+- Khi tạo booking sẽ có request lên url này "http://localhost/buffet_booking_mvc/booking/create"
+với payload là "csrf_token=7dc47383e2e92a6120157290cb4f7490b95c1e6cbc185cdd8b6a31a235c8ebae&customer_name=admin&customer_email=admin%40buffet.com&customer_phone=666666000&booking_date=2025-07-23&booking_time=12%3A00&party_size=5&booking_location=H%E1%BA%BBm+153+B%C3%A0+Hom%2C+Qu%E1%BA%ADn+6%2C+Th%C3%A0nh+ph%E1%BB%91+H%E1%BB%93+Ch%C3%AD+Minh%2C+Vi%E1%BB%87t+Nam&special_requests="
+- Nhưng hiện tại nó đang gặp lỗi "302 Found"
+- Có thể là do bảng booking hiện giờ thiếu một field là địa chỉ mà user cần booking
+
+Vậy nên hãy đọc DB viết thêm field lưu trữ địa chỉ khi người dùng booking và hoàn thiện lại chức năng booking của người dùng

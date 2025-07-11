@@ -126,7 +126,7 @@
                                     </select>
                                 </div>
 
-                               
+
                             </div>
                              <div class="mb-3">
                                     <label for="booking_location" class="form-label">
@@ -353,10 +353,6 @@
                         } else {
                             availabilityResult.className = 'alert alert-warning';
                             availabilityResult.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + data.message;
-
-                            if (data.suggestedTimes && data.suggestedTimes.length > 0) {
-                                availabilityResult.innerHTML += '<br><strong>Giờ có thể đặt:</strong> ' + data.suggestedTimes.join(', ');
-                            }
                         }
                     })
                     .catch(error => {

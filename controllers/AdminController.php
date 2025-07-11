@@ -632,7 +632,7 @@ class AdminController extends BaseController
         $date = $_GET['date'] ?? null;
 
         $bookings = $bookingModel->getAllForAdmin($limit, $offset, $status, $search, $date);
-        $totalBookings = $bookingModel->count($status);
+        $totalBookings = $bookingModel->count($status ? 'status' : null, $status);
         $totalPages = ceil($totalBookings / $limit);
 
         // Export functionality
@@ -643,8 +643,8 @@ class AdminController extends BaseController
         }
 
         // Calculate statistics (unfiltered)
-        $confirmedBookings = $bookingModel->count('confirmed');
-        $pendingBookings = $bookingModel->count('pending');
+        $confirmedBookings = $bookingModel->count('status', 'confirmed');
+        $pendingBookings = $bookingModel->count('status', 'pending');
         $todayBookings = $bookingModel->getTodayCount();
 
         // Generate CSRF token and ensure it's set in the session
@@ -829,6 +829,31 @@ class AdminController extends BaseController
         }
 
         try {
+            // Get booking details to check location compatibility
+            $booking = $bookingModel->getBookingDetails($bookingId);
+            if (!$booking) {
+                echo json_encode(['success' => false, 'message' => 'Booking not found']);
+                return;
+            }
+
+            // Get table details to check location
+            $table = $tableModel->findById($tableId);
+            if (!$table) {
+                echo json_encode(['success' => false, 'message' => 'Table not found']);
+                return;
+            }
+
+            // Check if table location matches booking location (if booking has location)
+            if (!empty($booking['booking_location']) && !empty($table['location'])) {
+                if ($booking['booking_location'] !== $table['location']) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Table location does not match booking location. Booking: ' . $booking['booking_location'] . ', Table: ' . $table['location']
+                    ]);
+                    return;
+                }
+            }
+
             // Assign table to booking
             if ($bookingModel->assignTable($bookingId, $tableId)) {
                 // Update table availability to 0 (unavailable)
@@ -938,18 +963,20 @@ class AdminController extends BaseController
         $bookingId = $_GET['booking_id'] ?? null;
         $reservationTime = $_GET['reservation_time'] ?? '';
         $numberOfGuests = (int)($_GET['number_of_guests'] ?? 1);
+        $bookingLocation = $_GET['booking_location'] ?? '';
 
-        // If we have a booking ID but no reservation time or number of guests,
+        // If we have a booking ID but no reservation details,
         // retrieve the booking details to get those values
-        if (!empty($bookingId) && (empty($reservationTime) || $numberOfGuests <= 1)) {
+        if (!empty($bookingId) && (empty($reservationTime) || $numberOfGuests <= 1 || empty($bookingLocation))) {
             // Passing null as userId since this is an admin request
             $booking = $bookingModel->getBookingDetails($bookingId, null);
             if ($booking) {
                 $reservationTime = $booking['reservation_time'] ?? '';
                 $numberOfGuests = (int)($booking['number_of_guests'] ?? 1);
+                $bookingLocation = $booking['booking_location'] ?? '';
 
                 // Log for debugging
-                error_log("Using data from booking #$bookingId: time=$reservationTime, guests=$numberOfGuests");
+                error_log("Using data from booking #$bookingId: time=$reservationTime, guests=$numberOfGuests, location=$bookingLocation");
             } else {
                 error_log("No booking found with ID: $bookingId");
             }
@@ -960,8 +987,8 @@ class AdminController extends BaseController
             return;
         }
 
-        $availableTables = $bookingModel->getAvailableTables($reservationTime, $numberOfGuests);
-        error_log("Found " . count($availableTables) . " available tables for time: $reservationTime, guests: $numberOfGuests");
+        $availableTables = $bookingModel->getAvailableTables($reservationTime, $numberOfGuests, $bookingLocation);
+        error_log("Found " . count($availableTables) . " available tables for time: $reservationTime, guests: $numberOfGuests, location: $bookingLocation");
 
         echo json_encode(['success' => true, 'tables' => $availableTables]);
     }
@@ -1603,7 +1630,7 @@ class AdminController extends BaseController
         // Khóa bàn nếu địa chỉ bị khóa
         $stmt = $db->prepare("UPDATE tables SET is_available = 0 WHERE LOWER(TRIM(REPLACE(location, '  ', ' '))) = :location");
         $stmt->execute([':location' => $normalizedAddr]);
-    } 
+    }
     // } else {
     //     // Mở bàn nếu địa chỉ mở lại
     //     $stmt = $db->prepare("UPDATE tables SET is_available = 1 WHERE LOWER(TRIM(REPLACE(location, '  ', ' '))) = :location");
@@ -1618,9 +1645,9 @@ class AdminController extends BaseController
         'locationStats' => $locationStats,
         'currentPage' => $page,
         'totalPages' => $totalPages,
-        'totalTables' => $stats['total_tables'] ?? 0, 
-        'filteredCount' => $totalTables, 
-        'addresses' => $addresses 
+        'totalTables' => $stats['total_tables'] ?? 0,
+        'filteredCount' => $totalTables,
+        'addresses' => $addresses
     ];
     // echo json_encode($data);
     // print_r($data); // Debugging output
@@ -1760,7 +1787,7 @@ class AdminController extends BaseController
             'table' => $table,
             'bookingHistory' => $bookingHistory,
             'csrf_token' => $this->generateCSRF(),
-             'addresses' => $addresses 
+             'addresses' => $addresses
         ];
 
         $this->loadAdminView('tables/edit', $data);

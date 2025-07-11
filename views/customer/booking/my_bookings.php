@@ -84,6 +84,12 @@ $current_page = (int)$current_page;
                                     <i class="fas fa-users me-2 text-primary"></i>
                                     <span><?= $booking['guest_count'] ?> Guest<?= $booking['guest_count'] > 1 ? 's' : '' ?></span>
                                 </div>
+                                <?php if (!empty($booking['booking_location'])): ?>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                                    <span><?= htmlspecialchars(substr($booking['booking_location'], 0, 50)) ?><?= strlen($booking['booking_location']) > 50 ? '...' : '' ?></span>
+                                </div>
+                                <?php endif; ?>
                                 <?php if (!empty($booking['table_number'])): ?>
                                 <div class="d-flex align-items-center mb-2">
                                     <i class="fas fa-chair me-2 text-primary"></i>

@@ -1176,6 +1176,9 @@
     <!-- Custom CSS -->
     <link href="<?= SITE_URL ?>/assets/css/internal-messages.css" rel="stylesheet">
 
+    <!-- Bootstrap JavaScript Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <!-- Custom Super Admin JavaScript -->
     <script src="<?= SITE_URL ?>/assets/js/superadmin.js" defer></script>
     <!-- Realtime Notifications -->
