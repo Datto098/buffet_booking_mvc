@@ -1,6 +1,7 @@
 # IDE
 .vscode/
 .idea/
+debug.log
 *.swp
 *.swo
 
