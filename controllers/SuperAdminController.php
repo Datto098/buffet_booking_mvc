@@ -764,6 +764,9 @@ class SuperAdminController extends BaseController
     // ==========================================
     // RESTAURANT INFO MANAGEMENT
     // ==========================================
+    // ==========================================
+    // RESTAURANT INFO MANAGEMENT
+    // ==========================================
     public function restaurantInfo()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -1032,6 +1035,7 @@ class SuperAdminController extends BaseController
         $this->restaurantInfo();
     }
 
+
     // ==========================================
     // PROMOTION MANAGEMENT
     // ==========================================
@@ -1070,6 +1074,7 @@ class SuperAdminController extends BaseController
 
         $this->loadSuperAdminView('promotions', $data);
     }
+
 
     public function createPromotion()
     {
@@ -1950,7 +1955,7 @@ class SuperAdminController extends BaseController
      * Xử lý upload file
      */
     private function handleFileUpload($file)
-    {
+ {
         $allowedTypes = ['pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png'];
         $maxSize = 5 * 1024 * 1024; // 5MB
 
@@ -2006,20 +2011,28 @@ class SuperAdminController extends BaseController
         $this->jsonResponse(['success' => false], 400);
     }
 
-    public function deleteAddress()
-    {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $id = (int)($_POST['id'] ?? 0);
-            if ($id > 0) {
-                $db = Database::getInstance()->getConnection();
+   public function deleteAddress()
+{
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id > 0) {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT address FROM addresses WHERE id = ?");
+            $stmt->execute([$id]);
+            $addressRow = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($addressRow) {
+                $address = mb_strtolower(trim(preg_replace('/\s+/', ' ', $addressRow['address'])), 'UTF-8');
+                $stmt = $db->prepare("DELETE FROM tables WHERE LOWER(TRIM(REPLACE(location, '  ', ' '))) = :location");
+                $stmt->execute([':location' => $address]);
                 $stmt = $db->prepare("DELETE FROM addresses WHERE id = ?");
                 $result = $stmt->execute([$id]);
-                $this->jsonResponse(['success' => $result]);
+                $this->redirect('/superadmin/addresses');
                 return;
             }
         }
-        $this->jsonResponse(['success' => false], 400);
     }
+    $this->redirect('/superadmin/addresses');
+}
 
     public function addresses()
     {
@@ -2080,5 +2093,5 @@ class SuperAdminController extends BaseController
         // Nếu không phải POST thì chuyển về danh sách
         $this->redirect('/superadmin/addresses');
     }
-
+    
 }

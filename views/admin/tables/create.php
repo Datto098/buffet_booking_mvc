@@ -64,24 +64,28 @@ require_once 'views/admin/layouts/header.php';
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="location" class="form-label">Location</label>
+                                            <label for="location" class="form-label">Location (Address)</label>
                                             <select class="form-select" id="location" name="location">
-                                                <option value="">Select Location</option>
-                                                <option value="Main Dining">Main Dining</option>
-                                                <option value="Private Room">Private Room</option>
-                                                <option value="Terrace">Terrace</option>
-                                                <option value="Bar Area">Bar Area</option>
-                                                <option value="VIP Section">VIP Section</option>
-                                                <option value="Outdoor">Outdoor</option>
+                                                <option value="">Select Address</option>
+                                                <?php if (!empty($data['addresses'])): ?>
+                                                    <?php foreach ($data['addresses'] as $addr): ?>
+                                                        <option value="<?= htmlspecialchars($addr['address']) ?>">
+                                                            <?= htmlspecialchars($addr['address']) ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                <?php endif; ?>
                                             </select>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="mb-3 form-check mt-4">
-                                            <input type="checkbox" class="form-check-input" id="is_available" name="is_available" checked>
-                                            <label class="form-check-label" for="is_available">
-                                                Available for booking
-                                            </label>
+                                        <label class="form-label d-block">Status</label>
+                                        <div class="form-check form-check-inline mt-4">
+                                            <input class="form-check-input" type="radio" name="is_available" id="available" value="1" checked>
+                                            <label class="form-check-label" for="available">Available</label>
+                                        </div>
+                                        <div class="form-check form-check-inline mt-4">
+                                            <input class="form-check-input" type="radio" name="is_available" id="unavailable" value="0">
+                                            <label class="form-check-label" for="unavailable">Unavailable</label>
                                         </div>
                                     </div>
                                 </div>

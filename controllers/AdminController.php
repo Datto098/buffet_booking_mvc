@@ -43,7 +43,8 @@ class AdminController extends BaseController
         $this->loadAdminView('dashboard', $data);
     }
 
-    public function dashboardStats() {
+    public function dashboardStats()
+    {
         try {
             $pdo = $this->getDatabase();
 
@@ -63,7 +64,6 @@ class AdminController extends BaseController
 
             header('Content-Type: application/json');
             echo json_encode($stats);
-
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
@@ -742,18 +742,18 @@ class AdminController extends BaseController
                     <p>Chúng tôi rất mong được đón tiếp bạn!</p>
                     <p>Trạng thái: <b>Đã xác nhận</b></p>
                 ";
-                     // Gửi email xác nhận đã nhận phiếu đặt bàn
-            sendResetMail($email, $subject, $message);
+                    // Gửi email xác nhận đã nhận phiếu đặt bàn
+                    sendResetMail($email, $subject, $message);
 
-            // Lấy lại thông tin booking vừa tạo
-            $booking = $this->bookingModel->getBookingDetails($bookingId);
+                    // Lấy lại thông tin booking vừa tạo
+                    $booking = $this->bookingModel->getBookingDetails($bookingId);
 
-            // Truyền biến $booking vào view PDF
-            ob_start();
-            include __DIR__ . '/../views/customer/booking/pdf_detail.php';
-            $htmlContent = ob_get_clean();
+                    // Truyền biến $booking vào view PDF
+                    ob_start();
+                    include __DIR__ . '/../views/customer/booking/pdf_detail.php';
+                    $htmlContent = ob_get_clean();
 
-            sendBookingPDFMail($email, $subject, $message, $htmlContent);
+                    sendBookingPDFMail($email, $subject, $message, $htmlContent);
                 }
             }
             echo json_encode(['success' => true, 'message' => 'Booking status updated successfully']);
@@ -877,7 +877,8 @@ class AdminController extends BaseController
     }
 
     // Helper method to validate CSRF token from header
-    private function validateCSRFToken($token) {
+    private function validateCSRFToken($token)
+    {
         // For debugging
         error_log("Validating CSRF token: " . ($token ?? 'null') . " against session token: " . ($_SESSION['csrf_token'] ?? 'null'));
 
@@ -1542,65 +1543,91 @@ class AdminController extends BaseController
 
         $this->redirect('/admin/categories');
     }
+
     public function tables()
     {
         $tableModel = new Table();
         $page = (int)($_GET['page'] ?? 1);
         $limit = 20;
-        $offset = ($page - 1) * $limit;
+    $offset = ($page - 1) * $limit;
 
-        // Get filter parameters
-        $search = $_GET['search'] ?? '';
-        $status = $_GET['status'] ?? '';
-        $location = $_GET['location'] ?? '';
+    // Get filter parameters
+    $search = $_GET['search'] ?? '';
+    $status = $_GET['status'] ?? '';
+    $location = $_GET['location'] ?? '';
 
-        // Get all tables for filtering
-        $allTables = $tableModel->getAllTables();
+    // Get all tables for filtering
+    $allTables = $tableModel->getAllTables();
 
-        // Apply filters
-        if ($search) {
-            $allTables = array_filter($allTables, function ($table) use ($search) {
-                return stripos($table['table_number'], $search) !== false ||
-                    stripos($table['location'], $search) !== false ||
-                    stripos($table['description'], $search) !== false;
-            });
-        }
-
-        if ($status !== '') {
-            $allTables = array_filter($allTables, function ($table) use ($status) {
-                return ($status === 'available' && $table['is_available'] == 1) ||
-                    ($status === 'unavailable' && $table['is_available'] == 0);
-            });
-        }
-
-        if ($location) {
-            $allTables = array_filter($allTables, function ($table) use ($location) {
-                return $table['location'] === $location;
-            });
-        }
-
-        $totalTables = count($allTables);
-        $totalPages = ceil($totalTables / $limit);
-
-        // Apply pagination to filtered data
-        $tables = array_slice($allTables, $offset, $limit);
-
-        // Get unfiltered statistics
-        $stats = $tableModel->getTableStats();
-        $locationStats = $tableModel->getTablesByLocation();
-        $data = [
-            'title' => 'Table Management',
-            'tables' => $tables,
-            'stats' => $stats,
-            'locationStats' => $locationStats,
-            'currentPage' => $page,
-            'totalPages' => $totalPages,
-            'totalTables' => $stats['total_tables'] ?? 0, // From unfiltered stats
-            'filteredCount' => $totalTables // From filtered data
-        ];
-
-        $this->loadAdminView('tables/index', $data);
+    // Apply filters
+    if ($search) {
+        $allTables = array_filter($allTables, function ($table) use ($search) {
+            return stripos($table['table_number'], $search) !== false ||
+                stripos($table['location'], $search) !== false ||
+                stripos($table['description'], $search) !== false;
+        });
     }
+
+    if ($status !== '') {
+        $allTables = array_filter($allTables, function ($table) use ($status) {
+            return ($status === 'available' && $table['is_available'] == 1) ||
+                ($status === 'unavailable' && $table['is_available'] == 0);
+        });
+    }
+
+    if ($location) {
+        $allTables = array_filter($allTables, function ($table) use ($location) {
+            return $table['location'] === $location;
+        });
+    }
+
+    $totalTables = count($allTables);
+    $totalPages = ceil($totalTables / $limit);
+
+    // Apply pagination to filtered data
+    $tables = array_slice($allTables, $offset, $limit);
+
+    // Get unfiltered statistics
+    $stats = $tableModel->getTableStats();
+    $locationStats = $tableModel->getTablesByLocation();
+
+    // Lấy danh sách địa chỉ (bao gồm status)
+    $db = Database::getInstance()->getConnection();
+    $stmt = $db->prepare("SELECT address, status FROM addresses");
+    $stmt->execute();
+    $addresses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+  foreach ($addresses as $addr) {
+    $normalizedAddr = mb_strtolower(trim(preg_replace('/\s+/', ' ', $addr['address'])), 'UTF-8');
+    if ((string)$addr['status'] === '0') {
+        // Khóa bàn nếu địa chỉ bị khóa
+        $stmt = $db->prepare("UPDATE tables SET is_available = 0 WHERE LOWER(TRIM(REPLACE(location, '  ', ' '))) = :location");
+        $stmt->execute([':location' => $normalizedAddr]);
+    } 
+    // } else {
+    //     // Mở bàn nếu địa chỉ mở lại
+    //     $stmt = $db->prepare("UPDATE tables SET is_available = 1 WHERE LOWER(TRIM(REPLACE(location, '  ', ' '))) = :location");
+    //     $stmt->execute([':location' => $normalizedAddr]);
+    // }
+}
+    // echo json_encode(['addresses' => $addresses]); // Debugging output
+    $data = [
+        'title' => 'Table Management',
+        'tables' => $tables,
+        'stats' => $stats,
+        'locationStats' => $locationStats,
+        'currentPage' => $page,
+        'totalPages' => $totalPages,
+        'totalTables' => $stats['total_tables'] ?? 0, 
+        'filteredCount' => $totalTables, 
+        'addresses' => $addresses 
+    ];
+    // echo json_encode($data);
+    // print_r($data); // Debugging output
+
+
+    $this->loadAdminView('tables/index', $data);
+}
 
     public function createTable()
     {
@@ -1653,6 +1680,12 @@ class AdminController extends BaseController
             'title' => 'Create Table',
             'csrf_token' => $this->generateCSRF()
         ];
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT id, address FROM addresses WHERE status = 1 ORDER BY id DESC");
+        $stmt->execute();
+        $addresses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $data['addresses'] = $addresses;
 
         $this->loadAdminView('tables/create', $data);
     }
@@ -1715,11 +1748,19 @@ class AdminController extends BaseController
 
         // Get table booking history
         $bookingHistory = $tableModel->getTableBookingHistory($id, 10);
+
+          // Lấy danh sách địa chỉ (address) cho dropdown
+    $db = Database::getInstance()->getConnection();
+    $stmt = $db->prepare("SELECT id, address FROM addresses WHERE status = 1 ORDER BY id DESC");
+    $stmt->execute();
+    $addresses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         $data = [
             'title' => 'Edit Table',
             'table' => $table,
             'bookingHistory' => $bookingHistory,
-            'csrf_token' => $this->generateCSRF()
+            'csrf_token' => $this->generateCSRF(),
+             'addresses' => $addresses 
         ];
 
         $this->loadAdminView('tables/edit', $data);
@@ -2102,7 +2143,7 @@ class AdminController extends BaseController
                         <td><strong>Trạng Thái:</strong></td>
                         <td>
                             <?php
-require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+                            require_once __DIR__ . '/../helpers/booking_trend_helper.php';
 
                             $statusClass = [
                                 'pending' => 'warning',
@@ -2122,8 +2163,8 @@ require_once __DIR__ . '/../helpers/booking_trend_helper.php';
             <div class="col-md-6">
                 <h6>Thông Tin Đơn Hàng</h6>
                 <?php
-require_once __DIR__ . '/../helpers/booking_trend_helper.php';
- if ($order): ?>
+                require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+                if ($order): ?>
                     <table class="table table-sm">
                         <tr>
                             <td><strong>Mã Đơn Hàng:</strong></td>
@@ -2151,27 +2192,27 @@ require_once __DIR__ . '/../helpers/booking_trend_helper.php';
                         </tr>
                     </table>
                 <?php
-require_once __DIR__ . '/../helpers/booking_trend_helper.php';
- else: ?>
+                    require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+                else: ?>
                     <p class="text-muted">Không tìm thấy thông tin đơn hàng</p>
                 <?php
-require_once __DIR__ . '/../helpers/booking_trend_helper.php';
- endif; ?>
+                    require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+                endif; ?>
             </div>
         </div>
 
         <?php
-require_once __DIR__ . '/../helpers/booking_trend_helper.php';
- if (!empty($payment['payment_data'])): ?>
+        require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+        if (!empty($payment['payment_data'])): ?>
             <div class="mt-3">
                 <h6>Dữ Liệu Raw VNPay</h6>
                 <pre class="bg-light p-3 rounded small"><?= htmlspecialchars(json_encode(json_decode($payment['payment_data']), JSON_PRETTY_PRINT)) ?></pre>
             </div>
         <?php
-require_once __DIR__ . '/../helpers/booking_trend_helper.php';
- endif; ?>
+            require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+        endif; ?>
 <?php
-require_once __DIR__ . '/../helpers/booking_trend_helper.php';
+        require_once __DIR__ . '/../helpers/booking_trend_helper.php';
 
         return ob_get_clean();
     }

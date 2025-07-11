@@ -63,9 +63,7 @@
     <script src="<?php echo SITE_URL; ?>/assets/js/luxury-effects.js"></script>
     <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>
 
-<<<<<<< HEAD
     <!-- CSRF Token for AJAX requests -->
-=======
     </html>
     </div>
     <!-- <div class="col-md-6 text-end">
@@ -82,7 +80,6 @@
     <script src="<?php echo SITE_URL; ?>/assets/js/luxury-scroll.js"></script>
     <!-- Custom JS -->
     <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script> <!-- CSRF Token for AJAX requests -->
->>>>>>> main
     <script>
         window.csrfToken = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
         window.siteUrl = '<?php echo SITE_URL; ?>';
@@ -93,8 +90,6 @@
             $_SESSION['csrf_token'] = generateCSRFToken();
         }
         ?>
-<<<<<<< HEAD
-=======
     </script>
     <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -130,7 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setHeroBg(currentHero);
     }, 3000);
 });
->>>>>>> main
 </script>
     </body>
     </html>
