@@ -320,7 +320,8 @@ class OrderController extends BaseController {
             redirect('/index.php?page=order&action=myOrders');
         }
 
-        $this->validateCSRF();
+        // Note: CSRF validation commented out for now
+        // $this->validateCSRF();
 
         $orderId = intval($_POST['order_id'] ?? 0);
 
