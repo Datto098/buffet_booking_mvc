@@ -251,7 +251,7 @@ class OrderController extends BaseController {
             'title' => 'Đơn Hàng Của Tôi - ' . SITE_NAME,
             'orders' => $orders,
             'total_pages' => $total_pages,
-            'current_page' => $current_page,
+            'current_page_num' => $current_page, // Fixed variable name to match view expectation
             'filter_params' => '',
             'info' => $restaurantInfo // Thêm dòng này
         ];
@@ -430,11 +430,30 @@ class OrderController extends BaseController {
     public function history() {
         $this->requireLogin();
         $userId = $_SESSION['user_id'];
-        $orders = $this->orderModel->getOrdersByUser($userId);
+
+        // Pagination setup - use 'p' parameter to avoid conflict with route 'page' parameter
+        $page = max(1, (int)($_GET['p'] ?? 1)); // Ensure page is at least 1
+        $limit = 10; // Orders per page
+        $offset = ($page - 1) * $limit;
+
+        // Get total count for pagination
+        $totalOrders = $this->orderModel->countOrdersByUser($userId);
+        $totalPages = ceil($totalOrders / $limit);
+
+        // Get orders with pagination
+        $orders = $this->orderModel->getOrdersByUser($userId, $limit, $offset);
 
         // Lấy thêm các món ăn cho từng đơn
         foreach ($orders as &$order) {
             $order['order_items'] = $this->orderModel->getOrderItems($order['id']);
+        }
+
+        // Build filter parameters for pagination links
+        $filterParams = '';
+        foreach ($_GET as $key => $value) {
+            if ($key !== 'p') { // Exclude pagination parameter 'p'
+                $filterParams .= '&' . urlencode($key) . '=' . urlencode($value);
+            }
         }
 
         // Lấy thông tin nhà hàng cho footer
@@ -456,7 +475,11 @@ class OrderController extends BaseController {
         $data = [
             'title' => 'Lịch Sử Đơn Hàng - ' . SITE_NAME,
             'orders' => $orders,
-            'info' => $restaurantInfo // Thêm dòng này
+            'current_page_num' => $page, // Use different variable name to avoid conflict
+            'total_pages' => $totalPages,
+            'total_orders' => $totalOrders,
+            'filter_params' => $filterParams,
+            'info' => $restaurantInfo
         ];
 
         $this->loadView('customer/order/history', $data);

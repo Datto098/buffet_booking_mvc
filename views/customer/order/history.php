@@ -127,23 +127,23 @@ $orders = $data['orders'] ?? [];
             <?php if ($total_pages > 1): ?>
             <nav aria-label="Order history pagination" class="mt-4">
                 <ul class="pagination justify-content-center">
-                    <?php if ($current_page > 1): ?>
+                    <?php if ($current_page_num > 1): ?>
                     <li class="page-item">
-                        <a class="page-link" href="?page=<?= $current_page - 1 ?><?= $filter_params ?>">
+                        <a class="page-link" href="?p=<?= $current_page_num - 1 ?><?= $filter_params ?>">
                             <i class="fas fa-chevron-left"></i>
                         </a>
                     </li>
                     <?php endif; ?>
 
-                    <?php for ($i = max(1, $current_page - 2); $i <= min($total_pages, $current_page + 2); $i++): ?>
-                    <li class="page-item <?= $i == $current_page ? 'active' : '' ?>">
-                        <a class="page-link" href="?page=<?= $i ?><?= $filter_params ?>"><?= $i ?></a>
+                    <?php for ($i = max(1, $current_page_num - 2); $i <= min($total_pages, $current_page_num + 2); $i++): ?>
+                    <li class="page-item <?= $i == $current_page_num ? 'active' : '' ?>">
+                        <a class="page-link" href="?p=<?= $i ?><?= $filter_params ?>"><?= $i ?></a>
                     </li>
                     <?php endfor; ?>
 
-                    <?php if ($current_page < $total_pages): ?>
+                    <?php if ($current_page_num < $total_pages): ?>
                     <li class="page-item">
-                        <a class="page-link" href="?page=<?= $current_page + 1 ?><?= $filter_params ?>">
+                        <a class="page-link" href="?p=<?= $current_page_num + 1 ?><?= $filter_params ?>">
                             <i class="fas fa-chevron-right"></i>
                         </a>
                     </li>

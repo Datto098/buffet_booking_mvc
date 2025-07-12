@@ -1003,6 +1003,9 @@ function handleCustomerRoute($page, $action, $param)
     } elseif ($action === 'forgot-password' || $action === 'forgotPassword') {
         $controller->forgotPassword();
         exit;
+    } elseif ($action === 'change-password' || $action === 'changePassword') {
+        $controller->changePassword();
+        exit;
     } elseif ($page === 'dine-in') {
         // Handle dine-in specific routes
         switch ($action) {

@@ -37,9 +37,6 @@ $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
                     <a href="#security" data-tab="security" class="list-group-item list-group-item-action<?= $active_tab == 'security' ? ' active' : '' ?>">
                         <i class="fas fa-lock me-2"></i>Security & Password
                     </a>
-                    <a href="#preferences" data-tab="preferences" class="list-group-item list-group-item-action <?= $active_tab == 'preferences' ? 'active' : '' ?>">
-                        <i class="fas fa-cog me-2"></i>Preferences
-                    </a>
                     <a href="#order-history" data-tab="order-history" class="list-group-item list-group-item-action <?= $active_tab == 'order-history' ? 'active' : '' ?>">
                         <i class="fas fa-shopping-bag me-2"></i>Order History
                     </a>
@@ -123,267 +120,268 @@ $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Security Tab -->
-            <div id="security" class="tab-content<?= $active_tab == 'security' ? ' active' : '' ?>">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0">Security & Password</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="<?= SITE_URL ?>/index.php?page=user&action=changePassword" method="post">
+
+
+        <!-- Security Tab -->
+        <div id="security" class="tab-content<?= $active_tab == 'security' ? ' active' : '' ?>">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Security & Password
+                    </h5>
+                    <small class="text-muted">Quản lý mật khẩu và bảo mật tài khoản</small>
+                </div>
+                <div class="card-body">
+                    <!-- Password Change Form -->
+                    <div class="password-change-form">
+                        <h6 class="mb-3">
+                            <i class="fas fa-key me-2 text-primary"></i>Đổi mật khẩu
+                        </h6>
+
+                        <form id="passwordChangeForm" action="<?= SITE_URL ?>/user/change-password" method="post">
                             <?= csrf_token_field() ?>
 
                             <div class="mb-3">
-                                <label for="current_password" class="form-label">Current Password</label>
-                                <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                <label for="currentPassword" class="form-label fw-bold">
+                                    <i class="fas fa-lock me-2"></i>Mật khẩu hiện tại
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="currentPassword" name="current_password" required>
+                                    <button class="btn btn-outline-secondary btn-toggle-password" type="button" onclick="togglePassword('currentPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="new_password" class="form-label">New Password</label>
-                                <input type="password" class="form-control" id="new_password" name="new_password" required>
-                                <div class="form-text">Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, and one number.</div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="confirm_password" class="form-label">Confirm New Password</label>
-                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-key me-2"></i>Change Password
-                            </button>
-                        </form>
-
-                        <hr class="my-4">
-
-
-                    </div>
-                </div>
-            </div>
-
-            <!-- Preferences Tab -->
-            <div id="preferences" class="tab-content <?= $active_tab == 'preferences' ? 'active' : '' ?>">
-                <!-- <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0">Preferences</h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="preferencesForm" method="POST" action="<?= SITE_URL ?>/user/update-preferences">
-                            <?= csrf_token_field() ?>
-
-                            <h6 class="mb-3">Email Notifications</h6>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="order_updates" name="notifications[]"
-                                           value="order_updates" <?= in_array('order_updates', $user['notifications'] ?? []) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="order_updates">
-                                        Order status updates
-                                    </label>
+                                <label for="newPassword" class="form-label fw-bold">
+                                    <i class="fas fa-key me-2"></i>Mật khẩu mới
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="newPassword" name="new_password" required>
+                                    <button class="btn btn-outline-secondary btn-toggle-password" type="button" onclick="togglePassword('newPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="promotional" name="notifications[]"
-                                           value="promotional" <?= in_array('promotional', $user['notifications'] ?? []) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="promotional">
-                                        Promotional offers and discounts
-                                    </label>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1 text-primary"></i>
+                                    Mật khẩu phải có ít nhất <?= PASSWORD_MIN_LENGTH ?> ký tự
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="menu_updates" name="notifications[]"
-                                           value="menu_updates" <?= in_array('menu_updates', $user['notifications'] ?? []) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="menu_updates">
-                                        New menu items and specials
-                                    </label>
+                                <div class="password-strength mt-2" id="password-strength" style="display: none;">
+                                    <div class="progress" style="height: 8px; border-radius: 4px;">
+                                        <div class="progress-bar transition-all" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block"></small>
                                 </div>
                             </div>
 
-                            <h6 class="mb-3">Dietary Preferences</h6>
-                            <div class="mb-3">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="vegetarian" name="dietary[]"
-                                           value="vegetarian" <?= in_array('vegetarian', $user['dietary_preferences'] ?? []) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="vegetarian">Vegetarian</label>
+                            <div class="mb-4">
+                                <label for="confirmPassword" class="form-label fw-bold">
+                                    <i class="fas fa-check-circle me-2"></i>Xác nhận mật khẩu mới
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="confirmPassword" name="confirm_password" required>
+                                    <button class="btn btn-outline-secondary btn-toggle-password" type="button" onclick="togglePassword('confirmPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
                                 </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="vegan" name="dietary[]"
-                                           value="vegan" <?= in_array('vegan', $user['dietary_preferences'] ?? []) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="vegan">Vegan</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="gluten_free" name="dietary[]"
-                                           value="gluten_free" <?= in_array('gluten_free', $user['dietary_preferences'] ?? []) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="gluten_free">Gluten-Free</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="dairy_free" name="dietary[]"
-                                           value="dairy_free" <?= in_array('dairy_free', $user['dietary_preferences'] ?? []) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="dairy_free">Dairy-Free</label>
+                                <div class="password-match mt-2" id="password-match" style="display: none;">
+                                    <small class="text-danger">
+                                        <i class="fas fa-times-circle me-1"></i>Mật khẩu xác nhận không khớp
+                                    </small>
                                 </div>
                             </div>
 
-                            <h6 class="mb-3">Default Order Preferences</h6>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="default_order_type" class="form-label">Default Order Type</label>
-                                    <select class="form-select" id="default_order_type" name="default_order_type">
-                                        <option value="">No Preference</option>
-                                        <option value="dine_in" <?= ($user['default_order_type'] ?? '') == 'dine_in' ? 'selected' : '' ?>>Dine In</option>
-                                        <option value="takeout" <?= ($user['default_order_type'] ?? '') == 'takeout' ? 'selected' : '' ?>>Takeout</option>
-                                        <option value="delivery" <?= ($user['default_order_type'] ?? '') == 'delivery' ? 'selected' : '' ?>>Delivery</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="default_payment_method" class="form-label">Preferred Payment Method</label>
-                                    <select class="form-select" id="default_payment_method" name="default_payment_method">
-                                        <option value="">No Preference</option>
-                                        <option value="credit_card" <?= ($user['default_payment_method'] ?? '') == 'credit_card' ? 'selected' : '' ?>>Credit Card</option>
-                                        <option value="debit_card" <?= ($user['default_payment_method'] ?? '') == 'debit_card' ? 'selected' : '' ?>>Debit Card</option>
-                                        <option value="cash" <?= ($user['default_payment_method'] ?? '') == 'cash' ? 'selected' : '' ?>>Cash</option>
-                                        <option value="digital_wallet" <?= ($user['default_payment_method'] ?? '') == 'digital_wallet' ? 'selected' : '' ?>>Digital Wallet</option>
-                                    </select>
-                                </div>
+                            <div class="d-flex gap-3">
+                                <button type="submit" class="btn btn-primary btn-lg flex-fill" id="changePasswordBtn">
+                                    <i class="fas fa-key me-2"></i>Đổi mật khẩu
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-lg" onclick="resetPasswordForm()">
+                                    <i class="fas fa-undo me-2"></i>Đặt lại
+                                </button>
                             </div>
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Save Preferences
-                            </button>
                         </form>
                     </div>
-                </div> -->
-                <div>
-                    <div class="text-center">
-                        Tính năng này đang được phát triển.
+
+                    <hr class="my-4">
+
+                    <!-- Security Information -->
+                    <div class="security-info">
+                        <h6 class="mb-3">
+                            <i class="fas fa-shield-alt me-2"></i>Thông tin bảo mật
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="security-icon me-3">
+                                        <i class="fas fa-clock text-info"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">Lần đăng nhập cuối</small>
+                                        <div class="fw-bold"><?= date('d/m/Y H:i', strtotime($user['last_login'] ?? $user['created_at'] ?? '2025-01-01')) ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="security-icon me-3">
+                                        <i class="fas fa-calendar text-success"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">Ngày tạo tài khoản</small>
+                                        <div class="fw-bold"><?= date('d/m/Y', strtotime($user['created_at'] ?? '2025-01-01')) ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Tips -->
+                    <div class="security-tips mt-4">
+                        <h6 class="mb-3">
+                            <i class="fas fa-lightbulb me-2"></i>Mẹo bảo mật
+                        </h6>
+                        <div class="alert alert-info">
+                            <ul class="mb-0">
+                                <li>Sử dụng mật khẩu mạnh và duy nhất cho tài khoản này</li>
+                                <li>Không chia sẻ thông tin đăng nhập với người khác</li>
+                                <li>Đăng xuất sau khi sử dụng trên thiết bị chung</li>
+                                <li>Thay đổi mật khẩu định kỳ để đảm bảo an toàn</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Order History Tab -->
-            <div id="order-history" class="tab-content <?= $active_tab == 'order-history' ? 'active' : '' ?>">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Recent Orders</h5>
-                        <a href="<?= SITE_URL ?>/order/history" class="btn btn-outline-primary btn-sm">
-                            View All Orders
-                        </a>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($recent_orders)): ?>
-                            <div class="text-center py-4">
-                                <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">No orders found</p>
-                            </div>
-                        <?php else: ?>
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead class="table-light">
+        <!-- Order History Tab -->
+        <div id="order-history" class="tab-content <?= $active_tab == 'order-history' ? 'active' : '' ?>">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Orders</h5>
+                    <a href="<?= SITE_URL ?>/index.php?page=order&action=history" class="btn btn-outline-primary btn-sm">
+                        View All Orders
+                    </a>
+                </div>
+                <div class="card-body">
+                    <?php if (empty($data['recent_orders'])): ?>
+                        <div class="text-center py-4">
+                            <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No orders found</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Date</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($data['recent_orders'] as $order): ?>
                                         <tr>
-                                            <th>Order #</th>
-                                            <th>Date</th>
-                                            <th>Items</th>
-                                            <th>Total</th>
-                                            <th>Status</th>
-                                            <th>Action</th>
+                                            <td>#<?= $order['id'] ?></td>
+                                            <td><?= date('M j, Y', strtotime($order['created_at'])) ?></td>
+                                            <td><?= $order['total_items'] ?? $order['item_count'] ?? 0 ?></td>
+                                            <td>$<?= number_format($order['total_amount'], 2) ?></td>
+                                            <td>
+                                                <span class="badge badge-<?= strtolower($order['status']) ?>">
+                                                    <?= ucfirst($order['status']) ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="<?= SITE_URL ?>/index.php?page=order&action=detail&id=<?= $order['id'] ?>"
+                                                    class="btn btn-outline-primary btn-sm">
+                                                    View
+                                                </a>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($recent_orders as $order): ?>
-                                            <tr>
-                                                <td>#<?= $order['id'] ?></td>
-                                                <td><?= date('M j, Y', strtotime($order['created_at'])) ?></td>
-                                                <td><?= $order['total_items'] ?></td>
-                                                <td>$<?= number_format($order['total_amount'], 2) ?></td>
-                                                <td>
-                                                    <span class="badge badge-<?= strtolower($order['status']) ?>">
-                                                        <?= ucfirst($order['status']) ?>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <a href="<?= SITE_URL ?>/order/detail/<?= $order['id'] ?>"
-                                                        class="btn btn-outline-primary btn-sm">
-                                                        View
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
+        </div>
 
-            <!-- Booking History Tab -->
-            <div id="booking-history" class="tab-content <?= $active_tab == 'booking-history' ? 'active' : '' ?>">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Recent Bookings</h5>
-                        <a href="<?= SITE_URL ?>/booking/history" class="btn btn-outline-primary btn-sm">
-                            View All Bookings
-                        </a>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($recent_bookings)): ?>
-                            <div class="text-center py-4">
-                                <i class="fas fa-calendar fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">No bookings found</p>
-                            </div>
-                        <?php else: ?>
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead class="table-light">
+        <!-- Booking History Tab -->
+        <div id="booking-history" class="tab-content <?= $active_tab == 'booking-history' ? 'active' : '' ?>">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Bookings</h5>
+                    <a href="<?= SITE_URL ?>/index.php?page=booking&action=history" class="btn btn-outline-primary btn-sm">
+                        View All Bookings
+                    </a>
+                </div>
+                <div class="card-body">
+                    <?php if (empty($data['recent_bookings'])): ?>
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No bookings found</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Booking #</th>
+                                        <th>Date & Time</th>
+                                        <th>Guests</th>
+                                        <th>Table</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($data['recent_bookings'] as $booking): ?>
                                         <tr>
-                                            <th>Booking #</th>
-                                            <th>Date & Time</th>
-                                            <th>Guests</th>
-                                            <th>Table</th>
-                                            <th>Status</th>
-                                            <th>Action</th>
+                                            <td>#<?= $booking['id'] ?></td>
+                                            <td>
+                                                <?= date('M j, Y', strtotime($booking['booking_date'])) ?><br>
+                                                <small class="text-muted"><?= date('g:i A', strtotime($booking['booking_time'])) ?></small>
+                                            </td>
+                                            <td><?= $booking['guest_count'] ?></td>
+                                            <td><?= $booking['table_number'] ?? 'TBD' ?></td>
+                                            <td>
+                                                <span class="badge badge-<?= strtolower($booking['status']) ?>">
+                                                    <?= ucfirst($booking['status']) ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="<?= SITE_URL ?>/index.php?page=booking&action=detail&id=<?= $booking['id'] ?>"
+                                                    class="btn btn-outline-primary btn-sm">
+                                                    View
+                                                </a>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($recent_bookings as $booking): ?>
-                                            <tr>
-                                                <td>#<?= $booking['id'] ?></td>
-                                                <td>
-                                                    <?= date('M j, Y', strtotime($booking['booking_date'])) ?><br>
-                                                    <small class="text-muted"><?= date('g:i A', strtotime($booking['booking_time'])) ?></small>
-                                                </td>
-                                                <td><?= $booking['guest_count'] ?></td>
-                                                <td><?= $booking['table_number'] ?? 'TBD' ?></td>
-                                                <td>
-                                                    <span class="badge badge-<?= strtolower($booking['status']) ?>">
-                                                        <?= ucfirst($booking['status']) ?>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <a href="<?= SITE_URL ?>/booking/detail/<?= $booking['id'] ?>"
-                                                        class="btn btn-outline-primary btn-sm">
-                                                        View
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
+</div>
 
 <?php if (!empty($_SESSION['success'])): ?>
     <div class="alert alert-success"><?= $_SESSION['success'];
-                                        unset($_SESSION['success']); ?></div>
-    <div>Test ổn</div>
+                                        unset($_SESSION['success']); ?>
+    </div>
 <?php endif; ?>
 <?php if (!empty($_SESSION['error'])): ?>
     <div class="alert alert-danger"><?= $_SESSION['error'];
                                     unset($_SESSION['error']); ?></div>
-    <div>Test ổn</div>
 <?php endif; ?>
 
 <style>
@@ -401,11 +399,11 @@ $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
     }
 
     .tab-content {
-        display: none;
+        display: none !important;
     }
 
     .tab-content.active {
-        display: block;
+        display: block !important;
     }
 
     .badge-pending {
@@ -436,6 +434,98 @@ $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
     .badge-cancelled {
         background-color: #dc3545;
         color: #fff;
+    }
+
+    /* Security Tab Styles */
+    .security-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .password-strength {
+        transition: all 0.3s ease;
+    }
+
+    .password-strength .progress {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .password-strength .progress-bar {
+        transition: all 0.3s ease;
+    }
+
+    .security-info .d-flex {
+        padding: 15px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .security-info .d-flex:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .security-tips .alert {
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        border: 1px solid #bee5eb;
+    }
+
+    .input-group .btn-outline-secondary {
+        border-left: none;
+    }
+
+    .input-group .form-control:focus+.btn-outline-secondary {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    #changePasswordForm .form-control {
+        transition: all 0.3s ease;
+    }
+
+    #changePasswordForm .form-control:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        border-color: #86b7fe;
+    }
+
+    .password-match {
+        transition: all 0.3s ease;
+    }
+
+    /* Button animations */
+    #changePasswordBtn {
+        transition: all 0.3s ease;
+    }
+
+    #changePasswordBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    }
+
+    /* Alert animations */
+    .alert {
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
 
@@ -499,13 +589,47 @@ $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
                     }
                 });
         };
-    }
-
-    // Khởi tạo map khi tab profile-info active
+    } // Khởi tạo map khi tab profile-info active
     document.addEventListener('DOMContentLoaded', function() {
-        if (document.getElementById('profile-info').classList.contains('active')) {
+        console.log('DOM Content Loaded');
+
+        // Activate tab based on URL parameter when page loads
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = urlParams.get('tab') || 'profile-info';
+        console.log('Active tab from URL:', activeTab);
+
+        // Debug: Check if elements exist
+        const tabLink = document.querySelector(`[data-tab="${activeTab}"]`);
+        const tabContent = document.getElementById(activeTab);
+        console.log('Tab link found:', tabLink);
+        console.log('Tab content found:', tabContent);
+
+        // Remove all active classes first
+        document.querySelectorAll('[data-tab]').forEach(t => {
+            console.log('Removing active from:', t.getAttribute('data-tab'));
+            t.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-content').forEach(c => {
+            console.log('Removing active from content:', c.id);
+            c.classList.remove('active');
+        });
+
+        // Activate the correct tab and content
+        if (tabLink && tabContent) {
+            console.log('Activating tab:', activeTab);
+            tabLink.classList.add('active');
+            tabContent.classList.add('active');
+            tabContent.style.display = 'block'; // Force display
+        } else {
+            console.error('Tab link or content not found for:', activeTab);
+        }
+
+        // Initialize map if profile-info tab is active
+        if (activeTab === 'profile-info') {
             setTimeout(initMap, 200);
         }
+
+        // Add click handlers for tab switching
         document.querySelectorAll('[data-tab]').forEach(tab => {
             tab.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -515,7 +639,13 @@ $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
                 const tabId = this.getAttribute('data-tab');
                 const tabContent = document.getElementById(tabId);
                 if (tabContent) tabContent.classList.add('active');
-                // Đổi URL để giữ tab khi reload
+
+                // Initialize map if switching to profile-info tab
+                if (tabId === 'profile-info') {
+                    setTimeout(initMap, 200);
+                }
+
+                // Update URL to maintain tab state on reload
                 if (history.pushState) {
                     const url = new URL(window.location);
                     url.searchParams.set('tab', tabId);
@@ -524,4 +654,281 @@ $active_tab = $active_tab ?? ($_GET['tab'] ?? 'profile-info');
             });
         });
     });
+
+    // Password change functionality
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        const button = field.nextElementSibling;
+        const icon = button.querySelector('i');
+
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    function checkPasswordStrength(password) {
+        let score = 0;
+        let feedback = '';
+
+        if (password.length >= 8) score += 1;
+        if (password.match(/[a-z]/)) score += 1;
+        if (password.match(/[A-Z]/)) score += 1;
+        if (password.match(/[0-9]/)) score += 1;
+        if (password.match(/[^a-zA-Z0-9]/)) score += 1;
+
+        const strengthElement = document.getElementById('password-strength');
+        const progressBar = strengthElement.querySelector('.progress-bar');
+        const feedbackElement = strengthElement.querySelector('small');
+
+        strengthElement.style.display = 'block';
+
+        switch (score) {
+            case 0:
+            case 1:
+                progressBar.style.width = '20%';
+                progressBar.className = 'progress-bar bg-danger';
+                feedback = 'Rất yếu';
+                break;
+            case 2:
+                progressBar.style.width = '40%';
+                progressBar.className = 'progress-bar bg-warning';
+                feedback = 'Yếu';
+                break;
+            case 3:
+                progressBar.style.width = '60%';
+                progressBar.className = 'progress-bar bg-info';
+                feedback = 'Trung bình';
+                break;
+            case 4:
+                progressBar.style.width = '80%';
+                progressBar.className = 'progress-bar bg-primary';
+                feedback = 'Mạnh';
+                break;
+            case 5:
+                progressBar.style.width = '100%';
+                progressBar.className = 'progress-bar bg-success';
+                feedback = 'Rất mạnh';
+                break;
+        }
+
+        feedbackElement.textContent = feedback;
+        return score;
+    }
+
+    function checkPasswordMatch() {
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const matchElement = document.getElementById('password-match');
+
+        if (confirmPassword.length > 0) {
+            if (newPassword === confirmPassword) {
+                matchElement.style.display = 'none';
+                matchElement.innerHTML = '<small class="text-success"><i class="fas fa-check-circle me-1"></i>Mật khẩu khớp</small>';
+                matchElement.style.display = 'block';
+                return true;
+            } else {
+                matchElement.innerHTML = '<small class="text-danger"><i class="fas fa-times-circle me-1"></i>Mật khẩu xác nhận không khớp</small>';
+                matchElement.style.display = 'block';
+                return false;
+            }
+        } else {
+            matchElement.style.display = 'none';
+            return false;
+        }
+    }
+
+    function resetPasswordForm() {
+        document.getElementById('passwordChangeForm').reset();
+        document.getElementById('password-strength').style.display = 'none';
+        document.getElementById('password-match').style.display = 'none';
+    }
+
+    // Form validation and submission
+    document.addEventListener('DOMContentLoaded', function() {
+        const newPasswordField = document.getElementById('newPassword');
+        const confirmPasswordField = document.getElementById('confirmPassword');
+        const changePasswordForm = document.getElementById('passwordChangeForm');
+
+        if (newPasswordField) {
+            newPasswordField.addEventListener('input', function() {
+                checkPasswordStrength(this.value);
+                if (confirmPasswordField.value) {
+                    checkPasswordMatch();
+                }
+            });
+        }
+
+        if (confirmPasswordField) {
+            confirmPasswordField.addEventListener('input', checkPasswordMatch);
+        }
+
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', function(e) {
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+
+                if (newPassword !== confirmPassword) {
+                    e.preventDefault();
+                    showAlert('Mật khẩu xác nhận không khớp!', 'danger');
+                    return false;
+                }
+
+                if (checkPasswordStrength(newPassword) < 3) {
+                    e.preventDefault();
+                    showAlert('Mật khẩu quá yếu! Vui lòng chọn mật khẩu mạnh hơn.', 'warning');
+                    return false;
+                }
+
+                // Show loading state
+                const submitBtn = document.getElementById('changePasswordBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+            });
+        }
+    });
+
+    function showAlert(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        const container = document.querySelector('.container');
+        container.insertBefore(alertDiv, container.firstChild);
+
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
 </script>
+
+<!-- CSRF token for forms -->
+<input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+
+<script>
+    // Enhanced form submission with better error handling
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordForm = document.getElementById('passwordChangeForm');
+
+        if (passwordForm) {
+            passwordForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+
+                // Clear previous messages
+                const alertContainer = document.getElementById('password-alert');
+                if (alertContainer) {
+                    alertContainer.remove();
+                }
+
+                // Validate form
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                    showPasswordAlert('Vui lòng điền đầy đủ thông tin!', 'error');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    showPasswordAlert('Mật khẩu xác nhận không khớp!', 'error');
+                    return;
+                }
+
+                if (newPassword.length < 6) {
+                    showPasswordAlert('Mật khẩu mới phải có ít nhất 6 ký tự!', 'error');
+                    return;
+                }
+
+                // Submit form
+                const formData = new FormData(passwordForm);
+
+                fetch('<?= SITE_URL ?>/user/change-password', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            showPasswordAlert('Đổi mật khẩu thành công! Đang chuyển hướng...', 'success');
+                            setTimeout(() => {
+                                window.location.href = '<?= SITE_URL ?>/user/profile?tab=security';
+                            }, 2000);
+                        } else {
+                            return response.text().then(text => {
+                                throw new Error('Server error: ' + response.status);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showPasswordAlert('Có lỗi xảy ra. Vui lòng thử lại!', 'error');
+                    });
+            });
+        }
+
+        function showPasswordAlert(message, type) {
+            const alertHTML = `
+                <div id="password-alert" class="alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show">
+                    <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            passwordForm.insertAdjacentHTML('beforebegin', alertHTML);
+        }
+    });
+</script>
+
+<!-- Enhanced styling for password change form -->
+<style>
+    .password-change-form {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .password-strength {
+        transition: all 0.3s ease;
+    }
+
+    .btn-toggle-password {
+        transition: color 0.3s ease;
+    }
+
+    .btn-toggle-password:hover {
+        color: #0d6efd !important;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    }
+
+    .alert {
+        border: none;
+        border-radius: 10px;
+    }
+</style>
+
+<?php require_once 'views/layouts/footer.php'; ?>

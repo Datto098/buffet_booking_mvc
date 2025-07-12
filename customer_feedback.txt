@@ -1,7 +1,0 @@
-KHÁCH HÀNG ĐANG CÓ FEEDBACK NHƯ SAU VỚI DỰ ÁN HIỆN TẠI:
-
-- Thứ 1: Ở chức năng booking của user khách muốn chuẩn là khách phải đặt bàn trước khi vào quán ít nhất 2 tiếng
-Ví dụ một ngày đẹp trời tôi muốn dẫn con ghệ của tôi đi ăn ở quán này tui tôi muốn ăn ở quán vào lúc 19:00 thì ít nhất là lúc 17:00 tôi phải đặt bàn nếu quá ví dụ 17:20 thì nó sẽ có thông báo chọn thời gian khách
-
-- Thứ 2: Ở phần order món ăn tại bàn thì admin sẽ phải có thêm nút xuất hóa đơn cho order đó luôn sẽ có option nhập vào số lượng khách trong bàn đó có bao nhiêu người lớn, bao nhiêu trẻ em, rồi có nhập vào khoản tiền thêm như khăn ướt, ...
-Rồi ta sẽ phải có thêm quy định về giá vé khi dùng buffet cho trẻ em và người lớn như nào cho hợp lý nữa

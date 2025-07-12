@@ -103,7 +103,14 @@ class Order extends BaseModel
 
     public function getOrdersByUser($userId, $limit = null, $offset = 0)
     {
-        $sql = "SELECT * FROM {$this->table} WHERE user_id = :user_id ORDER BY created_at DESC";
+        $sql = "SELECT o.*,
+                       COUNT(oi.id) as total_items,
+                       SUM(oi.quantity) as item_count
+                FROM {$this->table} o
+                LEFT JOIN order_items oi ON o.id = oi.order_id
+                WHERE o.user_id = :user_id
+                GROUP BY o.id
+                ORDER BY o.created_at DESC";
 
         if ($limit) {
             $sql .= " LIMIT :limit OFFSET :offset";
