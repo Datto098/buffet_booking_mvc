@@ -29,7 +29,7 @@ class UserController extends BaseController {
         $this->requireLogin();
 
         $user = $this->userModel->findById($_SESSION['user_id']);
-        $active_tab = $_GET['tab'] ?? 'profile-info'; 
+        $active_tab = $_GET['tab'] ?? 'profile-info';
 
         // Lấy thông tin nhà hàng cho footer
         try {
@@ -47,13 +47,19 @@ class UserController extends BaseController {
             ];
         }
 
+        // Get recent orders and bookings for the user
+        $recent_orders = $this->orderModel->getUserOrders($_SESSION['user_id'], 5);
+        $recent_bookings = $this->bookingModel->getUserBookings($_SESSION['user_id'], 5);
+
         $data = [
             'title' => 'Thông Tin Cá Nhân - ' . SITE_NAME,
             'user' => $user,
             'active_tab' => $active_tab,
-            'info' => $restaurantInfo // Thêm dòng này
+            'info' => $restaurantInfo,
+            'recent_orders' => $recent_orders,
+            'recent_bookings' => $recent_bookings
         ];
-       
+
 
         $this->loadView('customer/user/profile', $data);
     }
@@ -518,7 +524,6 @@ class UserController extends BaseController {
         }
     }
 
-   
+
 }
 ?>
-

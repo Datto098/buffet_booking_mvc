@@ -318,6 +318,13 @@ function getStatusText($status)
                                                     title="Cập nhật trạng thái">
                                                 <i class="fas fa-edit"></i>
                                             </button>
+                                            <?php if ($order['status'] === 'completed'): ?>
+                                                <a href="<?= SITE_URL ?>/admin/invoice/create?order_id=<?= $order['id'] ?>"
+                                                   class="btn btn-sm btn-primary"
+                                                   title="Tạo hóa đơn">
+                                                    <i class="fas fa-receipt"></i>
+                                                </a>
+                                            <?php endif; ?>
                                             <?php if ($order['status'] !== 'completed' && $order['status'] !== 'cancelled'): ?>
                                                 <button class="btn btn-sm btn-success"
                                                         onclick="quickUpdateStatus(<?= $order['id'] ?>, 'completed')"

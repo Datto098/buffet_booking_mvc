@@ -398,5 +398,69 @@ class Food extends BaseModel {
             return [];
         }
     }
+
+    /**
+     * Get all buffet items (free items included in buffet price)
+     */
+    public function getBuffetItems() {
+        $sql = "SELECT f.*, c.name as category_name
+                FROM {$this->table} f
+                LEFT JOIN categories c ON f.category_id = c.id
+                WHERE f.is_buffet_item = 1 AND f.is_available = 1
+                ORDER BY f.sort_order ASC, f.name ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get all regular menu items (additional paid items)
+     */
+    public function getRegularMenuItems() {
+        $sql = "SELECT f.*, c.name as category_name
+                FROM {$this->table} f
+                LEFT JOIN categories c ON f.category_id = c.id
+                WHERE f.is_buffet_item = 0 AND f.is_available = 1
+                ORDER BY c.sort_order ASC, f.sort_order ASC, f.name ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get foods by type (buffet or regular)
+     */
+    public function getFoodsByType($isBuffet = false) {
+        if ($isBuffet) {
+            return $this->getBuffetItems();
+        } else {
+            return $this->getRegularMenuItems();
+        }
+    }
+
+    /**
+     * Check if a food item is buffet item
+     */
+    public function isBuffetItem($foodId) {
+        $sql = "SELECT is_buffet_item FROM {$this->table} WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $foodId);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        return $result ? (bool)$result['is_buffet_item'] : false;
+    }
+
+    /**
+     * Update buffet status of a food item
+     */
+    public function updateBuffetStatus($foodId, $isBuffet) {
+        $sql = "UPDATE {$this->table} SET is_buffet_item = :is_buffet WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':is_buffet', $isBuffet ? 1 : 0);
+        $stmt->bindValue(':id', $foodId);
+        return $stmt->execute();
+    }
 }
 ?>

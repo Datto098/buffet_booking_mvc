@@ -87,6 +87,34 @@ public function index()
             exit;
         }
 
+        // Validate thời gian đặt bàn phải trước ít nhất 2 tiếng
+        $bookingDateTime = $date . ' ' . $time;
+        $bookingTimestamp = strtotime($bookingDateTime);
+        $currentTimestamp = time();
+        $minimumAdvanceTime = $currentTimestamp + (2 * 60 * 60); // 2 tiếng = 2 * 60 * 60 giây
+
+        if ($bookingTimestamp < $currentTimestamp) {
+            $response = [
+                'available' => false,
+                'message' => 'Không thể đặt bàn cho thời gian trong quá khứ.'
+            ];
+            error_log("BookingController - Past time validation failed: " . json_encode($response));
+            header('Content-Type: application/json');
+            echo json_encode($response);
+            exit;
+        } elseif ($bookingTimestamp <= $minimumAdvanceTime) {
+            $currentTime = date('H:i', $currentTimestamp);
+            $requiredTime = date('H:i', $minimumAdvanceTime + 60); // Thêm 1 phút để đảm bảo
+            $response = [
+                'available' => false,
+                'message' => "Bạn phải đặt bàn trước ít nhất 2 tiếng. Hiện tại là {$currentTime}, bạn chỉ có thể đặt bàn từ {$requiredTime} trở đi."
+            ];
+            error_log("BookingController - 2-hour advance validation failed: " . json_encode($response));
+            header('Content-Type: application/json');
+            echo json_encode($response);
+            exit;
+        }
+
         // Gọi model để kiểm tra bàn trống
         try {
             $result = $this->bookingModel->checkAvailability($date, $time, $partySize, $location);
@@ -273,8 +301,16 @@ public function index()
 
         // Validate date and time
         $bookingDateTime = $bookingDate . ' ' . $bookingTime;
-        if (strtotime($bookingDateTime) < time()) {
+        $bookingTimestamp = strtotime($bookingDateTime);
+        $currentTimestamp = time();
+        $minimumAdvanceTime = $currentTimestamp + (2 * 60 * 60); // 2 tiếng = 2 * 60 * 60 giây
+
+        if ($bookingTimestamp < $currentTimestamp) {
             $errors[] = 'Không thể đặt bàn cho thời gian trong quá khứ';
+        } elseif ($bookingTimestamp <= $minimumAdvanceTime) {
+            $currentTime = date('H:i', $currentTimestamp);
+            $requiredTime = date('H:i', $minimumAdvanceTime + 60); // Thêm 1 phút để đảm bảo
+            $errors[] = "Bạn phải đặt bàn trước ít nhất 2 tiếng. Hiện tại là {$currentTime}, bạn chỉ có thể đặt bàn từ {$requiredTime} trở đi.";
         }
 
         $address = $bookingLocation;

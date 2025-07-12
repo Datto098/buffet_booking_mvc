@@ -205,15 +205,65 @@
     margin-bottom: 5px;
 }
 
+.item-price {
+    font-size: 0.9rem;
+    color: #28a745;
+    font-weight: 500;
+    margin-bottom: 3px;
+}
+
 .item-special {
     font-size: 0.8rem;
     color: #666;
     font-style: italic;
 }
 
+.item-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
 .item-quantity {
     font-weight: bold;
     color: #e74c3c;
+    font-size: 0.9rem;
+}
+
+.item-total {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.order-summary {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid #e9ecef;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.summary-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 1.1rem;
+}
+
+.summary-value {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 1.3rem;
 }
 
 .estimated-time {
@@ -460,13 +510,25 @@
             <img src="<?= SITE_URL ?>/<?= $item['food_image'] ?>" alt="<?= htmlspecialchars($item['food_name']) ?>" class="item-image">
             <div class="item-info">
                 <div class="item-name"><?= htmlspecialchars($item['food_name']) ?></div>
+                <div class="item-price"><?= number_format($item['price']) ?>đ / món</div>
                 <?php if (!empty($item['special_instructions'])): ?>
                 <div class="item-special"><?= htmlspecialchars($item['special_instructions']) ?></div>
                 <?php endif; ?>
             </div>
-            <div class="item-quantity">x<?= $item['quantity'] ?></div>
+            <div class="item-right">
+                <div class="item-quantity">x<?= $item['quantity'] ?></div>
+                <div class="item-total"><?= number_format($item['total']) ?>đ</div>
+            </div>
         </div>
         <?php endforeach; ?>
+
+        <!-- Tổng kết đơn hàng -->
+        <div class="order-summary">
+            <div class="summary-row">
+                <span class="summary-label">Tổng tiền:</span>
+                <span class="summary-value"><?= number_format($order['total_amount']) ?>đ</span>
+            </div>
+        </div>
 
         <?php if (!empty($order['special_notes'])): ?>
         <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">

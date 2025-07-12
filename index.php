@@ -204,6 +204,9 @@ function handleAdminRoute($segments)
         case 'dine-in-orders':
             handleAdminDineInOrdersRoute($controller, $action, $param);
             break;
+        case 'invoice':
+            handleAdminInvoiceRoute($controller, $action, $param);
+            break;
         default:
             $controller->dashboard();    }
 }
@@ -767,6 +770,33 @@ function handleAdminDineInOrdersRoute($controller, $action, $param)
     }
 }
 
+function handleAdminInvoiceRoute($controller, $action, $param)
+{
+    require_once 'controllers/InvoiceController.php';
+    $invoiceController = new InvoiceController();
+
+    switch ($action) {
+        case 'create':
+            $invoiceController->create();
+            break;
+        case 'view':
+            $invoiceController->viewInvoice($param);
+            break;
+        case 'print':
+            $invoiceController->print($param);
+            break;
+        case 'export-pdf':
+            $invoiceController->exportPdf($param);
+            break;
+        case 'update-payment-status':
+            $invoiceController->updatePaymentStatus();
+            break;
+        default:
+            $invoiceController->create(); // Default to create form
+            break;
+    }
+}
+
 function handleApiRoute($segments)
 {
     header('Content-Type: application/json');
@@ -972,6 +1002,9 @@ function handleCustomerRoute($page, $action, $param)
         exit;
     } elseif ($action === 'forgot-password' || $action === 'forgotPassword') {
         $controller->forgotPassword();
+        exit;
+    } elseif ($action === 'change-password' || $action === 'changePassword') {
+        $controller->changePassword();
         exit;
     } elseif ($page === 'dine-in') {
         // Handle dine-in specific routes

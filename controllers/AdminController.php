@@ -280,6 +280,7 @@ class AdminController extends BaseController
         $search = $_GET['search'] ?? '';
         $category = $_GET['category'] ?? '';
         $status = $_GET['status'] ?? '';
+        $type = $_GET['type'] ?? '';
 
         // Get all foods for filtering
         $allFoods = $foodModel->getAllForAdmin();
@@ -303,6 +304,13 @@ class AdminController extends BaseController
             $allFoods = array_filter($allFoods, function ($food) use ($status) {
                 return ($status === 'available' && $food['is_available'] == 1) ||
                     ($status === 'unavailable' && $food['is_available'] == 0);
+            });
+        }
+
+        if ($type !== '') {
+            $allFoods = array_filter($allFoods, function ($food) use ($type) {
+                return ($type === 'buffet' && ($food['is_buffet_item'] ?? 0) == 1) ||
+                    ($type === 'regular' && ($food['is_buffet_item'] ?? 0) == 0);
             });
         }
 
@@ -363,8 +371,14 @@ class AdminController extends BaseController
                 'is_popular' => isset($_POST['is_popular']) ? 1 : 0,
                 'is_new' => isset($_POST['is_new']) ? 1 : 0,
                 'is_seasonal' => isset($_POST['is_seasonal']) ? 1 : 0,
+                'is_buffet_item' => isset($_POST['is_buffet_item']) ? 1 : 0,
                 'created_at' => date('Y-m-d H:i:s')
-            ]; // Handle image upload
+            ];
+
+            // If marked as buffet item, set price to 0
+            if ($foodData['is_buffet_item'] == 1) {
+                $foodData['price'] = 0.00;
+            } // Handle image upload
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $uploadDir = 'uploads/food_images/';
                 if (!is_dir($uploadDir)) {
@@ -424,8 +438,14 @@ class AdminController extends BaseController
                 'is_popular' => isset($_POST['is_popular']) ? 1 : 0,
                 'is_new' => isset($_POST['is_new']) ? 1 : 0,
                 'is_seasonal' => isset($_POST['is_seasonal']) ? 1 : 0,
+                'is_buffet_item' => isset($_POST['is_buffet_item']) ? 1 : 0,
                 'updated_at' => date('Y-m-d H:i:s')
-            ]; // Handle image upload
+            ];
+
+            // If marked as buffet item, set price to 0
+            if ($foodData['is_buffet_item'] == 1) {
+                $foodData['price'] = 0.00;
+            } // Handle image upload
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $uploadDir = 'uploads/food_images/';
                 if (!is_dir($uploadDir)) {

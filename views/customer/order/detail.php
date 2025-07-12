@@ -233,20 +233,28 @@ $order_items = isset($order['items']) && is_array($order['items']) ? $order['ite
 <script>
 function cancelOrder(orderId) {
     if (confirm('Are you sure you want to cancel this order?')) {
-        fetch(`<?= SITE_NAME ?>/order/cancel/${orderId}`, {
+        // Create form data
+        const formData = new FormData();
+        formData.append('order_id', orderId);
+        
+        fetch(`<?= SITE_URL ?>/index.php?page=order&action=cancel`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
+            body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.redirected) {
+                // Server redirected, follow the redirect
+                window.location.href = response.url;
+                return;
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.success) {
+            if (data && data.success) {
                 showAlert('Order cancelled successfully', 'success');
                 setTimeout(() => location.reload(), 1500);
-            } else {
-                showAlert(data.message || 'Failed to cancel order', 'error');
+            } else if (data && data.message) {
+                showAlert(data.message, 'error');
             }
         })
         .catch(error => {

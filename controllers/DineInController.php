@@ -45,7 +45,13 @@ class DineInController extends BaseController {
 
             // Lấy danh sách món ăn và danh mục
             $data['categories'] = $this->categoryModel->getAllCategories();
-            $data['foods'] = $this->foodModel->getAvailableFoods();
+
+            // Lấy món buffet và món thường riêng biệt
+            $data['buffet_foods'] = $this->foodModel->getBuffetItems();
+            $data['regular_foods'] = $this->foodModel->getRegularMenuItems();
+
+            // Kết hợp tất cả món ăn để tương thích với code cũ
+            $data['foods'] = array_merge($data['buffet_foods'], $data['regular_foods']);
 
             // Lấy đơn hàng hiện tại của bàn (nếu có)
             $data['current_order'] = $this->dineInOrderModel->getCurrentOrderByTable($table['id'], $_SESSION['user']['id']);
@@ -145,7 +151,9 @@ class DineInController extends BaseController {
             foreach ($_SESSION['dine_in_cart'][$table_number] as $food_id => $quantity) {
                 $food = $this->foodModel->getFoodById($food_id);
                 if ($food) {
-                    $total_amount += $food['price'] * $quantity;
+                    // Nếu là món buffet thì không tính tiền
+                    $price = ($food['is_buffet_item'] ?? 0) == 1 ? 0 : $food['price'];
+                    $total_amount += $price * $quantity;
                 }
             }
 
@@ -164,12 +172,16 @@ class DineInController extends BaseController {
             // Thêm chi tiết đơn hàng
             foreach ($_SESSION['dine_in_cart'][$table_number] as $food_id => $quantity) {
                 $food = $this->foodModel->getFoodById($food_id);
+
+                // Nếu là món buffet thì price = 0, nếu không thì lấy giá thật
+                $price = ($food['is_buffet_item'] ?? 0) == 1 ? 0 : $food['price'];
+
                 $item_data = [
                     'order_id' => $order_id,
                     'food_id' => $food_id,
                     'quantity' => $quantity,
-                    'price' => $food['price'],
-                    'total' => $food['price'] * $quantity
+                    'price' => $price,
+                    'total' => $price * $quantity
                 ];
                 $this->dineInOrderModel->addOrderItem($item_data);
             }
@@ -209,11 +221,16 @@ class DineInController extends BaseController {
             foreach ($_SESSION['dine_in_cart'][$table_id] as $food_id => $quantity) {
                 $food = $this->foodModel->getFoodById($food_id);
                 if ($food) {
-                    $item_total = $food['price'] * $quantity;
+                    // Nếu là món buffet thì price = 0, nếu không thì lấy giá thật
+                    $price = ($food['is_buffet_item'] ?? 0) == 1 ? 0 : $food['price'];
+                    $item_total = $price * $quantity;
+
                     $cart_items[] = [
                         'id' => $food_id,
                         'name' => $food['name'],
-                        'price' => $food['price'],
+                        'price' => $price,
+                        'original_price' => $food['price'], // Giá gốc để hiển thị
+                        'is_buffet_item' => ($food['is_buffet_item'] ?? 0) == 1,
                         'quantity' => $quantity,
                         'total' => $item_total,
                         'image' => $food['image']

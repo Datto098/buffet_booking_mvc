@@ -296,5 +296,36 @@ class DineInOrder extends BaseModel {
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Tìm order theo ID có kèm thông tin bàn
+     */
+    public function findById($id)
+    {
+        $sql = "SELECT dio.*, t.table_number
+                FROM {$this->table} dio
+                LEFT JOIN tables t ON dio.table_id = t.id
+                WHERE dio.id = ?";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Tìm order theo ID không join (cho các trường hợp đặc biệt)
+     */
+    public function findByIdSimple($id)
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getById($id)
+    {
+        return $this->findById($id);
+    }
 }
 ?>
