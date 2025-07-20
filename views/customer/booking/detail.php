@@ -186,9 +186,9 @@ $current_page = 'bookings';
 
                 <?php if ($booking['status'] === 'pending' || $booking['status'] === 'confirmed'): ?>
                     <?php if (strtotime($booking['booking_date'] . ' ' . $booking['booking_time']) > time() + 7200): // At least 2 hours before ?>
-                    <a href="index.php?page=booking&action=modify&id=<?= $booking['id'] ?>" class="btn btn-warning me-2">
+                    <!-- <a href="index.php?page=booking&action=modify&id=<?= $booking['id'] ?>" class="btn btn-warning me-2">
                         <i class="fas fa-edit me-2"></i>Modify Booking
-                    </a>
+                    </a> -->
                     <button class="btn btn-danger me-2" onclick="cancelBooking(<?= $booking['id'] ?>)">
                         <i class="fas fa-times me-2"></i>Cancel Booking
                     </button>
