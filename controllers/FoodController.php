@@ -152,6 +152,21 @@ class FoodController extends BaseController
         if ($categoryId > 0) {
             $subcategories = $this->categoryModel->getSubcategories($categoryId);
         }
+         // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
         $data = [
             'title' => 'Thực Đơn - ' . SITE_NAME,
             'foods' => $foods,
@@ -167,7 +182,7 @@ class FoodController extends BaseController
                 'search' => $search,
                 'sort' => $sortBy,
                 'price_range' => $priceRange
-            ]
+            ],
         ];
         // print_r($data);
         // echo "</pre>";
@@ -295,12 +310,29 @@ class FoodController extends BaseController
 
         // Get subcategories
         $subcategories = $this->categoryModel->getSubcategories($categoryId);
-
+        
+         // Lấy thông tin nhà hàng cho footer
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT * FROM restaurant_info WHERE id = 1");
+            $stmt->execute();
+            $restaurantInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $restaurantInfo = [
+                'restaurant_name' => SITE_NAME,
+                'address' => 'Địa chỉ nhà hàng',
+                'phone' => '0123-456-789',
+                'email' => ADMIN_EMAIL,
+                'description' => 'Nội dung giới thiệu về nhà hàng...'
+            ];
+        }
+        
         $data = [
             'title' => $category['name'] . ' - ' . SITE_NAME,
             'category' => $category,
             'foods' => $foods,
-            'subcategories' => $subcategories
+            'subcategories' => $subcategories,
+            'info' => $restaurantInfo,
         ];
 
         $this->loadView('customer/menu/category', $data);
