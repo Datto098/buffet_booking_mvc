@@ -301,19 +301,8 @@
 
 <!-- JavaScript for cart functionality -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {    // Add to cart functionality
-    document.querySelectorAll('.add-to-cart').forEach(button => {
-        button.addEventListener('click', function() {
-            const foodId = this.dataset.foodId;
-            const foodName = this.dataset.foodName;
-            const foodPrice = this.dataset.foodPrice;
-
-            // Add to cart logic here (you'll need to implement this based on your cart system)
-            addToCart(foodId, foodName, foodPrice);
-        });
-    });
-
-    // Favorite functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Favorite functionality only
     document.querySelectorAll('.favorite-btn').forEach(button => {
         button.addEventListener('click', function() {
             const foodId = this.dataset.foodId;
@@ -321,20 +310,8 @@ document.addEventListener('DOMContentLoaded', function() {    // Add to cart fun
         });
     });
 
-    function addToCart(foodId, foodName, foodPrice) {
-        // Implement your cart logic here
-        // This might involve AJAX calls to your cart controller
-        console.log('Adding to cart:', {foodId, foodName, foodPrice});
-
-        // Show success message
-        alert('Đã thêm ' + foodName + ' vào giỏ hàng!');
-    }
-
     function toggleFavorite(foodId, button) {
-        // Implement your favorite logic here
-        // This might involve AJAX calls to your user controller
         const icon = button.querySelector('i');
-
         if (button.classList.contains('active')) {
             button.classList.remove('active');
             icon.classList.remove('fas');
@@ -343,7 +320,8 @@ document.addEventListener('DOMContentLoaded', function() {    // Add to cart fun
             button.classList.add('active');
             icon.classList.remove('far');
             icon.classList.add('fas');
-        }    }
+        }
+    }
 });
 </script>
 <?php else: ?>    <!-- Hiển thị danh sách món ăn trong danh mục -->

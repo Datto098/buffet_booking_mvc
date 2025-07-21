@@ -81,7 +81,7 @@ class CartController extends BaseController {
         $added = 0;
         $skipped = [];
         foreach ($order['items'] as $item) {
-            $foodId = intval($item['food_id'] ?? 0);
+            $foodId = intval($item['food_item_id'] ?? 0);
             $quantity = intval($item['quantity'] ?? 1);
             if ($foodId > 0 && $quantity > 0) {
                 $food = $this->foodModel->getFoodDetails($foodId);

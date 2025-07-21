@@ -622,17 +622,15 @@
     <!-- JavaScript for cart functionality -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Add to cart functionality
-            document.querySelectorAll('.add-to-cart').forEach(button => {
-                button.addEventListener('click', function() {
-                    const foodId = this.dataset.foodId;
-                    const foodName = this.dataset.foodName;
-                    const foodPrice = this.dataset.foodPrice;
-
-                    // Add to cart logic here (you'll need to implement this based on your cart system)
-                    addToCart(foodId, foodName, foodPrice);
-                });
-            });
+            // Đã xử lý add-to-cart ở main.js, tránh double event
+            // document.querySelectorAll('.add-to-cart').forEach(button => {
+            //     button.addEventListener('click', function() {
+            //         const foodId = this.dataset.foodId;
+            //         const foodName = this.dataset.foodName;
+            //         const foodPrice = this.dataset.foodPrice;
+            //         addToCart(foodId, foodName, foodPrice);
+            //     });
+            // });
 
             // Favorite functionality
             document.querySelectorAll('.favorite-btn').forEach(button => {
