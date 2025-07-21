@@ -289,6 +289,7 @@ function buildPaginationUrl($page, $filters)
         // Add to cart functionality
         document.querySelectorAll('.add-to-cart-btn').forEach(button => {
             button.addEventListener('click', function() {
+               
                 const foodId = this.dataset.foodId;
                 const foodName = this.dataset.foodName;
                 const foodPrice = this.dataset.foodPrice;
@@ -335,12 +336,18 @@ function buildPaginationUrl($page, $filters)
 
         // Confirm add to cart
         document.getElementById('confirmAddToCart').addEventListener('click', function() {
+             console.log('Adding to cart:', {
+                    foodId: this.dataset.foodId,
+                    foodName: this.dataset.foodName,
+                    foodPrice: this.dataset.foodPrice
+                });
             const foodId = this.dataset.foodId;
             const quantity = parseInt(document.getElementById('modalQuantity').value);
-
-            addToCart(foodId, quantity).then(() => {
-                bootstrap.Modal.getInstance(document.getElementById('quickAddModal')).hide();
-                showToast('Đã thêm vào giỏ hàng', 'success');
+            addToCartWithQuantity(foodId, quantity, function(success) {
+                if (success) {
+                    bootstrap.Modal.getInstance(document.getElementById('quickAddModal')).hide();
+                    showToast('Đã thêm vào giỏ hàng', 'success');
+                }
             });
         });
 
@@ -373,6 +380,39 @@ function buildPaginationUrl($page, $filters)
             style: 'currency',
             currency: 'VND'
         }).format(price);
+    }
+
+    // Toast notification
+    function showToast(message, type = 'success') {
+        alert(message);
+    }
+
+    // Add to cart with quantity
+    function addToCartWithQuantity(foodId, quantity, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', window.siteUrl + '/cart/add', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var res = JSON.parse(xhr.responseText);
+                    if (res.success) {
+                        showToast('Đã thêm vào giỏ hàng', 'success');
+                        if (typeof callback === 'function') callback(true);
+                    } else {
+                        showToast(res.message || 'Có lỗi xảy ra', 'error');
+                        if (typeof callback === 'function') callback(false);
+                    }
+                } catch(e) {
+                    showToast('Lỗi xử lý dữ liệu', 'error');
+                    if (typeof callback === 'function') callback(false);
+                }
+            } else {
+                showToast('Không thể kết nối đến server', 'error');
+                if (typeof callback === 'function') callback(false);
+            }
+        };
+        xhr.send('food_id=' + encodeURIComponent(foodId) + '&quantity=' + encodeURIComponent(quantity));
     }
 </script>
 

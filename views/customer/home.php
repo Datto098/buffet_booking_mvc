@@ -1,3 +1,4 @@
+
 <!-- Hero Section -->
 <section class="hero-section hero-section--slider position-relative" id="hero-section">
     <div class="hero-bg" id="hero-bg"></div>
@@ -144,10 +145,12 @@
                                 <button class="btn btn-luxury add-to-cart"
                                         data-food-id="<?php echo $food['id']; ?>"
                                         data-food-name="<?php echo htmlspecialchars($food['name']); ?>"
-                                        data-food-price="<?php echo $food['price']; ?>">
+                                        data-food-price="<?php echo $food['price']; ?>"
+                                        onclick="this.classList.add('pulse'); setTimeout(()=>this.classList.remove('pulse'),300)">
                                     <i class="fas fa-cart-plus"></i>
                                 </button>
                             </div>
+  
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -261,4 +264,3 @@
         </div>
     </div>
 </section>
-

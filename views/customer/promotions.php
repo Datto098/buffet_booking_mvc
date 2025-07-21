@@ -805,72 +805,44 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Add to cart functionality with loading state
+        // Ensure window.siteUrl is set
+        if (!window.siteUrl) {
+            window.siteUrl = '<?= SITE_URL ?>';
+        }
+
         document.querySelectorAll('.add-to-cart-btn').forEach(button => {
             button.addEventListener('click', function() {
-                const foodId = this.dataset.foodId;
-                const foodName = this.dataset.foodName;
-                const foodPrice = this.dataset.foodPrice;
-                const originalText = this.innerHTML;
-
-                console.log('Add to cart clicked:', { foodId, foodName, foodPrice });
-
-                // Add loading state
-                this.classList.add('btn-loading');
-                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang thêm...';
-                this.disabled = true;
-
-                // Make actual API call to add to cart
-                fetch('<?= SITE_URL ?>/cart/add', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `food_id=${foodId}&quantity=1`
-                })
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Response data:', data);
-
-                    // Remove loading state
-                    this.classList.remove('btn-loading');
-
-                    if (data.success) {
-                        this.innerHTML = '<i class="fas fa-check me-2"></i>Đã thêm';
-                        this.classList.remove('btn-primary', 'btn-luxury');
-                        this.classList.add('btn-success');
-
-                        // Show success toast
-                        showToast('Thành công!', 'Đã thêm ' + foodName + ' vào giỏ hàng', 'success');
-
-                        // Update cart count if exists
-                        const cartCount = document.querySelector('.cart-count');
-                        if (cartCount && data.cartInfo && data.cartInfo.itemCount) {
-                            cartCount.textContent = data.cartInfo.itemCount;
+                var foodId = this.dataset.foodId;
+                var quantity = this.dataset.quantity ? this.dataset.quantity : 1;
+                if (typeof window.addToCartWithQuantity === 'function') {
+                    window.addToCartWithQuantity(foodId, quantity, function(success) {
+                        if (success) {
+                            showToast('Thành công!', 'Đã thêm vào giỏ hàng', 'success');
+                        } else {
+                            showToast('Lỗi!', 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
                         }
-
-                        // Reset button after 2 seconds
-                        setTimeout(() => {
-                            this.innerHTML = originalText;
-                            this.classList.remove('btn-success');
-                            this.classList.add('btn-luxury');
-                            this.disabled = false;
-                        }, 2000);
-                    } else {
-                        this.innerHTML = originalText;
-                        this.disabled = false;
-                        showToast('Lỗi!', data.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    this.classList.remove('btn-loading');
-                    this.innerHTML = originalText;
-                    this.disabled = false;
-                    showToast('Lỗi!', 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
-                });
+                    });
+                } else {
+                    // Fallback: fetch thủ công nếu main.js chưa load
+                    fetch(window.siteUrl + '/cart/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `food_id=${foodId}&quantity=${quantity}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Thành công!', 'Đã thêm vào giỏ hàng', 'success');
+                        } else {
+                            showToast('Lỗi!', data.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
+                        }
+                    })
+                    .catch(() => {
+                        showToast('Lỗi!', 'Không thể kết nối đến server', 'error');
+                    });
+                }
             });
         });
 
@@ -916,9 +888,42 @@
                     .then(res => res.json())
                     .then(data => {
                         foodGrid.innerHTML = data.html || '';
-                        // Thêm dòng này để hiện món ăn:
                         foodGrid.querySelectorAll('.fade-in-up').forEach(el => el.classList.add('fade-in-active'));
-                        // Gắn lại sự kiện cho nút mới nếu cần
+                        // Gắn lại sự kiện cho nút mới sau khi render
+                        foodGrid.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                            button.addEventListener('click', function() {
+                                var foodId = this.dataset.foodId;
+                                var quantity = this.dataset.quantity ? this.dataset.quantity : 1;
+                                if (typeof window.addToCartWithQuantity === 'function') {
+                                    window.addToCartWithQuantity(foodId, quantity, function(success) {
+                                        if (success) {
+                                            showToast('Thành công!', 'Đã thêm vào giỏ hàng', 'success');
+                                        } else {
+                                            showToast('Lỗi!', 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
+                                        }
+                                    });
+                                } else {
+                                    fetch(window.siteUrl + '/cart/add', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded',
+                                        },
+                                        body: `food_id=${foodId}&quantity=${quantity}`
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            showToast('Thành công!', 'Đã thêm vào giỏ hàng', 'success');
+                                        } else {
+                                            showToast('Lỗi!', data.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
+                                        }
+                                    })
+                                    .catch(() => {
+                                        showToast('Lỗi!', 'Không thể kết nối đến server', 'error');
+                                    });
+                                }
+                            });
+                        });
                     })
                     .catch(() => {
                         if (foodGrid) {

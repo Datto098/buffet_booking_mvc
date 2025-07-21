@@ -301,28 +301,55 @@
 
 <!-- JavaScript for cart functionality -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Favorite functionality only
-    document.querySelectorAll('.favorite-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const foodId = this.dataset.foodId;
-            toggleFavorite(foodId, this);
+function showToast(message, type = 'success') {
+    // Simple toast, replace with your own UI if cần
+    alert(message);
+}
+
+function addToCartWithQuantity(foodId, quantity, callback) {
+    // Gọi AJAX trực tiếp
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', window.location.origin + '/cart/add', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if (res.success) {
+                    showToast('Đã thêm vào giỏ hàng', 'success');
+                    if (typeof callback === 'function') callback(true);
+                } else {
+                    showToast(res.message || 'Có lỗi xảy ra', 'error');
+                    if (typeof callback === 'function') callback(false);
+                }
+            } catch(e) {
+                showToast('Lỗi xử lý dữ liệu', 'error');
+                if (typeof callback === 'function') callback(false);
+            }
+        } else {
+            showToast('Không thể kết nối đến server', 'error');
+            if (typeof callback === 'function') callback(false);
+        }
+    };
+    xhr.send('food_id=' + encodeURIComponent(foodId) + '&quantity=' + encodeURIComponent(quantity));
+}
+
+// Xử lý nút thêm vào giỏ hàng
+function bindAddToCartBtn() {
+    document.querySelectorAll('.add-to-cart-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var foodId = this.dataset.foodId;
+            var quantity = 1;
+            addToCartWithQuantity(foodId, quantity, function(success) {
+                if (success) {
+                    showToast('Đã thêm vào giỏ hàng', 'success');
+                }
+            });
         });
     });
+}
 
-    function toggleFavorite(foodId, button) {
-        const icon = button.querySelector('i');
-        if (button.classList.contains('active')) {
-            button.classList.remove('active');
-            icon.classList.remove('fas');
-            icon.classList.add('far');
-        } else {
-            button.classList.add('active');
-            icon.classList.remove('far');
-            icon.classList.add('fas');
-        }
-    }
-});
+bindAddToCartBtn();
 </script>
 <?php else: ?>    <!-- Hiển thị danh sách món ăn trong danh mục -->
     <section class="section-luxury bg-luxury">
