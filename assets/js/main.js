@@ -4,6 +4,150 @@
 if (typeof jQuery === 'undefined') {
 	console.warn('jQuery is not loaded. Some features may not work properly.');
 } else {
+	// Cart Management Functions
+	function addToCart(foodId, foodName, foodPrice, quantity) {
+		$.ajax({
+			url: window.siteUrl + '/cart/add',
+			method: 'POST',
+			data: {
+				food_id: foodId,
+				quantity: quantity,
+				csrf_token: window.csrfToken,
+			},
+			success: function (response) {
+				if (response.success) {
+					showAlert(
+						'success',
+						'Đã thêm ' + foodName + ' vào giỏ hàng'
+					);
+					updateCartDisplay();
+				} else {
+					showAlert('error', response.message || 'Có lỗi xảy ra');
+				}
+			},
+			error: function () {
+				showAlert('error', 'Không thể kết nối đến server');
+			},
+		});
+	}
+
+	window.addToCartWithQuantity = function(foodId, quantity, callback) {
+		$.ajax({
+			url: window.siteUrl + '/cart/add',
+			method: 'POST',
+			data: {
+				food_id: foodId,
+				quantity: quantity,
+				csrf_token: window.csrfToken,
+			},
+			success: function (response) {
+				if (response.success) {
+					showAlert('success', 'Đã thêm vào giỏ hàng');
+					updateCartDisplay();
+					if (typeof callback === 'function') callback(true);
+				} else {
+					showAlert('error', response.message || 'Có lỗi xảy ra');
+					if (typeof callback === 'function') callback(false);
+				}
+			},
+			error: function () {
+				showAlert('error', 'Không thể kết nối đến server');
+				if (typeof callback === 'function') callback(false);
+			},
+		});
+	}
+
+	function updateCartQuantity(foodId, quantity) {
+		$.ajax({
+			url: window.siteUrl + '/cart/update',
+			method: 'POST',
+			data: {
+				food_id: foodId,
+				quantity: quantity,
+				csrf_token: window.csrfToken,
+			},
+			success: function (response) {
+				if (response.success) {
+					updateCartDisplay();
+					location.reload(); // Refresh cart page
+				} else {
+					showAlert('error', response.message || 'Có lỗi xảy ra');
+				}
+			},
+			error: function () {
+				showAlert('error', 'Không thể kết nối đến server');
+			},
+		});
+	}
+
+	function removeFromCart(foodId) {
+		if (confirm('Bạn có chắc muốn xóa món này khỏi giỏ hàng?')) {
+			$.ajax({
+				url: window.siteUrl + '/cart/remove',
+				method: 'POST',
+				data: {
+					food_id: foodId,
+					csrf_token: window.csrfToken,
+				},
+				success: function (response) {
+					if (response.success) {
+						showAlert('success', 'Đã xóa món ăn khỏi giỏ hàng');
+						updateCartDisplay();
+						location.reload(); // Refresh cart page
+					} else {
+						showAlert(
+							'error',
+							response.message || 'Có lỗi xảy ra'
+						);
+					}
+				},
+				error: function () {
+					showAlert('error', 'Không thể kết nối đến server');
+				},
+			});
+		}
+	}
+
+	function updateCartDisplay() {
+		$.ajax({
+			url: window.siteUrl + '/cart/info',
+			method: 'POST',
+			data: {
+				csrf_token: window.csrfToken,
+			},
+			success: function (response) {
+				if (response.success) {
+					$('#cart-count').text(response.count);
+				}
+			},
+		});
+	}
+
+	function applyPromotionCode(code) {
+		$.ajax({
+			url: window.siteUrl + '/promotion/apply',
+			method: 'POST',
+			data: {
+				code: code,
+				csrf_token: window.csrfToken,
+			},
+			success: function (response) {
+				if (response.success) {
+					showAlert('success', 'Mã khuyến mãi đã được áp dụng');
+					location.reload();
+				} else {
+					showAlert(
+						'error',
+						response.message || 'Mã khuyến mãi không hợp lệ'
+					);
+				}
+			},
+			error: function () {
+				showAlert('error', 'Không thể kết nối đến server');
+			},
+		});
+	}
+
 	$(document).ready(function () {
 		// Initialize tooltips
 		var tooltipTriggerList = [].slice.call(
@@ -92,124 +236,6 @@ if (typeof jQuery === 'undefined') {
 		setTimeout(function () {
 			$('.alert').fadeOut();
 		}, 5000);
-
-		// Cart Management Functions
-		function addToCart(foodId, foodName, foodPrice, quantity) {
-			$.ajax({
-				url: window.siteUrl + '/cart/add',
-				method: 'POST',
-				data: {
-					food_id: foodId,
-					quantity: quantity,
-					csrf_token: window.csrfToken,
-				},
-				success: function (response) {
-					if (response.success) {
-						showAlert(
-							'success',
-							'Đã thêm ' + foodName + ' vào giỏ hàng'
-						);
-						updateCartDisplay();
-					} else {
-						showAlert('error', response.message || 'Có lỗi xảy ra');
-					}
-				},
-				error: function () {
-					showAlert('error', 'Không thể kết nối đến server');
-				},
-			});
-		}
-
-		function updateCartQuantity(foodId, quantity) {
-			$.ajax({
-				url: window.siteUrl + '/cart/update',
-				method: 'POST',
-				data: {
-					food_id: foodId,
-					quantity: quantity,
-					csrf_token: window.csrfToken,
-				},
-				success: function (response) {
-					if (response.success) {
-						updateCartDisplay();
-						location.reload(); // Refresh cart page
-					} else {
-						showAlert('error', response.message || 'Có lỗi xảy ra');
-					}
-				},
-				error: function () {
-					showAlert('error', 'Không thể kết nối đến server');
-				},
-			});
-		}
-
-		function removeFromCart(foodId) {
-			if (confirm('Bạn có chắc muốn xóa món này khỏi giỏ hàng?')) {
-				$.ajax({
-					url: window.siteUrl + '/cart/remove',
-					method: 'POST',
-					data: {
-						food_id: foodId,
-						csrf_token: window.csrfToken,
-					},
-					success: function (response) {
-						if (response.success) {
-							showAlert('success', 'Đã xóa món ăn khỏi giỏ hàng');
-							updateCartDisplay();
-							location.reload(); // Refresh cart page
-						} else {
-							showAlert(
-								'error',
-								response.message || 'Có lỗi xảy ra'
-							);
-						}
-					},
-					error: function () {
-						showAlert('error', 'Không thể kết nối đến server');
-					},
-				});
-			}
-		}
-
-		function updateCartDisplay() {
-			$.ajax({
-				url: window.siteUrl + '/cart/info',
-				method: 'POST',
-				data: {
-					csrf_token: window.csrfToken,
-				},
-				success: function (response) {
-					if (response.success) {
-						$('#cart-count').text(response.count);
-					}
-				},
-			});
-		}
-
-		function applyPromotionCode(code) {
-			$.ajax({
-				url: window.siteUrl + '/promotion/apply',
-				method: 'POST',
-				data: {
-					code: code,
-					csrf_token: window.csrfToken,
-				},
-				success: function (response) {
-					if (response.success) {
-						showAlert('success', 'Mã khuyến mãi đã được áp dụng');
-						location.reload();
-					} else {
-						showAlert(
-							'error',
-							response.message || 'Mã khuyến mãi không hợp lệ'
-						);
-					}
-				},
-				error: function () {
-					showAlert('error', 'Không thể kết nối đến server');
-				},
-			});
-		}
 
 		// Form Validation
 		function validateForm(form) {

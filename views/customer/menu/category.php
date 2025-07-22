@@ -301,50 +301,55 @@
 
 <!-- JavaScript for cart functionality -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {    // Add to cart functionality
-    document.querySelectorAll('.add-to-cart').forEach(button => {
-        button.addEventListener('click', function() {
-            const foodId = this.dataset.foodId;
-            const foodName = this.dataset.foodName;
-            const foodPrice = this.dataset.foodPrice;
+function showToast(message, type = 'success') {
+    // Simple toast, replace with your own UI if cần
+    alert(message);
+}
 
-            // Add to cart logic here (you'll need to implement this based on your cart system)
-            addToCart(foodId, foodName, foodPrice);
-        });
-    });
-
-    // Favorite functionality
-    document.querySelectorAll('.favorite-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const foodId = this.dataset.foodId;
-            toggleFavorite(foodId, this);
-        });
-    });
-
-    function addToCart(foodId, foodName, foodPrice) {
-        // Implement your cart logic here
-        // This might involve AJAX calls to your cart controller
-        console.log('Adding to cart:', {foodId, foodName, foodPrice});
-
-        // Show success message
-        alert('Đã thêm ' + foodName + ' vào giỏ hàng!');
-    }
-
-    function toggleFavorite(foodId, button) {
-        // Implement your favorite logic here
-        // This might involve AJAX calls to your user controller
-        const icon = button.querySelector('i');
-
-        if (button.classList.contains('active')) {
-            button.classList.remove('active');
-            icon.classList.remove('fas');
-            icon.classList.add('far');
+function addToCartWithQuantity(foodId, quantity, callback) {
+    // Gọi AJAX trực tiếp
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', window.location.origin + '/cart/add', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if (res.success) {
+                    showToast('Đã thêm vào giỏ hàng', 'success');
+                    if (typeof callback === 'function') callback(true);
+                } else {
+                    showToast(res.message || 'Có lỗi xảy ra', 'error');
+                    if (typeof callback === 'function') callback(false);
+                }
+            } catch(e) {
+                showToast('Lỗi xử lý dữ liệu', 'error');
+                if (typeof callback === 'function') callback(false);
+            }
         } else {
-            button.classList.add('active');
-            icon.classList.remove('far');
-            icon.classList.add('fas');
-        }    }
-});
+            showToast('Không thể kết nối đến server', 'error');
+            if (typeof callback === 'function') callback(false);
+        }
+    };
+    xhr.send('food_id=' + encodeURIComponent(foodId) + '&quantity=' + encodeURIComponent(quantity));
+}
+
+// Xử lý nút thêm vào giỏ hàng
+function bindAddToCartBtn() {
+    document.querySelectorAll('.add-to-cart-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var foodId = this.dataset.foodId;
+            var quantity = 1;
+            addToCartWithQuantity(foodId, quantity, function(success) {
+                if (success) {
+                    showToast('Đã thêm vào giỏ hàng', 'success');
+                }
+            });
+        });
+    });
+}
+
+bindAddToCartBtn();
 </script>
 <?php else: ?>    <!-- Hiển thị danh sách món ăn trong danh mục -->
     <section class="section-luxury bg-luxury">
