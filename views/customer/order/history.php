@@ -9,6 +9,14 @@ $orders = $data['orders'] ?? [];
 // echo '</pre>';
 
 ?>
+<style>
+    .btn {
+    border-radius: 25px;
+    font-weight: 500;
+    padding: 11px 20px;
+    transition: all 0.3s ease;
+}
+</style>
 
 <div class="container my-5">
     <div class="row">
@@ -107,11 +115,13 @@ $orders = $data['orders'] ?? [];
                                    class="btn btn-outline-primary btn-sm flex-fill">
                                     <i class="fas fa-eye me-1"></i>View Details
                                 </a>
-                                <?php if ($order['status'] === 'completed'): ?>
+                                <?php if ($order['status'] !== 'cancelled'): ?>
                                 <button class="btn btn-success btn-sm" onclick="reorderItems(<?= $order['id'] ?>)">
+                                    
                                     <i class="fas fa-redo me-1"></i>Reorder
                                 </button>
-                                <?php elseif ($order['status'] === 'pending'): ?>
+                                <?php endif; ?>
+                                <?php if ($order['status'] === 'pending'): ?>
                                 <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder(<?= $order['id'] ?>)">
                                     <i class="fas fa-times me-1"></i>Cancel
                                 </button>
@@ -289,24 +299,25 @@ function cancelOrder(orderId) {
 }
 
 function reorderItems(orderId) {
-    fetch(`<?= SITE_NAME ?>/order/reorder/${orderId}`, {
+    fetch('<?= SITE_URL ?>/index.php?page=cart&action=reorderFromOrder', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'order_id=' + encodeURIComponent(orderId)
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             showAlert('Items added to cart successfully', 'success');
-            updateCartCount();
+            setTimeout(() => window.location.href = 'index.php?page=cart', 1500);
         } else {
             showAlert(data.message || 'Failed to reorder items', 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('An error occurred while reordering', 'error');    });
+        showAlert('An error occurred while reordering', 'error');
+    });
 }
 </script>

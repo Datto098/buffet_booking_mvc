@@ -32,7 +32,7 @@ $current_page = (int)$current_page;
                         <option value="month">This Month</option>
                         <option value="past">Past Bookings</option>
                     </select>
-                    <a href="<?= SITE_NAME ?>/booking" class="btn btn-primary btn-sm">
+                    <a href="<?php echo SITE_URL; ?>/booking" class="btn btn-primary btn-sm">
                         <i class="fas fa-plus me-1"></i>New Booking
                     </a>
                 </div>
@@ -45,7 +45,7 @@ $current_page = (int)$current_page;
                 </div>
                 <h4 class="text-muted mb-3">No Bookings Found</h4>
                 <p class="text-muted mb-4">You haven't made any table reservations yet. Reserve a table to enjoy our buffet!</p>
-                <a href="<?= SITE_NAME ?>/booking" class="btn btn-primary">
+                <a href="<?php echo SITE_URL; ?>/booking" class="btn btn-primary">
                     <i class="fas fa-calendar-plus me-2"></i>Make a Reservation
                 </a>
             </div>
@@ -87,7 +87,7 @@ $current_page = (int)$current_page;
                                 <?php if (!empty($booking['booking_location'])): ?>
                                 <div class="d-flex align-items-center mb-2">
                                     <i class="fas fa-map-marker-alt me-2 text-primary"></i>
-                                    <span><?= htmlspecialchars(substr($booking['booking_location'], 0, 50)) ?><?= strlen($booking['booking_location']) > 50 ? '...' : '' ?></span>
+                                    <span><?= htmlspecialchars(($booking['booking_location'])) ?></span>
                                 </div>
                                 <?php endif; ?>
                                 <?php if (!empty($booking['table_number'])): ?>
@@ -114,9 +114,9 @@ $current_page = (int)$current_page;
 
                                 <?php if ($booking['status'] === 'pending' || $booking['status'] === 'confirmed'): ?>
                                     <?php if (strtotime($booking['booking_date'] . ' ' . $booking['booking_time']) > time() + 3600): // At least 1 hour before ?>
-                                    <button class="btn btn-outline-warning btn-sm" onclick="modifyBooking(<?= $booking['id'] ?>)">
+                                    <!-- <button class="btn btn-outline-warning btn-sm" onclick="modifyBooking(<?= $booking['id'] ?>)">
                                         <i class="fas fa-edit me-1"></i>Modify
-                                    </button>
+                                    </button> -->
                                     <button class="btn btn-outline-danger btn-sm" onclick="cancelBooking(<?= $booking['id'] ?>)">
                                         <i class="fas fa-times me-1"></i>Cancel
                                     </button>

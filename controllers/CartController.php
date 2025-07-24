@@ -57,9 +57,66 @@ class CartController extends BaseController {
         ];
 
         $this->loadView('customer/cart/index', $data);
-    }    public function add() {
-        error_log("CartController add() called");
+    } // <-- Đóng hàm index
 
+    // Thêm các món từ đơn hàng cũ vào giỏ hàng hiện tại
+    public function reorderFromOrder() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['error' => 'Method not allowed'], 405);
+        }
+
+        $orderId = intval($_POST['order_id'] ?? 0);
+        if ($orderId <= 0) {
+            $this->jsonResponse(['error' => 'Invalid order ID'], 400);
+        }
+
+        // Lấy model Order
+        require_once __DIR__ . '/../models/Order.php';
+        $orderModel = new Order();
+        $order = $orderModel->getOrderWithItems($orderId);
+        if (!$order || empty($order['items'])) {
+            $this->jsonResponse(['error' => 'Order not found or empty'], 404);
+        }
+
+        $added = 0;
+        $skipped = [];
+        foreach ($order['items'] as $item) {
+            $foodId = intval($item['food_item_id'] ?? 0);
+            $quantity = intval($item['quantity'] ?? 1);
+            if ($foodId > 0 && $quantity > 0) {
+                $food = $this->foodModel->getFoodDetails($foodId);
+                if ($food && $food['is_available']) {
+                    // Kiểm tra tồn kho nếu có
+                    if (isset($food['stock_quantity']) && $food['stock_quantity'] > 0) {
+                        $currentCart = $this->getCart();
+                        $currentQuantity = $currentCart[$foodId] ?? 0;
+                        if (($currentQuantity + $quantity) > $food['stock_quantity']) {
+                            $skipped[] = $food['name'];
+                            continue;
+                        }
+                    }
+                    $this->addToCart($foodId, $quantity);
+                    $added++;
+                } else {
+                    $skipped[] = $foodId;
+                }
+            }
+        }
+
+        $cartInfo = $this->getCartInfo();
+        $msg = 'Đã thêm ' . $added . ' món vào giỏ hàng.';
+        if (!empty($skipped)) {
+            $msg .= ' Một số món không khả dụng hoặc vượt quá tồn kho.';
+        }
+        $this->jsonResponse([
+            'success' => true,
+            'message' => $msg,
+            'cartInfo' => $cartInfo,
+            'skipped' => $skipped
+        ]);
+    } 
+
+    public function add() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             error_log("CartController add() - Not POST method");
             $this->jsonResponse(['error' => 'Method not allowed'], 405);

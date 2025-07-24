@@ -265,24 +265,25 @@ function cancelOrder(orderId) {
 }
 
 function reorderItems(orderId) {
-    fetch(`<?= SITE_NAME ?>/order/reorder/${orderId}`, {
+    fetch('index.php?page=cart&action=reorderFromOrder', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'order_id=' + encodeURIComponent(orderId)
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             showAlert('Items added to cart successfully', 'success');
-            setTimeout(() => window.location.href = '<?= SITE_NAME ?>/cart', 1500);
+            setTimeout(() => window.location.href = 'index.php?page=cart', 1500);
         } else {
             showAlert(data.message || 'Failed to reorder items', 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('An error occurred while reordering', 'error');    });
+        showAlert('An error occurred while reordering', 'error');
+    });
 }
 </script>

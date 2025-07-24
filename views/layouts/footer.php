@@ -79,7 +79,7 @@
     <!-- Luxury Smooth Scrolling -->
     <script src="<?php echo SITE_URL; ?>/assets/js/luxury-scroll.js"></script>
     <!-- Custom JS -->
-    <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script> <!-- CSRF Token for AJAX requests -->
+    
     <script>
         window.csrfToken = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
         window.siteUrl = '<?php echo SITE_URL; ?>';
