@@ -22,13 +22,13 @@ echo "Order ID: {$_POST['order_id']}\n";
 
 try {
     $controller = new OrderController();
-    
+
     // Capture output to prevent redirect
     ob_start();
     $controller->cancel();
     $output = ob_get_contents();
     ob_end_clean();
-    
+
     echo "Method executed successfully!\n";
     echo "Session messages:\n";
     if (isset($_SESSION['success'])) {
@@ -37,12 +37,12 @@ try {
     if (isset($_SESSION['error'])) {
         echo "  Error: {$_SESSION['error']}\n";
     }
-    
+
     echo "Output length: " . strlen($output) . " characters\n";
     if (strlen($output) > 0) {
         echo "Output preview: " . substr($output, 0, 200) . "...\n";
     }
-    
+
 } catch (Exception $e) {
     echo "Exception: " . $e->getMessage() . "\n";
 }

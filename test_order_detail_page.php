@@ -21,33 +21,33 @@ echo "Testing OrderController->detail() for order ID 8...\n";
 
 try {
     $controller = new OrderController();
-    
+
     ob_start();
     $controller->detail();
     $output = ob_get_contents();
     ob_end_clean();
-    
+
     echo "Page generated successfully!\n";
     echo "Output length: " . strlen($output) . " characters\n";
-    
+
     // Check if cancel button is present
     $hasCancelButton = strpos($output, 'Cancel Order') !== false;
     echo "Contains 'Cancel Order' button: " . ($hasCancelButton ? 'Yes' : 'No') . "\n";
-    
+
     // Check order status display
     if (preg_match('/status.*?cancelled/i', $output)) {
         echo "Shows order status as cancelled: Yes\n";
     } else {
         echo "Shows order status as cancelled: No\n";
     }
-    
+
     // Check if the condition is correct
     if (preg_match('/pending.*?Cancel Order/s', $output)) {
         echo "Cancel button is conditional on pending status: Yes\n";
     } else {
         echo "Cancel button condition check: Not found or different logic\n";
     }
-    
+
     // Show a snippet around any cancel button
     if ($hasCancelButton) {
         $pos = strpos($output, 'Cancel Order');
@@ -56,7 +56,7 @@ try {
         echo "\nContext around 'Cancel Order':\n";
         echo substr($output, $start, $length) . "\n";
     }
-    
+
 } catch (Exception $e) {
     echo "Exception: " . $e->getMessage() . "\n";
 }
