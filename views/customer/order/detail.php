@@ -236,7 +236,7 @@ function cancelOrder(orderId) {
         // Create form data
         const formData = new FormData();
         formData.append('order_id', orderId);
-        
+
         fetch(`<?= SITE_URL ?>/index.php?page=order&action=cancel`, {
             method: 'POST',
             body: formData

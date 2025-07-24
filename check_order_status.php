@@ -8,7 +8,7 @@ require_once 'models/Order.php';
 try {
     $orderModel = new Order();
     $order = $orderModel->findById(8);
-    
+
     if ($order) {
         echo "Order found:\n";
         echo "  ID: {$order['id']}\n";
@@ -16,13 +16,13 @@ try {
         echo "  Status: {$order['status']}\n";
         echo "  Total: {$order['total']}\n";
         echo "  Created: {$order['created_at']}\n";
-        
+
         echo "\nCan be cancelled: " . (in_array($order['status'], ['pending', 'confirmed']) ? 'Yes' : 'No') . "\n";
         echo "Valid statuses for cancellation: pending, confirmed\n";
         echo "Current status: {$order['status']}\n";
     } else {
         echo "Order with ID 8 not found!\n";
-        
+
         // Check what orders exist
         echo "\nChecking available orders...\n";
         $orders = $orderModel->getOrdersByUser(1, 10, 0);
@@ -31,7 +31,7 @@ try {
             echo "  Order {$order['id']}: status = {$order['status']}\n";
         }
     }
-    
+
 } catch (Exception $e) {
     echo "Error: " . $e->getMessage() . "\n";
 }
