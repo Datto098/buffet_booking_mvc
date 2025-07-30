@@ -237,11 +237,22 @@
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                     <ul class="dropdown-menu">
-                                                        <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'confirmed')">Mark Confirmed</a></li>
-                                                        <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'preparing')">Mark Preparing</a></li>
-                                                        <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'ready')">Mark Ready</a></li>
-                                                        <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'delivered')">Mark Delivered</a></li>
-                                                        <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'completed')">Mark Completed</a></li>
+                                                        <?php $currentStatus = $order['status']; ?>
+                                                        <?php if ($currentStatus === 'pending'): ?>
+                                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'confirmed')">Mark Confirmed</a></li>
+                                                        <?php endif; ?>
+                                                        <?php if (in_array($currentStatus, ['pending','confirmed'])): ?>
+                                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'preparing')">Mark Preparing</a></li>
+                                                        <?php endif; ?>
+                                                        <?php if (in_array($currentStatus, ['pending','confirmed','preparing'])): ?>
+                                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'ready')">Mark Ready</a></li>
+                                                        <?php endif; ?>
+                                                        <?php if (in_array($currentStatus, ['pending','confirmed','preparing','ready'])): ?>
+                                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'delivered')">Mark Delivered</a></li>
+                                                        <?php endif; ?>
+                                                        <?php if (in_array($currentStatus, ['pending','confirmed','preparing','ready','delivered'])): ?>
+                                                            <li><a class="dropdown-item" href="#" onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'completed')">Mark Completed</a></li>
+                                                        <?php endif; ?>
                                                         <li>
                                                             <hr class="dropdown-divider">
                                                         </li>

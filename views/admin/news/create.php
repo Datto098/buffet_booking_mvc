@@ -64,11 +64,14 @@
                         Nội Dung <span class="text-danger">*</span>
                         <small class="text-muted">(Sử dụng Rich Text Editor)</small>
                     </label>
-                    <textarea class="form-control" id="content" name="content" rows="12" required
-                              placeholder="Nhập nội dung chi tiết của bài viết..."><?php echo isset($_SESSION['form_data']['content']) ? htmlspecialchars($_SESSION['form_data']['content']) : ''; ?></textarea>
+                    <!-- Quill Editor Container -->
+                    <div id="quill-editor" style="height:400px;background:#fff;"></div>
+                    <textarea class="form-control" id="content" name="content" rows="12" required style="display:none;">
+                        <?php echo isset($_SESSION['form_data']['content']) ? htmlspecialchars($_SESSION['form_data']['content']) : ''; ?>
+                    </textarea>
                     <small class="text-muted">
                         <i class="fas fa-info-circle me-1"></i>
-                        Sử dụng rich text editor để định dạng văn bản, thêm liên kết, bảng, và nhiều hơn nữa.
+                        Sử dụng rich text editor Quill để định dạng văn bản, thêm liên kết, bảng, và nhiều hơn nữa.
                     </small>
                 </div>
 
@@ -114,97 +117,52 @@
         </div>
     </div>
 
+<!-- QuillJS CDN & Image Resize Module -->
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
 <script>
-    // Set up site URL for admin functions
     window.SITE_URL = '<?= SITE_URL ?>';
-
-    // Initialize news create form
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Page loaded, initializing CKEditor...');
-
-        // Initialize CKEditor for content textarea
-        if (typeof CKEDITOR !== 'undefined') {
-            console.log('CKEditor is available, replacing textarea...');
-
-            CKEDITOR.replace('content', {
-                height: 400,
-                language: 'vi',
+        // Khởi tạo Quill
+        var quill = new Quill('#quill-editor', {
+            theme: 'snow',
+            placeholder: 'Nhập nội dung chi tiết của bài viết...',
+            modules: {
                 toolbar: [
-                    ['Bold', 'Italic', 'Underline', 'Strike'],
-                    ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
-                    ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
-                    ['Link', 'Unlink'],
-                    ['Table', 'HorizontalRule', 'SpecialChar'],
-                    ['TextColor', 'BGColor'],
-                    ['Styles', 'Format', 'Font', 'FontSize'],
-                    ['Maximize', 'Source']
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link', 'image', 'video'],
+                    ['blockquote', 'code-block'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    ['clean']
                 ],
-                fontSize_sizes: '12/12px;14/14px;16/16px;18/18px;20/20px;24/24px;28/28px;32/32px;36/36px',
-                format_tags: 'p;h1;h2;h3;h4;h5;h6;pre;address;div',
-                removeButtons: 'Save,NewPage,Preview,Print,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Flash,Smiley,PageBreak,Iframe',
-                resize_enabled: true,
-                removePlugins: 'elementspath',
-                on: {
-                    'instanceReady': function(evt) {
-                        console.log('CKEditor is ready for news creation!');
-
-                        // Show success notification
-                        const notification = document.createElement('div');
-                        notification.className = 'alert alert-success alert-dismissible fade show';
-                        notification.style.position = 'fixed';
-                        notification.style.top = '20px';
-                        notification.style.right = '20px';
-                        notification.style.zIndex = '9999';
-                        notification.innerHTML = `
-                            <i class="fas fa-check-circle me-2"></i>
-                            Rich Text Editor đã sẵn sàng để tạo nội dung!
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        `;
-                        document.body.appendChild(notification);
-
-                        // Auto-hide notification after 3 seconds
-                        setTimeout(() => {
-                            if (notification.parentNode) {
-                                notification.remove();
-                            }
-                        }, 3000);
-                    }
+                imageResize: {
+                    // module options (default)
                 }
-            });
-        } else {
-            console.error('CKEditor not loaded - fallback to plain textarea');
+            }
+        });
 
-            // Show error notification
-            const errorNotification = document.createElement('div');
-            errorNotification.className = 'alert alert-warning alert-dismissible fade show';
-            errorNotification.style.position = 'fixed';
-            errorNotification.style.top = '20px';
-            errorNotification.style.right = '20px';
-            errorNotification.style.zIndex = '9999';
-            errorNotification.innerHTML = `
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                Rich Text Editor không tải được. Đang sử dụng textarea thông thường.
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.body.appendChild(errorNotification);
+        // Nếu có dữ liệu cũ thì set vào Quill
+        var oldContent = document.getElementById('content').value.trim();
+        if (oldContent) {
+            quill.root.innerHTML = oldContent;
         }
 
-        // Initialize form validation and submission
+        // Khi submit form, lấy HTML từ Quill gán vào textarea content
         const form = document.querySelector('form');
         if (form) {
             form.addEventListener('submit', function(e) {
-                // Update CKEditor content before submit
-                if (CKEDITOR.instances.content) {
-                    CKEDITOR.instances.content.updateElement();
-
-                    // Validate content is not empty
-                    const content = CKEDITOR.instances.content.getData().trim();
-                    if (!content || content === '<p></p>' || content === '<p>&nbsp;</p>') {
-                        e.preventDefault();
-                        alert('Vui lòng nhập nội dung bài viết!');
-                        return false;
-                    }
+                // Lấy HTML từ Quill
+                var html = quill.root.innerHTML.trim();
+                if (!html || html === '<p><br></p>') {
+                    e.preventDefault();
+                    alert('Vui lòng nhập nội dung bài viết!');
+                    return false;
                 }
+                document.getElementById('content').value = html;
 
                 // Validate title
                 const title = document.getElementById('title').value.trim();

@@ -253,12 +253,16 @@
                                         <select class="form-select form-select-sm status-select"
                                             data-order-id="<?php echo $order['id']; ?>"
                                             data-current-status="<?php echo $order['status'] ?? 'pending'; ?>">
-                                            <option value="pending" <?php echo ($order['status'] ?? 'pending') === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                            <option value="confirmed" <?php echo ($order['status'] ?? 'pending') === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
-                                            <option value="preparing" <?php echo ($order['status'] ?? 'pending') === 'preparing' ? 'selected' : ''; ?>>Preparing</option>
-                                            <option value="ready" <?php echo ($order['status'] ?? 'pending') === 'ready' ? 'selected' : ''; ?>>Ready</option>
-                                            <option value="completed" <?php echo ($order['status'] ?? 'pending') === 'completed' ? 'selected' : ''; ?>>Completed</option>
-                                            <option value="cancelled" <?php echo ($order['status'] ?? 'pending') === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                            <?php
+                                            $currentStatus = $order['status'] ?? 'pending';
+                                            $disablePending = in_array($currentStatus, ['confirmed','preparing','ready','completed','cancelled']);
+                                            ?>
+                                            <option value="pending" <?php echo $currentStatus === 'pending' ? 'selected' : ''; ?> <?php echo $disablePending ? 'disabled style="opacity:0.5;"' : ''; ?>>Pending</option>
+                                            <option value="confirmed" <?php echo $currentStatus === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
+                                            <option value="preparing" <?php echo $currentStatus === 'preparing' ? 'selected' : ''; ?>>Preparing</option>
+                                            <option value="ready" <?php echo $currentStatus === 'ready' ? 'selected' : ''; ?>>Ready</option>
+                                            <option value="completed" <?php echo $currentStatus === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                            <option value="cancelled" <?php echo $currentStatus === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                                         </select>
                                     </div>
                                 </td>
