@@ -375,6 +375,10 @@ function getStatusText($status)
                     <input type="hidden" name="id" id="updateOrderId">
                     <div class="mb-3">
                         <label class="form-label">Trạng thái mới</label>
+                        <?php
+                        // Lấy trạng thái hiện tại từ JS khi mở modal, nhưng khi render lần đầu thì chưa có
+                        // Nên sẽ render tất cả, và dùng JS để disable option nếu cần
+                        ?>
                         <select class="form-select" name="status" id="updateOrderStatus" required>
                             <option value="pending">Chờ xử lý</option>
                             <option value="preparing">Đang chuẩn bị</option>
@@ -396,7 +400,20 @@ function getStatusText($status)
 <script>
     function showUpdateStatusModal(id, status) {
         document.getElementById('updateOrderId').value = id;
-        document.getElementById('updateOrderStatus').value = status;
+        var select = document.getElementById('updateOrderStatus');
+        select.value = status;
+        // Disable option 'pending' nếu trạng thái hiện tại khác 'pending'
+        for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === 'pending') {
+                if (status !== 'pending') {
+                    select.options[i].disabled = true;
+                    select.options[i].style.opacity = 0.5;
+                } else {
+                    select.options[i].disabled = false;
+                    select.options[i].style.opacity = 1;
+                }
+            }
+        }
         var modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
         modal.show();
     }
