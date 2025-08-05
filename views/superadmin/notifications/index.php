@@ -134,6 +134,7 @@
                                     <option value="">All Types</option>
                                     <option value="new_order" <?php echo ($currentType === 'new_order') ? 'selected' : ''; ?>>New Orders</option>
                                     <option value="new_booking" <?php echo ($currentType === 'new_booking') ? 'selected' : ''; ?>>New Bookings</option>
+                                    <option value="booking_status_update" <?php echo ($currentType === 'booking_status_update') ? 'selected' : ''; ?>>Booking Status Updates</option>
                                     <option value="system" <?php echo ($currentType === 'system') ? 'selected' : ''; ?>>System</option>
                                 </select>
                             </div>
@@ -217,12 +218,14 @@
                             $typeClass = match($notification['type']) {
                                 'new_order' => 'success',
                                 'new_booking' => 'info',
+                                'booking_status_update' => 'warning',
                                 'system' => 'warning',
                                 default => 'secondary'
                             };
                             $typeIcon = match($notification['type']) {
                                 'new_order' => 'shopping-cart',
                                 'new_booking' => 'calendar-alt',
+                                'booking_status_update' => 'calendar-check',
                                 'system' => 'cog',
                                 default => 'bell'
                             };
@@ -268,6 +271,18 @@
                                                        class="btn btn-outline-primary btn-sm"
                                                        onclick="markAsRead(<?php echo $notification['id']; ?>)">
                                                         <i class="fas fa-eye"></i> View Order
+                                                    </a>
+                                                <?php elseif ($notification['type'] === 'new_booking' && isset($data['url'])): ?>
+                                                    <a href="<?php echo SITE_URL . $data['url']; ?>"
+                                                       class="btn btn-outline-primary btn-sm"
+                                                       onclick="markAsRead(<?php echo $notification['id']; ?>)">
+                                                        <i class="fas fa-calendar-check"></i> View Booking
+                                                    </a>
+                                                <?php elseif ($notification['type'] === 'booking_status_update' && isset($data['url'])): ?>
+                                                    <a href="<?php echo SITE_URL . $data['url']; ?>"
+                                                       class="btn btn-outline-warning btn-sm"
+                                                       onclick="markAsRead(<?php echo $notification['id']; ?>)">
+                                                        <i class="fas fa-calendar-check"></i> View Status
                                                     </a>
                                                 <?php endif; ?>
 

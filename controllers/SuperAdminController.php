@@ -349,10 +349,16 @@ class SuperAdminController extends BaseController
     public function updateOrderStatus($id)
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $status = $_POST['status'] ?? '';
-            $validStatuses = ['pending', 'processing', 'preparing', 'ready', 'delivered', 'cancelled'];
+            // Đọc JSON data từ request body
+            $input = json_decode(file_get_contents('php://input'), true);
+            $status = $input['status'] ?? $_POST['status'] ?? '';
+
+            error_log("UpdateOrderStatus - ID: $id, Status: $status, Input: " . json_encode($input));
+
+            $validStatuses = ['pending', 'confirmed', 'processing', 'preparing', 'ready', 'delivered', 'completed', 'cancelled'];
 
             if (!in_array($status, $validStatuses)) {
+                error_log("Invalid status: $status");
                 $this->jsonResponse(['success' => false, 'message' => 'Invalid status'], 400);
                 return;
             }
@@ -362,6 +368,8 @@ class SuperAdminController extends BaseController
             } else {
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to update order status'], 500);
             }
+        } else {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
     }
     public function orderDetails($id)
@@ -432,8 +440,16 @@ class SuperAdminController extends BaseController
     public function updateBookingStatus($id)
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $status = $_POST['status'] ?? '';
-            $validStatuses = ['pending', 'confirmed', 'cancelled'];
+            // Handle both JSON and form data
+            $input = file_get_contents('php://input');
+            if (!empty($input)) {
+                $data = json_decode($input, true);
+                $status = $data['status'] ?? '';
+            } else {
+                $status = $_POST['status'] ?? '';
+            }
+
+            $validStatuses = ['pending', 'confirmed', 'cancelled', 'seated', 'completed', 'no_show'];
 
             if (!in_array($status, $validStatuses)) {
                 $this->jsonResponse(['success' => false, 'message' => 'Invalid status'], 400);
@@ -936,7 +952,7 @@ class SuperAdminController extends BaseController
                 'description' => '',
                 'opening_hours' => '09:00 - 22:00',
                 'capacity' => 100,
-                'logo_url' => '', 
+                'logo_url' => '',
                 'cover_images' => '',
                 'facebook' => '',
                 'instagram' => '',
@@ -964,7 +980,7 @@ class SuperAdminController extends BaseController
 
         $this->loadSuperAdminView('restaurant', $data);
 
-        
+
 
     }
 
@@ -2093,5 +2109,20 @@ class SuperAdminController extends BaseController
         // Nếu không phải POST thì chuyển về danh sách
         $this->redirect('/superadmin/addresses');
     }
-    
+
+    // ==========================================
+    // HELPER METHODS
+    // ==========================================
+
+    /**
+     * Send JSON response
+     */
+    protected function jsonResponse($data, $statusCode = 200)
+    {
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
+
 }

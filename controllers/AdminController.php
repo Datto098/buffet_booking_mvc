@@ -9,6 +9,7 @@ require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Booking.php';
 require_once __DIR__ . '/../models/Table.php';
 require_once __DIR__ . '/../models/InternalMessage.php';
+require_once __DIR__ . '/../models/Notification.php';
 require_once __DIR__ . '/../helpers/mail_helper.php';
 require_once __DIR__ . '/../helpers/pdf_helper.php';
 
@@ -1092,6 +1093,10 @@ class AdminController extends BaseController
         try {
             $bookingId = $this->bookingModel->createBooking($bookingData);
             if ($bookingId) {
+                // Create notification for super admin
+                $notificationModel = new Notification();
+                $notificationModel->createBookingNotification($bookingId);
+
                 $_SESSION['success'] = 'Booking created successfully';
                 header('Location: /admin/bookings');
             } else {

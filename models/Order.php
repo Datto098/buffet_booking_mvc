@@ -161,7 +161,7 @@ class Order extends BaseModel
     }
     public function getOrderItems($orderId)
     {
-        $sql = "SELECT oi.*, f.name AS food_name, f.image, f.description
+        $sql = "SELECT oi.*, f.name, f.image, f.description
             FROM order_items oi
             LEFT JOIN food_items f ON oi.food_item_id = f.id
             WHERE oi.order_id = :order_id";
@@ -324,7 +324,6 @@ class Order extends BaseModel
                 LEFT JOIN users u ON o.user_id = u.id
                 LEFT JOIN order_items oi ON o.id = oi.order_id";
 
-
         if ($status) {
             $sql .= " WHERE o.status = :status";
         }
@@ -347,7 +346,14 @@ class Order extends BaseModel
         }
 
         $stmt->execute();
-        return $stmt->fetchAll();
+        $orders = $stmt->fetchAll();
+
+        // Lấy thông tin items cho mỗi order
+        foreach ($orders as &$order) {
+            $order['items'] = $this->getOrderItems($order['id']);
+        }
+
+        return $orders;
     }    public function count($condition = null, $value = null) {
         $sql = "SELECT COUNT(*) FROM {$this->table}";
 
@@ -568,7 +574,14 @@ class Order extends BaseModel
             }
         }
         $stmt->execute();
-        return $stmt->fetchAll();
+        $orders = $stmt->fetchAll();
+
+        // Lấy thông tin items cho mỗi order
+        foreach ($orders as &$order) {
+            $order['items'] = $this->getOrderItems($order['id']);
+        }
+
+        return $orders;
     }
 
     // Count filtered orders

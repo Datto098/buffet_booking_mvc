@@ -31,6 +31,8 @@ class InvoiceController extends BaseController
         try {
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $orderId = $this->sanitize($_POST['order_id'] ?? '');
+                $customerType = $this->sanitize($_POST['customer_type'] ?? 'walkin');
+                $bookingId = !empty($_POST['booking_id']) ? (int)$_POST['booking_id'] : null;
                 $adultCount = (int)$this->sanitize($_POST['adult_count'] ?? 0);
                 $childCount = (int)$this->sanitize($_POST['child_count'] ?? 0);
                 $additionalCharges = $_POST['additional_charges'] ?? [];
@@ -38,9 +40,9 @@ class InvoiceController extends BaseController
                 $notes = $this->sanitize($_POST['notes'] ?? '');
 
                 // Debug logging
-                error_log("Invoice validation - OrderID: '$orderId', AdultCount: $adultCount, ChildCount: $childCount");
+                error_log("Invoice validation - OrderID: '$orderId', CustomerType: '$customerType', BookingID: $bookingId, AdultCount: $adultCount, ChildCount: $childCount");
 
-                // Validate input - allow 0 people but not negative
+                // Validate input
                 if (empty($orderId)) {
                     throw new Exception('Order ID không được để trống');
                 }
@@ -51,6 +53,30 @@ class InvoiceController extends BaseController
 
                 if ($adultCount == 0 && $childCount == 0) {
                     throw new Exception('Phải có ít nhất 1 người (người lớn hoặc trẻ em)');
+                }
+
+                // Validate booking for booking customers
+                if ($customerType === 'booking') {
+                    if (empty($bookingId)) {
+                        throw new Exception('Vui lòng chọn booking');
+                    }
+
+                    // Check if booking exists and is valid
+                    $db = Database::getInstance()->getConnection();
+                    $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ? AND status IN ('confirmed', 'seated')");
+                    $stmt->execute([$bookingId]);
+                    $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                    if (!$booking) {
+                        throw new Exception('Booking không tồn tại hoặc chưa được xác nhận');
+                    }
+
+                    // Check if booking already has invoice
+                    $stmt2 = $db->prepare("SELECT id FROM invoices WHERE booking_id = ?");
+                    $stmt2->execute([$bookingId]);
+                    if ($stmt2->rowCount() > 0) {
+                        throw new Exception('Booking này đã có hóa đơn');
+                    }
                 }
 
                 // Kiểm tra order có tồn tại không
@@ -68,25 +94,39 @@ class InvoiceController extends BaseController
                 // Tính toán giá buffet
                 $buffetCalculation = $this->calculateBuffetPrice($adultCount, $childCount);
 
+                // Calculate discount for booking customers (15% already paid)
+                $buffetDiscount = 0;
+                if ($customerType === 'booking') {
+                    $buffetDiscount = round($buffetCalculation['total'] * 0.15);
+                }
+
                 // Tính toán phí phát sinh
                 $additionalCalculation = $this->calculateAdditionalCharges($additionalCharges);
+
+                // Calculate final totals
+                $finalBuffetTotal = $buffetCalculation['total'] - $buffetDiscount;
+                $subtotal = $finalBuffetTotal + ($order['total_amount'] ?? 0) + $additionalCalculation['total'];
 
                 // Tạo hóa đơn
                 $invoiceData = [
                     'order_id' => $orderId,
+                    'booking_id' => $bookingId,
+                    'customer_type' => $customerType,
+                    'is_prepaid' => $customerType === 'booking' ? 1 : 0,
                     'invoice_number' => $this->generateInvoiceNumber(),
                     'adult_count' => $adultCount,
                     'child_count' => $childCount,
                     'adult_price' => $buffetCalculation['adult_price'],
                     'child_price' => $buffetCalculation['child_price'],
                     'buffet_total' => $buffetCalculation['total'],
+                    'buffet_discount' => $buffetDiscount,
                     'food_total' => $order['total_amount'] ?? 0,
                     'additional_charges' => json_encode($additionalCalculation['charges']),
                     'additional_total' => $additionalCalculation['total'],
-                    'subtotal' => $buffetCalculation['total'] + ($order['total_amount'] ?? 0) + $additionalCalculation['total'],
+                    'subtotal' => $subtotal,
                     'tax_rate' => 0.00, // Có thể config sau
                     'tax_amount' => 0.00,
-                    'total_amount' => $buffetCalculation['total'] + ($order['total_amount'] ?? 0) + $additionalCalculation['total'],
+                    'total_amount' => $subtotal,
                     'payment_method' => $paymentMethod,
                     'payment_status' => 'pending',
                     'notes' => $notes,
@@ -95,13 +135,21 @@ class InvoiceController extends BaseController
 
                 $invoiceId = $this->invoiceModel->create($invoiceData);
 
+                // If booking customer, update booking status to 'seated'
+                if ($customerType === 'booking' && $bookingId) {
+                    $stmt = $db->prepare("UPDATE bookings SET status = 'seated' WHERE id = ?");
+                    $stmt->execute([$bookingId]);
+                }
+
                 // Trả về JSON response
                 header('Content-Type: application/json');
                 echo json_encode([
                     'success' => true,
                     'message' => 'Tạo hóa đơn thành công',
                     'invoice_id' => $invoiceId,
-                    'invoice_number' => $invoiceData['invoice_number']
+                    'invoice_number' => $invoiceData['invoice_number'],
+                    'customer_type' => $customerType,
+                    'discount_applied' => $buffetDiscount > 0 ? $buffetDiscount : null
                 ]);
                 return;
             }
