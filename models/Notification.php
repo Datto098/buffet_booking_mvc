@@ -222,4 +222,63 @@ class Notification extends BaseModel {
 
         return $stmt->fetchAll();
     }
+
+    /**
+     * Create notification for new booking
+     */
+    public function createBookingNotification($bookingId)
+    {
+        try {
+            // Get booking details
+            $bookingModel = new Booking();
+            $booking = $bookingModel->getBookingDetails($bookingId);
+
+            if (!$booking) {
+                return false;
+            }
+
+            // Get all super_admin users
+            $userModel = new User();
+            $superAdmins = $userModel->getUsersByRole('super_admin');
+
+            if (empty($superAdmins)) {
+                return false;
+            }
+
+            $title = 'New Booking Created';
+            $message = "A new booking has been created by {$booking['customer_name']} for " .
+                      date('M j, Y \a\t g:i A', strtotime($booking['booking_date'] . ' ' . $booking['booking_time'])) .
+                      " ({$booking['guest_count']} guests)";
+
+            $data = [
+                'booking_id' => $bookingId,
+                'customer_name' => $booking['customer_name'],
+                'reservation_time' => $booking['booking_date'] . ' ' . $booking['booking_time'],
+                'guest_count' => $booking['guest_count'],
+                'url' => "/admin/bookings?id={$bookingId}"
+            ];
+
+            $success = true;
+            foreach ($superAdmins as $admin) {
+                $result = $this->create([
+                    'user_id' => $admin['id'],
+                    'type' => 'new_booking',
+                    'title' => $title,
+                    'message' => $message,
+                    'data' => json_encode($data)
+                ]);
+
+                if (!$result) {
+                    $success = false;
+                    error_log("Failed to create booking notification for admin ID: " . $admin['id']);
+                }
+            }
+
+            return $success;
+
+        } catch (Exception $e) {
+            error_log("Error creating booking notification: " . $e->getMessage());
+            return false;
+        }
+    }
 }

@@ -201,7 +201,17 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge bg-secondary"><?php echo $order['item_count'] ?? 0; ?> items</span>
+                                            <?php
+                                            $itemCount = 0;
+                                            if (!empty($order['items'])) {
+                                                $itemCount = count($order['items']);
+                                            } elseif (isset($order['item_count'])) {
+                                                $itemCount = $order['item_count'];
+                                            } elseif (isset($order['total_items'])) {
+                                                $itemCount = $order['total_items'];
+                                            }
+                                            ?>
+                                            <span class="badge bg-secondary"><?php echo $itemCount; ?> items</span>
                                             <?php if (!empty($order['items'])): ?>
                                                 <div class="small text-muted mt-1">
                                                     <?php

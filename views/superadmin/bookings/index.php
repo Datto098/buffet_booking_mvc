@@ -248,10 +248,13 @@
                                                         <li><a class="dropdown-item text-danger" href="#" onclick="updateBookingStatus(<?php echo $booking['id']; ?>, 'cancelled')">Cancel Booking</a></li>
                                                     </ul>
                                                 </div>
+                                                <!-- Assign Table button - Hidden as requested -->
+                                                <?php /*
                                                 <button type="button" class="btn btn-sm btn-outline-warning"
                                                     onclick="assignTable(<?php echo $booking['id']; ?>)">
                                                     <i class="fas fa-chair"></i>
                                                 </button>
+                                                */ ?>
                                             </div>
                                         </td>
                                     </tr>
@@ -346,6 +349,7 @@
 
 <script>
      window.SITE_URL = '<?= SITE_URL ?>';
+     window.csrfToken = '<?= $csrf_token ?? '' ?>';
     function refreshBookings() {
         location.reload();
     }
@@ -395,13 +399,20 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-Token': window.csrfToken || ''
                     },
                     body: JSON.stringify({
-                        status: status
+                        status: status,
+                        csrf_token: window.csrfToken || ''
                     })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         location.reload();
@@ -411,7 +422,7 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Error updating booking status');
+                    alert('Error updating booking status: ' + error.message);
                 });
         }
     }

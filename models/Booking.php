@@ -484,15 +484,30 @@ class Booking extends BaseModel {
             'booking_location' => $bookingData['booking_location'] ?? null,
             'special_requests' => $bookingData['special_requests'] ?? null,
             'status' => $bookingData['status'] ?? 'pending',
-            'booking_reference' => $bookingReference
+            'booking_reference' => $bookingReference,
+            'total_amount' => $bookingData['total_amount'] ?? 0,
+            'prepaid_amount' => $bookingData['prepaid_amount'] ?? 0,
+            'remaining_amount' => $bookingData['remaining_amount'] ?? 0,
+            'payment_status' => $bookingData['payment_status'] ?? 'pending',
+            'adult_count' => $bookingData['adult_count'] ?? 0,
+            'children_0_5_count' => $bookingData['children_0_5_count'] ?? 0,
+            'children_6_10_count' => $bookingData['children_6_10_count'] ?? 0,
+            'children_11_17_count' => $bookingData['children_11_17_count'] ?? 0,
+            'guest_breakdown' => $bookingData['guest_breakdown'] ?? null
         ];
 
         $sql = "INSERT INTO {$this->table}
                 (user_id, customer_name, customer_email, customer_phone, booking_date, booking_time,
-                 guest_count, booking_location, special_requests, status, booking_reference, created_at, updated_at)
+                 guest_count, booking_location, special_requests, status, booking_reference,
+                 total_amount, prepaid_amount, remaining_amount, payment_status,
+                 adult_count, children_0_5_count, children_6_10_count, children_11_17_count, guest_breakdown,
+                 created_at, updated_at)
                 VALUES
                 (:user_id, :customer_name, :customer_email, :customer_phone, :booking_date, :booking_time,
-                 :guest_count, :booking_location, :special_requests, :status, :booking_reference, NOW(), NOW())";
+                 :guest_count, :booking_location, :special_requests, :status, :booking_reference,
+                 :total_amount, :prepaid_amount, :remaining_amount, :payment_status,
+                 :adult_count, :children_0_5_count, :children_6_10_count, :children_11_17_count, :guest_breakdown,
+                 NOW(), NOW())";
 
         $stmt = $this->db->prepare($sql);
         $result = $stmt->execute([
@@ -506,10 +521,17 @@ class Booking extends BaseModel {
             ':booking_location' => $mappedData['booking_location'],
             ':special_requests' => $mappedData['special_requests'],
             ':status' => $mappedData['status'],
-            ':booking_reference' => $mappedData['booking_reference']
-        ]);
-
-        if ($result) {
+            ':booking_reference' => $mappedData['booking_reference'],
+            ':total_amount' => $mappedData['total_amount'],
+            ':prepaid_amount' => $mappedData['prepaid_amount'],
+            ':remaining_amount' => $mappedData['remaining_amount'],
+            ':payment_status' => $mappedData['payment_status'],
+            ':adult_count' => $mappedData['adult_count'],
+            ':children_0_5_count' => $mappedData['children_0_5_count'],
+            ':children_6_10_count' => $mappedData['children_6_10_count'],
+            ':children_11_17_count' => $mappedData['children_11_17_count'],
+            ':guest_breakdown' => $mappedData['guest_breakdown']
+        ]);        if ($result) {
             return $this->db->lastInsertId();
         }
 

@@ -231,6 +231,15 @@ function handleSuperAdminRoute($segments)
 
     if (!$isAuthenticated) {
         error_log("Super Admin authentication failed - user role: " . ($userRole ?? 'none'));
+
+        // Handle AJAX requests differently
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+
         header('Location: ' . SITE_URL . '/auth/login');
         exit;
     }
