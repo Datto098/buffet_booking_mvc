@@ -163,7 +163,7 @@ class Order extends BaseModel
     {
         $sql = "SELECT oi.*, f.name, f.image, f.description
             FROM order_items oi
-            LEFT JOIN food_items f ON oi.food_item_id = f.id
+            LEFT JOIN foods f ON oi.food_item_id = f.id
             WHERE oi.order_id = :order_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':order_id' => $orderId]);
@@ -527,7 +527,9 @@ class Order extends BaseModel
     // Get filtered orders for enhanced admin interface
     public function getFilteredOrders($filters = [], $limit = null, $offset = 0)
     {
-        $sql = "SELECT o.*, CONCAT(u.first_name, ' ', u.last_name) as customer_name, u.email as customer_email,
+        $sql = "SELECT o.*,
+                       COALESCE(CONCAT(u.first_name, ' ', u.last_name), o.customer_name) as display_customer_name,
+                       COALESCE(u.email, o.customer_email) as display_customer_email,
                        COUNT(oi.id) as total_items
                 FROM {$this->table} o
                 LEFT JOIN users u ON o.user_id = u.id
@@ -553,7 +555,12 @@ class Order extends BaseModel
         }
 
         if (!empty($filters['search'])) {
-            $sql .= " AND (CONCAT(u.first_name, ' ', u.last_name) LIKE :search OR u.email LIKE :search OR o.id LIKE :search)";
+            $sql .= " AND (
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), o.customer_name) LIKE :search
+                OR COALESCE(u.email, o.customer_email) LIKE :search
+                OR o.order_number LIKE :search
+                OR o.customer_phone LIKE :search
+            )";
             $params[':search'] = '%' . $filters['search'] . '%';
         }
 
@@ -576,9 +583,21 @@ class Order extends BaseModel
         $stmt->execute();
         $orders = $stmt->fetchAll();
 
-        // Lấy thông tin items cho mỗi order
-        foreach ($orders as &$order) {
-            $order['items'] = $this->getOrderItems($order['id']);
+        // Tối ưu: chỉ lấy thông tin items nếu cần thiết và không quá nhiều orders
+        if (count($orders) <= 50) { // Giới hạn chỉ load items khi có ít hơn 50 orders
+            foreach ($orders as &$order) {
+                try {
+                    $order['items'] = $this->getOrderItems($order['id']);
+                } catch (Exception $e) {
+                    $order['items'] = [];
+                    error_log("Error loading items for order {$order['id']}: " . $e->getMessage());
+                }
+            }
+        } else {
+            // Nếu có quá nhiều orders, không load items để tránh memory issue
+            foreach ($orders as &$order) {
+                $order['items'] = [];
+            }
         }
 
         return $orders;
@@ -611,7 +630,12 @@ class Order extends BaseModel
         }
 
         if (!empty($filters['search'])) {
-            $sql .= " AND (u.name LIKE :search OR u.email LIKE :search OR o.id LIKE :search)";
+            $sql .= " AND (
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), o.customer_name) LIKE :search
+                OR COALESCE(u.email, o.customer_email) LIKE :search
+                OR o.order_number LIKE :search
+                OR o.customer_phone LIKE :search
+            )";
             $params[':search'] = '%' . $filters['search'] . '%';
         }
 

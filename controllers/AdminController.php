@@ -278,7 +278,7 @@ class AdminController extends BaseController
         $offset = ($page - 1) * $limit;
 
         // Get filter parameters
-        $search = $_GET['search'] ?? '';
+        $search = trim($_GET['search'] ?? '');
         $category = $_GET['category'] ?? '';
         $status = $_GET['status'] ?? '';
         $type = $_GET['type'] ?? '';
@@ -287,7 +287,7 @@ class AdminController extends BaseController
         $allFoods = $foodModel->getAllForAdmin();
 
         // Apply filters
-        if ($search) {
+        if (!empty($search)) {
             $allFoods = array_filter($allFoods, function ($food) use ($search) {
                 return stripos($food['name'], $search) !== false ||
                     stripos($food['description'], $search) !== false ||
@@ -295,7 +295,7 @@ class AdminController extends BaseController
             });
         }
 
-        if ($category) {
+        if (!empty($category)) {
             $allFoods = array_filter($allFoods, function ($food) use ($category) {
                 return $food['category_id'] == $category;
             });
@@ -345,7 +345,13 @@ class AdminController extends BaseController
             'totalFoods' => $totalFoodsCount,
             'availableFoods' => $availableFoods,
             'totalCategories' => $totalCategories,
-            'popularToday' => $popularToday
+            'popularToday' => $popularToday,
+            'filters' => [
+                'search' => $search,
+                'category' => $category,
+                'status' => $status,
+                'type' => $type
+            ]
         ];
 
         $this->loadAdminView('foods/index', $data);
@@ -519,64 +525,93 @@ class AdminController extends BaseController
     }
     public function orders()
     {
-        $orderModel = new Order();
+        try {
+            $orderModel = new Order();
 
-        $page = (int)($_GET['page'] ?? 1);
-        $limit = 20;
-        $offset = ($page - 1) * $limit;
+            $page = (int)($_GET['page'] ?? 1);
+            $limit = 20;
+            $offset = ($page - 1) * $limit;
 
-        // Get filter parameters
-        $status = $_GET['status'] ?? '';
-        $search = $_GET['search'] ?? '';
-        $dateFrom = $_GET['date_from'] ?? '';
-        $dateTo = $_GET['date_to'] ?? '';
+            // Get filter parameters
+            $status = $_GET['status'] ?? '';
+            $search = trim($_GET['search'] ?? '');
+            $dateFrom = $_GET['date_from'] ?? '';
+            $dateTo = $_GET['date_to'] ?? '';
 
-        // Build filters array
-        $filters = [];
-        if ($status) $filters['status'] = $status;
-        if ($search) $filters['search'] = $search;
-        if ($dateFrom) $filters['date_from'] = $dateFrom;
-        if ($dateTo) $filters['date_to'] = $dateTo;
+            // Build filters array
+            $filters = [];
+            if (!empty($status)) $filters['status'] = $status;
+            if (!empty($search)) $filters['search'] = $search;
+            if (!empty($dateFrom)) $filters['date_from'] = $dateFrom;
+            if (!empty($dateTo)) $filters['date_to'] = $dateTo;
 
-        $orders = $orderModel->getFilteredOrders($filters, $limit, $offset);
-        $totalOrders = $orderModel->countFilteredOrders($filters);
-        $totalPages = ceil($totalOrders / $limit);
+            // Debug log
+            error_log("Order filters: " . json_encode($filters));
 
-        // Calculate statistics for the dashboard cards (unfiltered)
-        $allOrders = $orderModel->getAllOrders();
+            $orders = $orderModel->getFilteredOrders($filters, $limit, $offset);
+            $totalOrders = $orderModel->countFilteredOrders($filters);
+            $totalPages = ceil($totalOrders / $limit);
 
-        $completedOrders = count(array_filter($allOrders, function ($order) {
-            return $order['status'] === 'completed';
-        }));
+            // Calculate statistics for the dashboard cards (unfiltered)
+            $allOrders = $orderModel->getAllOrders();
 
-        $pendingOrders = count(array_filter($allOrders, function ($order) {
-            return $order['status'] === 'pending';
-        }));
+            $completedOrders = count(array_filter($allOrders, function ($order) {
+                return $order['status'] === 'completed';
+            }));
 
-        $todayRevenue = array_sum(array_map(function ($order) {
-            if (
-                date('Y-m-d', strtotime($order['created_at'])) === date('Y-m-d')
-                && $order['status'] === 'completed'
-            ) {
-                return $order['total_amount'] ?? 0;
-            }
-            return 0;
-        }, $allOrders));
-        $data = [
-            'title' => 'Order Management',
-            'orders' => $orders,
-            'currentPage' => $page,
-            'totalPages' => $totalPages,
-            'totalOrders' => count($allOrders), // Total from unfiltered data
-            'filteredCount' => $totalOrders, // Count from filtered data
-            'filters' => $filters,
-            'completedOrders' => $completedOrders,
-            'pendingOrders' => $pendingOrders,
-            'todayRevenue' => $todayRevenue,
-            'csrf_token' => $this->generateCSRF()
-        ];
+            $pendingOrders = count(array_filter($allOrders, function ($order) {
+                return $order['status'] === 'pending';
+            }));
 
-        $this->loadAdminView('orders/index', $data);
+            $todayRevenue = array_sum(array_map(function ($order) {
+                if (
+                    date('Y-m-d', strtotime($order['created_at'])) === date('Y-m-d')
+                    && $order['status'] === 'completed'
+                ) {
+                    return $order['total_amount'] ?? 0;
+                }
+                return 0;
+            }, $allOrders));
+
+            $data = [
+                'title' => 'Order Management',
+                'orders' => $orders,
+                'currentPage' => $page,
+                'totalPages' => $totalPages,
+                'totalOrders' => count($allOrders), // Total from unfiltered data
+                'filteredCount' => $totalOrders, // Count from filtered data
+                'filters' => $filters,
+                'completedOrders' => $completedOrders,
+                'pendingOrders' => $pendingOrders,
+                'todayRevenue' => $todayRevenue,
+                'csrf_token' => $this->generateCSRF()
+            ];
+
+            $this->loadAdminView('orders/index', $data);
+
+        } catch (Exception $e) {
+            error_log("Error in orders(): " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+
+            // Initialize basic data for view even when there's an error
+            $data = [
+                'title' => 'Order Management',
+                'orders' => [],
+                'currentPage' => 1,
+                'totalPages' => 0,
+                'totalOrders' => 0,
+                'filteredCount' => 0,
+                'filters' => $_GET,
+                'completedOrders' => 0,
+                'pendingOrders' => 0,
+                'todayRevenue' => 0,
+                'csrf_token' => $this->generateCSRF()
+            ];
+
+            // Show specific error message
+            $this->setFlash('error', 'Error loading orders: ' . $e->getMessage());
+            $this->loadAdminView('orders/index', $data);
+        }
     }
     public function updateOrderStatus($id)
     {

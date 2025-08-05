@@ -12,7 +12,7 @@
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#filterModal">
-                    <i class="fas fa-filter"></i> Filter
+                    <i class="fas fa-filter"></i> Advanced Filter
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportFoods()">
                     <i class="fas fa-download"></i> Export
@@ -127,13 +127,13 @@
     <!-- Filter Bar -->
     <div class="filter-bar mb-4">
         <form action="<?= SITE_URL ?>/admin/foods" method="GET" class="row g-3 align-items-end">
-            <div class="col-md-4">
+            <div class="col-lg-4 col-md-6">
                 <label class="form-label">Search Foods</label>
                 <div class="search-box">
                     <input type="text" class="form-control" name="search" placeholder="Food name, description..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-lg-3 col-md-3">
                 <label class="form-label">Category</label>
                 <select class="form-select" name="category">
                     <option value="">All Categories</option>
@@ -144,7 +144,7 @@
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-lg-2 col-md-3">
                 <label class="form-label">Status</label>
                 <select class="form-select" name="status">
                     <option value="">All Status</option>
@@ -152,7 +152,7 @@
                     <option value="unavailable" <?= ($_GET['status'] ?? '') == 'unavailable' ? 'selected' : '' ?>>Unavailable</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-lg-2 col-md-3">
                 <label class="form-label">Type</label>
                 <select class="form-select" name="type">
                     <option value="">All Types</option>
@@ -160,16 +160,48 @@
                     <option value="regular" <?= ($_GET['type'] ?? '') == 'regular' ? 'selected' : '' ?>>Regular Items</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary me-2">
-                    <i class="fas fa-filter me-1"></i>Filter
-                </button>
-                <a href="<?= SITE_URL ?>/admin/foods" class="btn btn-outline-secondary">
-                    <i class="fas fa-times me-1"></i>Clear
-                </a>
+            <div class="col-lg-1 col-md-12">
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                    <a href="<?= SITE_URL ?>/admin/foods" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </a>
+                </div>
             </div>
-            </a>
+        </form>
     </div>
+
+    <!-- Applied Filters Indicator -->
+    <?php
+    $activeFilters = [];
+    if (!empty($_GET['search'])) $activeFilters[] = 'Search: "' . htmlspecialchars($_GET['search']) . '"';
+    if (!empty($_GET['category'])) {
+        $categoryName = '';
+        foreach ($categories as $cat) {
+            if ($cat['id'] == $_GET['category']) {
+                $categoryName = $cat['name'];
+                break;
+            }
+        }
+        $activeFilters[] = 'Category: ' . htmlspecialchars($categoryName);
+    }
+    if (!empty($_GET['status'])) $activeFilters[] = 'Status: ' . ucfirst($_GET['status']);
+    if (!empty($_GET['type'])) $activeFilters[] = 'Type: ' . ucfirst($_GET['type']);
+    ?>
+
+    <?php if (!empty($activeFilters)): ?>
+        <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <i class="fas fa-filter me-2"></i>
+                <strong>Active Filters:</strong> <?= implode(' • ', $activeFilters) ?>
+            </div>
+            <a href="<?= SITE_URL ?>/admin/foods" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-times me-1"></i>Clear All
+            </a>
+        </div>
+    <?php endif; ?>
 
     <!-- Foods Table -->
     <div class="card">
@@ -293,11 +325,23 @@
 
                 <!-- Pagination -->
                 <?php if (($totalPages ?? 0) > 1): ?>
+                    <?php
+                    // Build query string for pagination to preserve filters
+                    $queryParams = [];
+                    if (!empty($_GET['search'])) $queryParams['search'] = $_GET['search'];
+                    if (!empty($_GET['category'])) $queryParams['category'] = $_GET['category'];
+                    if (!empty($_GET['status'])) $queryParams['status'] = $_GET['status'];
+                    if (!empty($_GET['type'])) $queryParams['type'] = $_GET['type'];
+                    ?>
                     <nav aria-label="Foods pagination" class="mt-4">
                         <ul class="pagination justify-content-center">
                             <?php if ($currentPage > 1): ?>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=<?php echo $currentPage - 1; ?>">
+                                    <?php
+                                    $prevParams = $queryParams;
+                                    $prevParams['page'] = $currentPage - 1;
+                                    ?>
+                                    <a class="page-link" href="?<?php echo http_build_query($prevParams); ?>">
                                         <i class="fas fa-chevron-left"></i> Previous
                                     </a>
                                 </li>
@@ -305,13 +349,21 @@
 
                             <?php for ($i = max(1, $currentPage - 2); $i <= min($totalPages, $currentPage + 2); $i++): ?>
                                 <li class="page-item <?php echo $i == $currentPage ? 'active' : ''; ?>">
-                                    <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                    <?php
+                                    $pageParams = $queryParams;
+                                    $pageParams['page'] = $i;
+                                    ?>
+                                    <a class="page-link" href="?<?php echo http_build_query($pageParams); ?>"><?php echo $i; ?></a>
                                 </li>
                             <?php endfor; ?>
 
                             <?php if ($currentPage < $totalPages): ?>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=<?php echo $currentPage + 1; ?>">
+                                    <?php
+                                    $nextParams = $queryParams;
+                                    $nextParams['page'] = $currentPage + 1;
+                                    ?>
+                                    <a class="page-link" href="?<?php echo http_build_query($nextParams); ?>">
                                         Next <i class="fas fa-chevron-right"></i>
                                     </a>
                                 </li>
@@ -344,14 +396,21 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="filterForm">
+                    <form id="filterForm" action="<?= SITE_URL ?>/admin/foods" method="GET">
+                        <div class="mb-3">
+                            <label for="searchFilter" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="searchFilter" name="search"
+                                   placeholder="Food name, description..."
+                                   value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                        </div>
                         <div class="mb-3">
                             <label for="categoryFilter" class="form-label">Category</label>
                             <select class="form-select" id="categoryFilter" name="category">
                                 <option value="">All Categories</option>
                                 <?php if (!empty($categories)): ?>
                                     <?php foreach ($categories as $category): ?>
-                                        <option value="<?php echo $category['id']; ?>">
+                                        <option value="<?php echo $category['id']; ?>"
+                                                <?= ($_GET['category'] ?? '') == $category['id'] ? 'selected' : '' ?>>
                                             <?php echo htmlspecialchars($category['name']); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -362,26 +421,24 @@
                             <label for="statusFilter" class="form-label">Status</label>
                             <select class="form-select" id="statusFilter" name="status">
                                 <option value="">All Status</option>
-                                <option value="available">Available</option>
-                                <option value="unavailable">Unavailable</option>
+                                <option value="available" <?= ($_GET['status'] ?? '') == 'available' ? 'selected' : '' ?>>Available</option>
+                                <option value="unavailable" <?= ($_GET['status'] ?? '') == 'unavailable' ? 'selected' : '' ?>>Unavailable</option>
                             </select>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="minPrice" class="form-label">Min Price</label>
-                                <input type="number" class="form-control" id="minPrice" name="min_price" step="0.01" placeholder="0.00">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="maxPrice" class="form-label">Max Price</label>
-                                <input type="number" class="form-control" id="maxPrice" name="max_price" step="0.01" placeholder="999.99">
-                            </div>
+                        <div class="mb-3">
+                            <label for="typeFilter" class="form-label">Type</label>
+                            <select class="form-select" id="typeFilter" name="type">
+                                <option value="">All Types</option>
+                                <option value="buffet" <?= ($_GET['type'] ?? '') == 'buffet' ? 'selected' : '' ?>>Buffet Items</option>
+                                <option value="regular" <?= ($_GET['type'] ?? '') == 'regular' ? 'selected' : '' ?>>Regular Items</option>
+                            </select>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">Clear</button>
+                    <button type="submit" form="filterForm" class="btn btn-primary">Apply Filters</button>
+                    <a href="<?= SITE_URL ?>/admin/foods" class="btn btn-outline-secondary">Clear All</a>
                 </div>
             </div>
         </div>
@@ -390,4 +447,20 @@
     <script>
         // Set global SITE_URL for admin.js functions
         window.SITE_URL = '<?= SITE_URL ?>';
+
+        // Ensure form validation and prevent double submit
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterForm = document.querySelector('form[action*="admin/foods"]');
+            if (filterForm) {
+                filterForm.addEventListener('submit', function(e) {
+                    // Remove empty values to clean up URL
+                    const inputs = this.querySelectorAll('input, select');
+                    inputs.forEach(input => {
+                        if (!input.value || input.value.trim() === '') {
+                            input.removeAttribute('name');
+                        }
+                    });
+                });
+            }
+        });
     </script>
